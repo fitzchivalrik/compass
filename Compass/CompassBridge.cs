@@ -8,6 +8,10 @@ namespace Compass
         private Compass _plugin = null!;
         public string Name => Compass.PluginName;
         
+        
+        //NOTE (Chiv) For LPL to set the correct AssemblyLocation
+        public static string AssemblyLocation { get; private set; } = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        
         public void Initialize(DalamudPluginInterface pi)
         {
             var config = pi.GetPluginConfig() as Configuration ?? new Configuration();
@@ -19,5 +23,13 @@ namespace Compass
             _plugin.Dispose();
             GC.SuppressFinalize(this);
         }
+        
+#if DEBUG
+        //NOTE (Chiv) For LPL to set the correct AssemblyLocation
+        private void SetLocation(string s)
+        {
+            AssemblyLocation = s;
+        }
+#endif
     }
 }

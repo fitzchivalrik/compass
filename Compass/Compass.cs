@@ -120,14 +120,8 @@ namespace Compass
             
             #endregion
 
-
-            var root =
-#if DEBUG
-                "C:\\Development\\chivalrik\\compass\\Compass\\bin\\Debug\\net472\\";
-#else
-                Assembly.GetExecutingAssembly().Location;
-#endif
-            var imagePath = Path.Combine(Path.GetDirectoryName(root)!, @"res/compass.png");
+            
+            var imagePath = Path.Combine(Path.GetDirectoryName(CompassBridge.AssemblyLocation)!, @"res/compass.png");
             _compassImage = _pluginInterface.UiBuilder.LoadImage(imagePath);
             pi.CommandManager.AddHandler(Command, new CommandInfo((_, _) => { OnOpenConfigUi(null!, null!); })
             {
