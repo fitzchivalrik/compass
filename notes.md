@@ -1,7 +1,29 @@
 ### Questions
-Does the Minimap rotation thingy gets updated when minimap is disabled?
+Does the Minimap rotation thingy gets updated when minimap is disabled? -> Appears so
+Does the Minimap gets updated at all when minimap is disabled? -> Appears so
 
 
+### TODO
+
+- 060443.tex // Player Marker PreLoad and fixed position
+- S/W/N/E markers preload
+
+### Tex Mappings
+
+- Navimap.tex
+    - 21: Glowing Under Thingy (Makes Icons glow)
+    - 20: Blue Arrow (Arrow for fate out of viewport)
+    - 18: Orange Arrow (Arrow for Quest-Area out of viewport)
+    - 9: East <0.5446429, 0.8301887> <0.5892857, 0.9811321>
+    - 10: South <0.5892857, 0.8301887> <0.6339286, 0.9811321>
+    - 8: West <0.4732143, 0.8301887> <0.5446429, 0.9811321>
+    - 7: North <0.4017857, 0.8301887> <0.4732143, 0.9811321>
+      
+- 060955.tex // Arrow Down on QuestMarker 
+- 071021.tex // Quest Marker
+- 060954.tex // Arrow UP on QuestMarker
+- 071025.tex // Quest Complete Marker
+- 060443.tex // Player Marker
 
 ### Notes
 ChatLog->ULDData.LoadedState == 3

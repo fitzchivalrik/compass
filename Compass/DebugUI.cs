@@ -349,11 +349,92 @@ namespace Compass
                 .GetValue(dalamudUi)!;
             //dataWindow.GetType().GetMethod("Draw")!.Invoke(dataWindow, new object[0]);
         }
-        private void BuildDebugUi()
+        private unsafe void BuildDebugUi()
         {
             CompassExploration();
             ImGui.SetNextWindowBgAlpha(1);
             if(!ImGui.Begin($"{PluginName} Debug")) { ImGui.End(); return;}
+            var naviMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+            var areaMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
+            ImGui.Text($"LoadedState of _NaviMap {naviMap->ULDData.LoadedState}");
+            ImGui.Text($"LoadedState of AreaMap {areaMap->ULDData.LoadedState}");
+            ImGui.Separator();
+            
+            ImGui.Text($"WindowSize {ImGui.GetWindowSize()}");
+            ImGui.Text($"Window Width {ImGui.GetWindowWidth()}");
+            ImGui.Text($"Window Height {ImGui.GetWindowHeight()}");
+            ImGui.Text($"Window Content Region Width {ImGui.GetWindowContentRegionWidth()}");
+            ImGui.Text($"ContentRegionVail {ImGui.GetContentRegionAvail()}");
+            
+            
+            ImGui.Separator();
+            var miniMapRootComponentNode = (AtkComponentNode*)naviMap->ULDData.NodeList[2];
+            for (var i = int.MaxValue; i < miniMapRootComponentNode->Component->ULDData.NodeListCount; i++)
+            {
+                var baseComponentNode = (AtkComponentNode*) miniMapRootComponentNode->Component->ULDData.NodeList[i];
+                if (!baseComponentNode->AtkResNode.IsVisible) continue;
+                for (var j = int.MaxValue; j < baseComponentNode->Component->ULDData.NodeListCount; j++)
+                {
+                    var node = baseComponentNode->Component->ULDData.NodeList[j];
+                    if (!node->IsVisible || node->Type != NodeType.Image) continue;
+                    var imgNode = (AtkImageNode*) node;
+                    var part = imgNode->PartsList->Parts[imgNode->PartId];
+                    var type = part.ULDTexture->AtkTexture.TextureType;
+                    if (type != TextureType.Resource) continue;
+                    var texFileNamePtr =
+                        part.ULDTexture->AtkTexture.Resource->TexFileResourceHandle->ResourceHandle
+                            .FileName;
+                    var texString = Marshal.PtrToStringAnsi(new IntPtr(texFileNamePtr));
+                    if (
+                        (texString?.EndsWith("071025.tex") ?? false) 
+                        || (texString?.EndsWith("060955.tex") ?? false)
+                        || (texString?.EndsWith("071021.tex") ?? false)
+                        //|| ((texString?.EndsWith("navimap.tex") ?? false) && imgNode->PartId == 21 ) 
+                        )
+                    {
+                        //imgNode->PartId = 0;
+                        var tex = part.ULDTexture->AtkTexture.Resource->KernelTextureObject;
+                        var u = (float)part.U / tex->Width;
+                        var v = (float)part.V / tex->Height;
+                        var u1 = (float)(part.U + part.Width) / tex->Width;
+                        var v1 = (float)(part.V + part.Height) / tex->Height;
+                        var x = baseComponentNode->AtkResNode.X;
+                        var y = baseComponentNode->AtkResNode.Y;
+                        var playerX = 72;
+                        var playerY = 72;
+                        //var cos = (float)Math.Cos(cameraRotationInRadian);
+                        //var sin = (float)Math.Sin(cameraRotationInRadian);
+                        //var playerViewVector =
+                        //    Vector2.UnitY.Rotate(
+                        //        cos,
+                        //        sin);
+                        //var dot = Vector2.Dot(Vector2.Normalize(new Vector2(playerX - x, playerY - y)), playerViewVector);
+                        //var playerViewVector2 = new Vector2(-sin, cos);
+                        var widthOfCompass = _compassImage.Width;
+                        var compassUnit = widthOfCompass / 360f;
+                        var toObject = new Vector2(playerX -x, playerY - y);
+                                    
+                        
+                        ImGui.Text($"{part.U} {part.V} {part.Width} {part.Height}");            
+                        ImGui.Text($"{tex->Width} {tex->Width}");            
+                        ImGui.Text($"{u} {v} {u1} {v1}");            
+                        //var signedAngle = ((float)Math.Atan2(toObject.Y, toObject.X) - (float)Math.Atan2(playerViewVector.Y, playerViewVector.X));
+                        //var signedAngle2 = -SignedAngle(toObject, playerViewVector2);
+                        //if (signedAngle > Math.PI) signedAngle -= 2f * (float) Math.PI;
+                        //var compassPos = new Vector2(compassUnit * signedAngle2, 0f);
+                        //ImGui.SameLine(_compassImage.Width/2f+compassPos.X);
+                        ImGui.Image(
+                            new IntPtr(tex->D3D11ShaderResourceView),
+                            new Vector2(part.Width, part.Height) *  ImGui.GetIO().FontGlobalScale
+                            , imgNode->PartId == 0 ? new Vector2(0,0) : new Vector2(u, v)
+                            ,imgNode->PartId == 0 ? new Vector2(1,1) : new Vector2(u1, v1)
+                                        
+                                        
+                        );
+                    }
+                }
+            }
+            ImGui.Separator();
             ImGui.Text($"Cardinals Str");
             foreach (var c in cardinals_str)
             {
@@ -375,6 +456,8 @@ namespace Compass
                 ImGui.SameLine();
             }
             ImGui.Dummy(Vector2.Zero);
+            
+            
             
             ImGui.End();
         }
