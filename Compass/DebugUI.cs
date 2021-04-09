@@ -9,6 +9,7 @@ using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Actors;
 using FFXIVClientStructs.Component.GUI;
 using ImGuiNET;
+using SimpleTweaksPlugin.Debugging;
 using static Compass.Extensions;
 
 #if DEBUG
@@ -26,6 +27,18 @@ namespace Compass
         private char[] indicator_short_str = new char[COMPASS_STR_LEN];
         private float compass_inc_size = 5f;
         private float _lastSeenAngle = 181f;
+
+        private bool _refresh = true;
+        private UIDebug _UIDebug;
+        private bool _recalculate;
+        private bool _destroy;
+        private bool _replaceTexture;
+        private int _partId;
+        private int _wrapMode;
+        private int _width;
+        private int _height;
+        private float _rotation;
+
         private unsafe void CompassExploration()
         {
             const ImGuiWindowFlags flagsReal = ImGuiWindowFlags.NoDecoration
@@ -38,7 +51,6 @@ namespace Compass
             const ImGuiWindowFlags flags = ImGuiWindowFlags.None;
             var open = true;
             
-            ImGui.GetBackgroundDrawList();
             
             //ImGui.SetNextWindowPos(ImVec2((float)x, (float)y), ImGuiSetCond_FirstUseEver);
             if (!ImGui.Begin("Compass EXploration##Compass!!!", ref open, flags))
@@ -47,6 +59,7 @@ namespace Compass
                 return;
             }
 
+            
             var naviMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             
             var addonName = Marshal.PtrToStringAnsi(new IntPtr(naviMap->Name));
@@ -351,9 +364,57 @@ namespace Compass
         }
         private unsafe void BuildDebugUi()
         {
+            
             CompassExploration();
             ImGui.SetNextWindowBgAlpha(1);
             if(!ImGui.Begin($"{PluginName} Debug")) { ImGui.End(); return;}
+
+            ImGui.DragFloat2("Compass Offset", ref _compassOffset);
+            ImGui.Separator();
+            ImGui.InputFloat("Rotation", ref _rotation);
+            ImGui.InputInt("PartId", ref _partId);
+            ImGui.InputInt("WrapMode", ref _wrapMode);
+            ImGui.InputInt("Width", ref _width);
+            ImGui.InputInt("Height", ref _height);
+            ImGui.InputFloat("Scale##compass scale", ref _scale);
+            if (ImGui.Checkbox("replace", ref _replaceTexture))
+            {
+                
+            }ImGui.SameLine();
+            if (ImGui.Checkbox("Destroy", ref _destroy))
+            {
+                
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Checkbox("REcalculate Position", ref _recalculate))
+            {
+                
+            }
+            ImGui.SameLine();
+            if(ImGui.Checkbox("Refresh", ref _refresh))
+            {
+                
+            }
+            ImGui.SameLine();
+            if(ImGui.Checkbox("REset", ref _reset))
+            {
+                
+            }
+            ImGui.Separator();
+            if (_clonedUnitBase != null)
+            {
+                _UIDebug.DrawUnitBase(_clonedUnitBase);
+                
+            }
+            ImGui.Separator();
+            ImGui.Separator();
+            if (_clonedTxtNode != null)
+            {
+                _UIDebug.PrintNode((AtkResNode*)_clonedTxtNode, false);
+            }
+            ImGui.Separator();
+            _UIDebug.Draw();
             var naviMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             var areaMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
             ImGui.Text($"LoadedState of _NaviMap {naviMap->ULDData.LoadedState}");
@@ -365,7 +426,9 @@ namespace Compass
             ImGui.Text($"Window Height {ImGui.GetWindowHeight()}");
             ImGui.Text($"Window Content Region Width {ImGui.GetWindowContentRegionWidth()}");
             ImGui.Text($"ContentRegionVail {ImGui.GetContentRegionAvail()}");
+            ImGui.Separator();
             
+            ImGui.Image(_naviMap.ImGuiHandle, new Vector2(_naviMap.Width, _naviMap.Height));
             
             ImGui.Separator();
             var miniMapRootComponentNode = (AtkComponentNode*)naviMap->ULDData.NodeList[2];

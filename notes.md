@@ -2,7 +2,6 @@
 Does the Minimap rotation thingy gets updated when minimap is disabled? -> Appears so
 Does the Minimap gets updated at all when minimap is disabled? -> Appears so
 
-
 ### TODO
 
 - 060443.tex // Player Marker PreLoad and fixed position
@@ -11,21 +10,69 @@ Does the Minimap gets updated at all when minimap is disabled? -> Appears so
 ### Tex Mappings
 
 - Navimap.tex
-    - 21: Glowing Under Thingy (Makes Icons glow)
-    - 20: Blue Arrow (Arrow for fate out of viewport)
-    - 18: Orange Arrow (Arrow for Quest-Area out of viewport)
-    - 9: East <0.5446429, 0.8301887> <0.5892857, 0.9811321>
-    - 10: South <0.5892857, 0.8301887> <0.6339286, 0.9811321>
-    - 8: West <0.4732143, 0.8301887> <0.5446429, 0.9811321>
-    - 7: North <0.4017857, 0.8301887> <0.4732143, 0.9811321>
+  
+  - 00: Outer, edgy circle
+  - 01: Inner circle circle
+  - 02: Small Sun
+  - 03: Yellow Circle
+  - 04: Weather circle outer
+  - 05: X
+  - 06: Y
+  - 07: North <0.4017857, 0.8301887> <0.4732143, 0.9811321>
+  - 08: West <0.4732143, 0.8301887> <0.5446429, 0.9811321>
+  - 09: East <0.5446429, 0.8301887> <0.5892857, 0.9811321>
+  - 10: South <0.5892857, 0.8301887> <0.6339286, 0.9811321>
+  - 11: Settings cog (link/unlink)
+  - 12: Dark shadow circle, small
+  - 13: Minus
+  - 14: Plus
+  - 15: Square Shadow
+  - 16: ViewTriangle
+  - 17: Small circle with outer border
+  - 18: Orange Arrow (Arrow for quest out of viewport)
+  - 19: Green Arrow
+  - 20: Blue Arrow (Arrow for fate out of viewport)
+  - 21: Glowing Under Thingy (Makes Icons glow)
+  - 22: Red Arrow
+  - 23: White Arrow
+     
       
 - 060955.tex // Arrow Down on QuestMarker 
 - 071021.tex // Quest Marker
 - 060954.tex // Arrow UP on QuestMarker
 - 071025.tex // Quest Complete Marker
 - 060443.tex // Player Marker
+- 060457.tex // Area Transition Bullet Thingy
+- 060496.tex // Big QuestArea Circle 
+  - Fate AddRGB 0 0 100 MultiplyRGB 50 100 100 (on ImgNode)
+  - Orange(Quest) AddRGB 200 30 0 MultiplyRGB 62 62 24 (on ImgNode)
 
 ### Notes
+
+### AtkUnitBase
+
+ULDData hold lists of all resources and stuff used by nodes in this unitbase
+Textures, PartLists, Objects are Arrays with respective Count Var.
+-> Can maybe bypass as I feed of _NaviMaps resources?
+
+Prev/Next is bottom to top in regard to UiDebug (Next is Up, Prev is down)
+ULDData -> NodeList has all the nodes of the NonComponentNodes.
+ComponentNodes have their own ULDData, including Texture info etc.
+There are overlaps -> Maybe ULDResourceHandle determines 'ownership'?
+
+AreaMap lowest level has 265 Children in the relevant component node
+NaviMap has 206
+
+#### AtkImageNode
+
+- Multiple[Red|Blue|Green]  are percentage in range 0-100 (maybe)
+// NOTE WrapMode 1 -> ignore UV and take Width/Size != size, 2-> Fit/Stretch, 0 -> ignore Width/Height, do UV only
+// Seems like game uses 1 + correct width/size, matching UV
+
+### Stuff
+I’ll just add one to the nameplate ui
+Since it’s always visible
+
 ChatLog->ULDData.LoadedState == 3
 this is the flag that should tell when a ui addon is fully operational
 

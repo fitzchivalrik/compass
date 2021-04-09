@@ -6,6 +6,7 @@ namespace Compass
 {
     public static class Extensions
     {
+        
         public const float kEpsilon = 0.00001F;
         public const float kEpsilonNormalSqrt = 1e-15f;
 
@@ -73,13 +74,15 @@ namespace Compass
         
         public static float Angle(Vector2 from, Vector2 to)
         {
-            
+            //TODO (chiv) Replace with LengthSquared
             // sqrt(a) * sqrt(b) = sqrt(a * b) -- valid for real numbers
             var denominator = (float)Math.Sqrt(SqrMagnitude(from) * SqrMagnitude(to));
             if (denominator < kEpsilonNormalSqrt)
                 return 0F;
             
+            //TODO REplace with Math clamp or something
             var dot = Clamp(Vector2.Dot(from, to) / denominator, -1F, 1F);
+            // TODO Do all in RAD
             return (float)Math.Acos(dot) * Rad2Deg;
         }
         
