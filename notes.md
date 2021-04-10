@@ -18,10 +18,10 @@ Does the Minimap gets updated at all when minimap is disabled? -> Appears so
   - 04: Weather circle outer
   - 05: X
   - 06: Y
-  - 07: North <0.4017857, 0.8301887> <0.4732143, 0.9811321>
-  - 08: West <0.4732143, 0.8301887> <0.5446429, 0.9811321>
-  - 09: East <0.5446429, 0.8301887> <0.5892857, 0.9811321>
-  - 10: South <0.5892857, 0.8301887> <0.6339286, 0.9811321>
+  - 07: North <0.4017857f, 0.8301887f> <0.4732143f, 0.9811321f>
+  - 08: West <0.4732143f, 0.8301887f> <0.5446429f, 0.9811321f>
+  - 09: East <0.5446429f, 0.8301887f> <0.5892857f, 0.9811321f>
+  - 10: South <0.5892857f, 0.8301887f> <0.6339286f, 0.9811321f>
   - 11: Settings cog (link/unlink)
   - 12: Dark shadow circle, small
   - 13: Minus
@@ -43,13 +43,17 @@ Does the Minimap gets updated at all when minimap is disabled? -> Appears so
 - 071025.tex // Quest Complete Marker
 - 060443.tex // Player Marker
 - 060457.tex // Area Transition Bullet Thingy
-- 060496.tex // Big QuestArea Circle 
+- 060495.tex // Small Area Circle
+- 060496.tex // Big Area Circle 
   - Fate AddRGB 0 0 100 MultiplyRGB 50 100 100 (on ImgNode)
   - Orange(Quest) AddRGB 200 30 0 MultiplyRGB 62 62 24 (on ImgNode)
+- 060501.tex // Fate Marker
 
 ### Notes
 
 ### AtkUnitBase
+
+dec(x:-22.27, y:56.34 distance: 15.56
 
 ULDData hold lists of all resources and stuff used by nodes in this unitbase
 Textures, PartLists, Objects are Arrays with respective Count Var.
@@ -70,6 +74,18 @@ NaviMap has 206
 // Seems like game uses 1 + correct width/size, matching UV
 
 ### Stuff
+
+C# 9 Delegate magic
+```c#
+public unsafe List<Action> LearnedBlueSpells {
+  get {
+    var func = (delegate*<IntPtr, uint, bool>)(MainModule.BaseAddress + 0x7D54E0);
+    var arg = MainModule.BaseAddress + 0x1DB4D50;
+    return BlueMageSpells.Values.Where(action => func(arg, action.UnlockLink)).ToList();
+  }
+}
+```
+
 I’ll just add one to the nameplate ui
 Since it’s always visible
 

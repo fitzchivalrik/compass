@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -38,16 +39,10 @@ namespace Compass
         private int _width;
         private int _height;
         private float _rotation;
+        private List<(float radius, float distance)> _areaCircle = new();
 
         private unsafe void CompassExploration()
         {
-            const ImGuiWindowFlags flagsReal = ImGuiWindowFlags.NoDecoration
-                                               | ImGuiWindowFlags.NoSavedSettings
-                                               | ImGuiWindowFlags.NoMove
-                                               | ImGuiWindowFlags.NoMouseInputs
-                                               | ImGuiWindowFlags.NoFocusOnAppearing
-                                               | ImGuiWindowFlags.NoBackground
-                                               | ImGuiWindowFlags.NoNav;
             const ImGuiWindowFlags flags = ImGuiWindowFlags.None;
             var open = true;
             
@@ -369,6 +364,11 @@ namespace Compass
             ImGui.SetNextWindowBgAlpha(1);
             if(!ImGui.Begin($"{PluginName} Debug")) { ImGui.End(); return;}
 
+            foreach (var circle in _areaCircle)
+            {
+                ImGui.Text($"Radius {circle.radius} {circle.distance} Distance");
+            }
+            ImGui.Separator();
             ImGui.DragFloat2("Compass Offset", ref _compassOffset);
             ImGui.Separator();
             ImGui.InputFloat("Rotation", ref _rotation);
