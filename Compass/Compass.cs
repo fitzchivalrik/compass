@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Compass.Collection;
@@ -254,7 +255,7 @@ namespace Compass
             // TODO (Chiv) Why use this and not the rotation on the minimap rotation thingy?
             // Minimap rotation thingy is even already flipped!
             // And apparently even accessible & updated if _NaviMap is disabled
-            
+            if (!_config.ImGuiCompassEnable) return;
             var naviMapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             if (naviMapPtr == IntPtr.Zero) return;
             var naviMap = (AtkUnitBase*) naviMapPtr;
@@ -264,7 +265,7 @@ namespace Compass
             if (!naviMap->IsVisible) return;
             if (ShouldHideCompass()) return;
             var scale = _config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
-            const float compassHeight = 50f;
+            const float windowHeight = 50f;
             const ImGuiWindowFlags flags = ImGuiWindowFlags.NoDecoration
                                            | ImGuiWindowFlags.NoMove
                                            | ImGuiWindowFlags.NoMouseInputs
@@ -273,21 +274,18 @@ namespace Compass
                                            | ImGuiWindowFlags.NoNav
                                            | ImGuiWindowFlags.NoInputs
                                            | ImGuiWindowFlags.NoCollapse;
-            ImGui.SetNextWindowBgAlpha(0.3f);
             ImGui.SetNextWindowSizeConstraints(
-                new Vector2(250f,(compassHeight+20) * scale), 
-                new Vector2(int.MaxValue,(compassHeight+20) *scale));
+                new Vector2(250f,(windowHeight+20) * scale), 
+                new Vector2(int.MaxValue,(windowHeight+20) *scale));
             if (!ImGui.Begin("###ImGuiCompassWindow"
                 , _buildingConfigUi 
                     ? ImGuiWindowFlags.NoCollapse 
                       | ImGuiWindowFlags.NoTitleBar 
                       | ImGuiWindowFlags.NoFocusOnAppearing
                       | ImGuiWindowFlags.NoScrollbar
+                      | ImGuiWindowFlags.NoBackground
                     : flags)
             ) { ImGui.End(); return; }
-#if DEBUG
-            _areaCircle.Clear();
-#endif
             // NOTE (Chiv) This is the position of the player in the minimap coordinate system
             const int playerX = 72, playerY = 72;
             var cameraRotationInRadian = -*(float*) (_maybeCameraStruct + 0x130);
@@ -295,7 +293,7 @@ namespace Compass
             // This leads to jerky behaviour
             //var cameraRotationInRadian = miniMapIconsRootComponentNode->Component->ULDData.NodeList[2]->Rotation;
             //var scaleFactorForRotationBasedDistance = Math.Max(1f - 0 / maxDistance, lowestScaleFactor) * ImGui.GetIO().FontGlobalScale;
-            var scaleFactorForRotationBasedDistance = ImGui.GetIO().FontGlobalScale * 0.7f; 
+            var scaleFactorForRotationBasedDistance = 0.7f * scale; 
             // TODO (Chiv) My math must be bogus somewhere, cause I need to do some things differently then math would say
             // TODO I think my and the games coordinate system do not agree
             // TODO (Chiv) Redo the math for not locked _NaviMap (might be easier? Should be the same?)
@@ -308,7 +306,8 @@ namespace Compass
             var oneVec = Vector2.One;
             // TODO (Chiv) do it all in Radians
             var widthOfCompass = ImGui.GetWindowContentRegionWidth();
-            var halfWidthOfCompass = widthOfCompass / 2f;
+            var halfWidthOfCompass = widthOfCompass * 0.5f;
+            var halfHeightOfCompass = windowHeight * 0.5f * scale;
             var compassUnit = widthOfCompass / 360f;
             var westCardinalAtkImageNode = (AtkImageNode*) naviMap->ULDData.NodeList[11];
             // TODO (Chiv) Cache on TerritoryChange/Initialisation?
@@ -316,18 +315,42 @@ namespace Compass
                 westCardinalAtkImageNode->PartsList->Parts[0]
                         .ULDTexture->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
                 );
+            var whiteColor = ImGui.ColorConvertFloat4ToU32(new Vector4(1));
             var drawList = ImGui.GetWindowDrawList();
             var backgroundDrawList = ImGui.GetBackgroundDrawList();
             var cursorPosition = ImGui.GetCursorScreenPos() - new Vector2(7,0);
-            var compassCentre = new Vector2(cursorPosition.X + halfWidthOfCompass, cursorPosition.Y);
+            var compassCentre = new Vector2(cursorPosition.X + halfWidthOfCompass, cursorPosition.Y + halfHeightOfCompass);
+            var halfWidth32 = 16 * scale;
+            var backgroundPMin = new Vector2(compassCentre.X - 5 - halfWidthOfCompass, compassCentre.Y - halfHeightOfCompass*0.5f);
+            var backgroundPMax = new Vector2(compassCentre.X + 5 + halfWidthOfCompass, compassCentre.Y + halfHeightOfCompass *0.5f);
             // TODO (Chiv) Draw Background
             //First, the background
-            backgroundDrawList.AddRectFilled(
-                cursorPosition
-                ,new Vector2(cursorPosition.X + widthOfCompass+13, cursorPosition.Y + compassHeight * scale)
-                , ImGui.ColorConvertFloat4ToU32(new Vector4(1f,1f,0.2f,0.2f))
-                , 10f
-                );
+            if (!_config.ImGuiCompassDisableBackground)
+            {
+                switch (_config.ImGuiCompassBackgroundStyle)
+                {
+                    case ImGuiCompassBackgroundStyle.Filled:
+                        backgroundDrawList.AddRectFilled(
+                            backgroundPMin
+                            , backgroundPMax
+                            , ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColor)
+                            , _config.ImGuiCompassBackgroundRouding
+                        );
+                        break;
+                    case ImGuiCompassBackgroundStyle.Border:
+                        backgroundDrawList.AddRect(
+                             backgroundPMin
+                            , backgroundPMax
+                            , ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColor)
+                            , _config.ImGuiCompassBackgroundRouding
+                        );
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                ;
+            }
+
             // Second, we position our Cardinals
             //TODO (Chiv) Uhm, no, east is the other way. Again, coordinate system mismatch?
             var east = -Vector2.UnitX;
@@ -338,34 +361,35 @@ namespace Compass
             // TODO (chiv) actually, SignedAngle first arg is FROM, not TO
             // TODO (Chiv) Draw it all manually via the Drawlist, no need for same line
             var eastOffset = compassUnit * -SignedAngle(east, playerForward);
+            var halfWidth20 = 10 * scale;
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
-                ,new Vector2(compassCentre.X + eastOffset, compassCentre.Y)
-                ,new Vector2(compassCentre.X + eastOffset + 20 * scale, compassCentre.Y + 32 *scale)
+                ,new Vector2(compassCentre.X - halfWidth20 + eastOffset, compassCentre.Y  - halfWidth32) // Width = 20
+                ,new Vector2(compassCentre.X + eastOffset + halfWidth20, compassCentre.Y + halfWidth32)
                 ,new Vector2(0.5446429f, 0.8301887f)
                 ,new Vector2(0.5892857f, 0.9811321f)
             );
             var southOffset = compassUnit * -SignedAngle(south, playerForward);
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
-                ,new Vector2(compassCentre.X + southOffset, compassCentre.Y)
-                ,new Vector2(compassCentre.X + southOffset + 20 * scale, compassCentre.Y + 32 *scale)
+                ,new Vector2(compassCentre.X - halfWidth20 + southOffset, compassCentre.Y - halfWidth32)
+                ,new Vector2(compassCentre.X + southOffset + halfWidth20, compassCentre.Y + halfWidth32)
                 ,new Vector2(0.5892857f, 0.8301887f)
                 ,new Vector2(0.6339286f, 0.9811321f)
             );
             var westOffset = compassUnit * -SignedAngle(west, playerForward);
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
-                ,new Vector2(compassCentre.X + westOffset, compassCentre.Y)
-                ,new Vector2(compassCentre.X + westOffset + 32 * scale, compassCentre.Y + 32 *scale)
+                ,new Vector2(compassCentre.X - halfWidth32 + westOffset, compassCentre.Y - halfWidth32)
+                ,new Vector2(compassCentre.X + westOffset + halfWidth32, compassCentre.Y + halfWidth32)
                 ,new Vector2(0.4732143f, 0.8301887f)
                 ,new Vector2(0.5446429f, 0.9811321f)
             );
             var northOffset = compassUnit * -SignedAngle(north, playerForward);
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
-                ,new Vector2(compassCentre.X + northOffset, compassCentre.Y)
-                ,new Vector2(compassCentre.X + northOffset + 32 * scale, compassCentre.Y + 32 *scale)
+                ,new Vector2(compassCentre.X - halfWidth32 + northOffset, compassCentre.Y - halfWidth32)
+                ,new Vector2(compassCentre.X + northOffset + halfWidth32, compassCentre.Y + halfWidth32)
                 ,new Vector2(0.4017857f, 0.8301887f)
                 ,new Vector2(0.4732143f, 0.9811321f)
                 , ImGui.ColorConvertFloat4ToU32(new Vector4(176f/255f,100f/255f,0f,1))
@@ -376,7 +400,7 @@ namespace Compass
                 // Then, we do the dance through all relevant nodes on _NaviMap
                 // I imagine this throws sometimes because of racing conditions -> We try to access an already freed texture e.g.
                 // So we just ignore those small exceptions, it works a few frames later anyways
-                var mapScale = miniMapIconsRootComponentNode->Component->ULDData.NodeList[1]->ScaleX;
+                var mapScale = miniMapIconsRootComponentNode->Component->ULDData.NodeList[1]->ScaleX; //maxZoom level == 2
                 var playerPos = new Vector2(playerX, playerY);
                 for (var i = 4; i < miniMapIconsRootComponentNode->Component->ULDData.NodeListCount; i++)
                 {
@@ -401,7 +425,7 @@ namespace Compass
 #if DEBUG                        
                         if (type != TextureType.Resource)
                         {
-                            SimpleLog.Error($"{i}{j} was not a Resource Texture");
+                            SimpleLog.Error($"{i}{j} was not a Resource texture");
                             continue;
                         };
 #endif
@@ -409,73 +433,75 @@ namespace Compass
                         var texFileNamePtr =
                             part.ULDTexture->AtkTexture.Resource->TexFileResourceHandle->ResourceHandle
                                 .FileName;
+                        // NOTE (Chiv) We are in a try-catch, so we just throw if the read failed.
+                        // Cannot act anyways if the texture path is butchered
+                        var textureFileName = Marshal.PtrToStringAnsi(new IntPtr(texFileNamePtr))!;
+                        //var success = uint.TryParse(textureFileName.Substring(textureFileName.LastIndexOf('/')+1, 6), out var iconId);
                         
-                        var texString = Marshal.PtrToStringAnsi(new IntPtr(texFileNamePtr));
-                        switch (texString)
+                        var _ = uint.TryParse(textureFileName.Substring(textureFileName.Length-10, 6), out var iconId);
+                        //iconId = 0 (==> success == false as IconID will never be 0) Must have been NaviMap (and only that hopefully)
+                        var textureIdPtr = new IntPtr(tex->D3D11ShaderResourceView);
+                        Vector2 pMin;
+                        Vector2 pMax;
+                        var uv = zeroVec;
+                        var uv1 = oneVec;
+                        var tintColour = whiteColor;
+
+                        switch (iconId)
                         {
-                            case var _ when texString?.EndsWith("060443.tex", StringComparison.InvariantCultureIgnoreCase) ?? false: //Player Marker
-                                backgroundDrawList.AddImage(
-                                    new IntPtr(tex->D3D11ShaderResourceView)
-                                    ,new Vector2(compassCentre.X , compassCentre.Y+22)
-                                    ,new Vector2(compassCentre.X + 32 * scale, compassCentre.Y + 22 + 32 *scale)
-                                    ,zeroVec
-                                    ,oneVec
-                                );
-                                break;
-                            case var _ when texString?.EndsWith("060495.tex", StringComparison.InvariantCultureIgnoreCase) ?? false: // Small Area Circle
-                            case var _ when texString?.EndsWith("060496.tex", StringComparison.InvariantCultureIgnoreCase) ?? false: // Big Area Circle
-                                // TODO Distinguish between Circles for quests and circles for Fates (colour?)
-                                var (scaleArea, angleArea, distanceArea) = GetScaleFactorAndSignedAngle(
-                                    playerPos,
-                                    new Vector2(
-                                        mapIconComponentNode->AtkResNode.X,
-                                        mapIconComponentNode->AtkResNode.Y
-                                    ),
-                                    playerForward,
-                                    mapScale);
-                                //TODO Adjust for different scale levels...or not.
-                                var radius = mapIconComponentNode->AtkResNode.ScaleX * 
-                                             (mapIconComponentNode->AtkResNode.Width - mapIconComponentNode->AtkResNode.OriginX);
-#if DEBUG
-                                _areaCircle.Add((radius, distanceArea));
-#endif
+                            case 0: //Arrows to quests and fates, glowy thingy
+                                // NOTE (Chiv) We assume part.Width == part.Height == 24
+                                // NOTE (Chiv) We assume tex.Width == 448 && tex.Height == 212
+                                //TODO (Chiv) Will break on glowy under thingy, need to test if 'if' or 'read' is slower, I assume if
+                                var u = (float) part.U / 448; // = (float) part.U / tex->Width;
+                                var v = (float) part.V / 212; // = (float) part.V / tex->Height;
+                                var u1 = (float) (part.U + 24) / 448; // = (float) (part.U + part.Width) / tex->Width;
+                                var v1 = (float) (part.V + 24) / 212; // = (float) (part.V + part.Height) / tex->Height;
                                 // TODO Ring, ring, SignedAngle first arg is FROM !
                                 // TODO (Chiv) Ehhh, the minus before SignedAngle
-                                ImGui.SameLine(halfWidthOfCompass + compassUnit * -angleArea);
-                                ImGui.Image(
-                                    new IntPtr(tex->D3D11ShaderResourceView)
-                                    ,new Vector2(part.Width, part.Height) * scale * (scaleArea)
-                                    ,zeroVec
-                                    ,oneVec
-                                    , distanceArea < radius
-                                        ? new Vector4(
-                                            imgNode->AtkResNode.AddRed * (imgNode->AtkResNode.MultiplyRed/100f)/255f,
-                                            imgNode->AtkResNode.AddGreen * (imgNode->AtkResNode.MultiplyGreen/100f)/255f,
-                                            imgNode->AtkResNode.AddBlue * (imgNode->AtkResNode.MultiplyBlue/100f)/255f,
-                                            1)
-                                        : new Vector4(1f,1,1f,1f)
-                                );
+                                var naviMapCutOffset = compassUnit * 
+                                                       -CalculateSignedAngle(mapIconComponentNode->AtkResNode.Rotation, playerForward);
+                                var naviMapCutHalfWidth = 12 * scaleFactorForRotationBasedDistance;
+                                pMin = new Vector2(compassCentre.X - naviMapCutHalfWidth + naviMapCutOffset, compassCentre.Y - naviMapCutHalfWidth);
+                                pMax = new Vector2(
+                                    compassCentre.X + naviMapCutOffset + naviMapCutHalfWidth,
+                                    compassCentre.Y + naviMapCutHalfWidth);
+                                uv = new Vector2(u, v);
+                                uv1 = new Vector2(u1, v1);
                                 break;
-                            case var _ when (texString?.EndsWith("NaviMap.tex", StringComparison.InvariantCultureIgnoreCase) ?? false): //Arrows to quests and fates, glowy thingy
-                                var u = (float) part.U / tex->Width;
-                                var v = (float) part.V / tex->Height;
-                                var u1 = (float) (part.U + part.Width) / tex->Width;
-                                var v1 = (float) (part.V + part.Height) / tex->Height;
-                                // TODO Ring, ring, SignedAngle first arg is FROM !
-                                // TODO (Chiv) Ehhh, the minus before SignedAngle
-                                ImGui.SameLine(halfWidthOfCompass + 
-                                               compassUnit * 
-                                               -GetSignedAngle(mapIconComponentNode->AtkResNode.Rotation, playerForward));
-                                ImGui.Image(
-                                    naviMapTextureD3D11ShaderResourceView,
-                                    new Vector2(part.Width, part.Height) * scale * scaleFactorForRotationBasedDistance,
-                                    new Vector2(u,v),
-                                    new Vector2(u1,v1)
-                                );
+                            case 060443: //Player Marker
+                                if(_config.ImGuiCompassDisableCenterMarker) continue;
+                                drawList = backgroundDrawList;
+                                pMin = new Vector2(compassCentre.X - halfWidth32, compassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * scale - halfWidth32);
+                                pMax = new Vector2(compassCentre.X + halfWidth32, compassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * scale  + halfWidth32);
+                                uv1 = _config.ImGuiCompassFlipCentreMarker ? new Vector2(1, -1) : oneVec;
                                 break;
-                            case var _ when texString?.EndsWith("060457.tex") ?? false: // Area Transition Bullet Thingy
+                            case 060495: // Small Area Circle
+                            case 060496: // Big Area Circle
+                            case 060497: // Another Circle
+                            case 060498: // One More Circle
+                                bool inArea;
+                                (pMin, pMax, tintColour, inArea) 
+                                    = CalculateAreaCirlceVariables(playerPos, playerForward, mapIconComponentNode, imgNode,  mapScale, compassUnit, halfWidth32, compassCentre);
+                                if (inArea)
+                                {
+                                    //*((byte*) &tintColour + 3) = 0x33  == (0x33FFFFFF) & (tintColour)
+                                    backgroundDrawList.AddRectFilled(
+                                        backgroundPMin
+                                        , backgroundPMax
+                                        , 0x33FFFFFF & tintColour //Set A to 0.1
+                                        , _config.ImGuiCompassBackgroundRouding
+                                    );
+                                }
+                                break;
+                            case 060542: // Arrow UP on Circle
+                            case 060546: // Arrow DOWN on Circle
+                                (pMin, pMax, tintColour, _) 
+                                    = CalculateAreaCirlceVariables(playerPos, playerForward, mapIconComponentNode, imgNode,  mapScale, compassUnit, halfWidth32, compassCentre);
+                                break;
+                            case 060457: // Area Transition Bullet Thingy
                             default:
-                                var (scaleFactor, angle, _) = GetScaleFactorAndSignedAngle(
+                                var (iconScaleFactor, iconAngle, _) = CalculateDrawVariables(
                                     playerPos,
                                     new Vector2(
                                         mapIconComponentNode->AtkResNode.X,
@@ -485,35 +511,81 @@ namespace Compass
                                     mapScale);
                                 // TODO Ring, ring, SignedAngle first arg is FROM !
                                 // TODO (Chiv) Ehhh, the minus before SignedAngle
-                                ImGui.SameLine(halfWidthOfCompass + compassUnit * -angle);
-                                ImGui.Image(
-                                    new IntPtr(tex->D3D11ShaderResourceView),
-                                    new Vector2(part.Width, part.Height) * scale * scaleFactor,
-                                    zeroVec,
-                                    oneVec
-                                );
+                                // NOTE (Chiv) We assume part.Width == part.Height == 32
+                                var iconOffset = compassUnit * -iconAngle;
+                                var iconHalfWidth = halfWidth32 * iconScaleFactor;
+                                pMin = new Vector2(compassCentre.X - iconHalfWidth + iconOffset, compassCentre.Y - iconHalfWidth);
+                                pMax = new Vector2(
+                                    compassCentre.X + iconOffset + iconHalfWidth,
+                                    compassCentre.Y + iconHalfWidth);
                                 break;
-                                
                         }
+                        drawList.AddImage(textureIdPtr,pMin,pMax,uv,uv1, tintColour);
 
                     }
                 }
 
                 //TODO (Chiv) Later, we might do that for AreaMap too
             }
+#if DEBUG
+            catch (Exception e)
+            {
+
+                SimpleLog.Error(e);
+#else
             catch
             {
-                // ignored
+
+#endif
+                
             }
 
         }
 
-        
-        private (float scaleFactor, float signedAngle, float distance) GetScaleFactorAndSignedAngle(in Vector2 from, in Vector2 to, in Vector2 forward, float distanceScaling)
+        private (Vector2 pMin,Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
+            Vector2 playerPos, Vector2 playerForward, AtkComponentNode* mapIconComponentNode,
+            AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre)
+        {
+            // TODO Distinguish between Circles for quests and circles for Fates (colour?)
+            var (scaleArea, angleArea, distanceArea) = CalculateDrawVariables(
+                playerPos,
+                new Vector2(
+                    mapIconComponentNode->AtkResNode.X,
+                    mapIconComponentNode->AtkResNode.Y
+                ),
+                playerForward,
+                mapScale);
+            //TODO Adjust for different scale levels...or not.
+            var radius = mapIconComponentNode->AtkResNode.ScaleX *
+                         (mapIconComponentNode->AtkResNode.Width - mapIconComponentNode->AtkResNode.OriginX);
+            // TODO Ring, ring, SignedAngle first arg is FROM !
+            // TODO (Chiv) Ehhh, the minus before SignedAngle
+            // NOTE (Chiv) We asumme part.Width == part.Height == 32
+            var areaCircleOffset = compassUnit * -angleArea;
+            var areaHalfWidth = halfWidth32 * scaleArea;
+            if (distanceArea >= radius)
+                return (
+                    new Vector2(compassCentre.X - areaHalfWidth + areaCircleOffset, compassCentre.Y - areaHalfWidth),
+                    new Vector2(compassCentre.X + areaCircleOffset + areaHalfWidth, compassCentre.Y + areaHalfWidth),
+                    0xFFFFFFFF, false);
+            var tintColour = ImGui.ColorConvertFloat4ToU32(new Vector4(
+                (255 + imgNode->AtkResNode.AddRed) * (imgNode->AtkResNode.MultiplyRed / 100f) / 255f,
+                (255 + imgNode->AtkResNode.AddGreen) * (imgNode->AtkResNode.MultiplyGreen / 100f) / 255f,
+                (255 + imgNode->AtkResNode.AddBlue) * (imgNode->AtkResNode.MultiplyBlue / 100f) / 255f,
+                1));
+            return (new Vector2(compassCentre.X - areaHalfWidth, compassCentre.Y - areaHalfWidth)
+                , new Vector2(compassCentre.X + areaHalfWidth, compassCentre.Y + areaHalfWidth)
+                , tintColour, true);
+
+        }
+
+        //TODO Extract to Extensions
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static (float scaleFactor, float signedAngle, float distance) CalculateDrawVariables(Vector2 from, Vector2 to, Vector2 forward, float distanceScaling)
         {
             const float lowestScaleFactor = 0.3f;
-            var distanceOffset = 40f * distanceScaling;//80f;
-            var maxDistance = 180f * distanceScaling; //;360f;
+            var distanceOffset = 40f * distanceScaling;//80f @Max Zoom(==2) _NaviMap
+            var maxDistance = 180f * distanceScaling; //360f @Max Zoom(==2) _NaviMap
             //TODO (Chiv) Oh boy, check the math
             var distance = Vector2.Distance(to, from);
             var scaleFactor = Math.Max(1f - (distance-distanceOffset) / maxDistance, lowestScaleFactor);
@@ -521,7 +593,9 @@ namespace Compass
             return (scaleFactor,SignedAngle(from - to, forward), distance);
         }
 
-        private float GetSignedAngle(in float rotation, in Vector2 forward)
+        //TODO Extract to Extensions
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private float CalculateSignedAngle(in float rotation, in Vector2 forward)
         {
             var cosObject = (float) Math.Cos(rotation);
             var sinObject = (float) Math.Sin(rotation);

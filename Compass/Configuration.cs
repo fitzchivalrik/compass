@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Configuration;
+using Newtonsoft.Json;
 using SimpleTweaksPlugin.Debugging;
 
 namespace Compass
@@ -10,20 +11,41 @@ namespace Compass
 #if DEBUG
         public DebugConfig Debugging = new();
 #endif
-        public Vector2 AddonCompassOffset = new(0,0);
-        public float AddonCompassScale = 1f;
-        public int AddonCompassWidth = 550;
+        [JsonIgnore] public Vector2 AddonCompassOffset = new(0,0);
+        [JsonIgnore] public float AddonCompassScale = 1f;
+        [JsonIgnore] public int AddonCompassWidth = 550;
         // NOTE (Chiv) ImGuiCompass Offset/Position are saved as the window coords/size.
-        public int AddonCompassBackgroundPartId = 1;
-        public bool AddonCompassDisableBackground;
-        public bool AddonCompassEnable = true;
+        [JsonIgnore] public int AddonCompassBackgroundPartId = 1;
+        [JsonIgnore] public bool AddonCompassDisableBackground;
+        [JsonIgnore] public bool AddonCompassEnable;
         
         public float ImGuiCompassScale = 1f;
-        public int ImGuiCompassBackgroundPartId = 1;
         public bool ImGuiCompassDisableBackground;
-        public bool ImGuiCompassEnable;
-        
+        public ImGuiCompassBackgroundStyle ImGuiCompassBackgroundStyle;
+        public Vector4 ImGuiBackgroundColor = new Vector4(0.2f,0.2f,0.2f,0.2f);
+        public float ImGuiCompassBackgroundRouding = 10f;
+
+        public bool ImGuiCompassDisableCenterMarker;
+        public bool ImGuiCompassFlipCentreMarker;
+        public int ImGuiCompassCentreMarkerOffset = 27;
+        public bool ImGuiCompassEnable = true;
+
+        public bool HideOnAreaMap;
+        public bool HideOnDialogueBox;
+        public bool HideOnInventories;
+        public bool HideOnSkillTooltip;
+        public bool HideOnItemTooltip;
+        public bool HideInCombat;
+        public bool HideInPvPMaps;
+        public bool HideInInstances;
+
         public int Version { get; set; } = 0;
+    }
+
+    public enum ImGuiCompassBackgroundStyle
+    {
+        Filled,
+        Border
     }
     
 }

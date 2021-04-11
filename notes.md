@@ -47,7 +47,15 @@ Does the Minimap gets updated at all when minimap is disabled? -> Appears so
 - 060496.tex // Big Area Circle 
   - Fate AddRGB 0 0 100 MultiplyRGB 50 100 100 (on ImgNode)
   - Orange(Quest) AddRGB 200 30 0 MultiplyRGB 62 62 24 (on ImgNode)
+- 060497.tex // circle
+- 060498.tex // Another circle
+- 060093.tex // Fate Exclamation Mark
 - 060501.tex // Fate Marker
+- 060502.tex // Fate Marker Boss Battle
+- till
+- 060508.tex // Fate markers
+- 060546.tex // Arrow Down on Circle Area
+- 060542.tex // Arrow UP on Circle Area
 
 ### Notes
 
