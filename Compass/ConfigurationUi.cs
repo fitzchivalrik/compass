@@ -98,8 +98,8 @@ namespace Compass
                 ImGui.Indent();
                 ImGui.PushItemWidth(200f * scale);
                 changed |= ImGui.DragFloat("Scale###ImGui", ref config.ImGuiCompassScale, 0.1f, 0.1f, 3f);
-                changed |= ImGui.Checkbox("Disable Centre Marker##ImGui", ref config.ImGuiCompassDisableCenterMarker);
-                if (!config.ImGuiCompassDisableCenterMarker)
+                changed |= ImGui.Checkbox("Enable Centre Marker##ImGui", ref config.ImGuiCompassEnableCenterMarker);
+                if (config.ImGuiCompassEnableCenterMarker)
                 {
                     ImGui.Indent();
                     ImGui.SetNextItemWidth(35 * scale);
@@ -107,18 +107,31 @@ namespace Compass
                     changed |= ImGui.Checkbox("Flip Centre Marker##ImGui", ref config.ImGuiCompassFlipCentreMarker);
                     ImGui.Unindent();
                 }
-                changed |= ImGui.Checkbox("Disable Background##ImGui", ref config.ImGuiCompassDisableBackground);
-                if (!config.ImGuiCompassDisableBackground)
+                changed |= ImGui.Checkbox("Enable Background##ImGui", ref config.ImGuiCompassEnableBackground);
+                if (config.ImGuiCompassEnableBackground)
                 {
                     ImGui.Indent();
-                    var backgroundStyle = (int) config.ImGuiCompassBackgroundStyle;
-                    ImGui.Text("Background");
-                    changed |= ImGui.RadioButton("Filled", ref backgroundStyle, 0);
+                    var backgroundStyle = config.ImGuiCompassDrawBorder 
+                        ? config.ImGuiCompassFillBackground
+                            ? 2
+                            : 0
+                        : 1;
+                    ImGui.Text($"Background");
+                    changed |= ImGui.RadioButton("Border##ImGui", ref backgroundStyle, 0);
                     ImGui.SameLine();
-                    changed |= ImGui.RadioButton("Border", ref backgroundStyle, 1);
-                    if (changed) config.ImGuiCompassBackgroundStyle = (ImGuiCompassBackgroundStyle) backgroundStyle;
-                    changed |= ImGui.ColorEdit4("Background Colour##Edit", ref config.ImGuiBackgroundColor);
-                    changed |= ImGui.DragFloat("Rounding", ref config.ImGuiCompassBackgroundRouding);
+                    changed |= ImGui.RadioButton("Filled##ImGui", ref backgroundStyle, 1);
+                    ImGui.SameLine();
+                    changed |= ImGui.RadioButton("Both##ImGui", ref backgroundStyle, 2);
+                    if (changed)
+                    {
+                        config.ImGuiCompassDrawBorder = backgroundStyle == 0 || backgroundStyle == 2;
+                        config.ImGuiCompassFillBackground = backgroundStyle == 1 || backgroundStyle == 2;
+                    }
+                    if(config.ImGuiCompassFillBackground)
+                        changed |= ImGui.ColorEdit4("Background Colour##ImGui", ref config.ImGuiBackgroundColour);
+                    if(config.ImGuiCompassDrawBorder)
+                        changed |= ImGui.ColorEdit4("Background Border Colour##ImGui", ref config.ImGuiBackgroundBorderColour);
+                    changed |= ImGui.DragFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding);
                     ImGui.Unindent();
                 }
                 ImGui.PopItemWidth();
@@ -138,17 +151,11 @@ namespace Compass
                 changed = false;
                 ImGui.PushItemWidth(200f * scale);
                 changed |= ImGui.DragFloat("Scale###ImGui", ref config.ImGuiCompassScale,0.1f, 0.1f, 3f);
-                changed |= ImGui.Checkbox("Disable Background##ImGui", ref config.ImGuiCompassDisableBackground);
-                if (!config.ImGuiCompassDisableBackground)
+                changed |= ImGui.Checkbox("Disable Background##ImGui", ref config.ImGuiCompassEnableBackground);
+                if (config.ImGuiCompassEnableBackground)
                 {
                     ImGui.Indent();
-                    var backgroundStyle = (int) config.ImGuiCompassBackgroundStyle;
-                    ImGui.Text("Background");
-                    changed |= ImGui.RadioButton("Filled", ref backgroundStyle, 0);
-                    ImGui.SameLine();
-                    changed |= ImGui.RadioButton("Border", ref backgroundStyle, 1);
-                    if (changed) config.ImGuiCompassBackgroundStyle = (ImGuiCompassBackgroundStyle) backgroundStyle;
-                    changed |= ImGui.ColorEdit4("Background Colour##Edit", ref config.ImGuiBackgroundColor);
+                  
                     ImGui.Unindent();
                 }
 

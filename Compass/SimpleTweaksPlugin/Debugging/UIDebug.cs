@@ -21,7 +21,7 @@ using Action = System.Action;
 
 // Customised version of https://github.com/aers/FFXIVUIDebug
 
-
+#if DEBUG
 namespace SimpleTweaksPlugin.Debugging {
 
     public partial class DebugConfig {
@@ -911,3 +911,4 @@ namespace SimpleTweaksPlugin.Debugging {
         public string Name => "UI Debugging";
     }
 }
+#endif

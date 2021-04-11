@@ -20,18 +20,21 @@ namespace Compass
         [JsonIgnore] public bool AddonCompassEnable;
         
         public float ImGuiCompassScale = 1f;
-        public bool ImGuiCompassDisableBackground;
-        public ImGuiCompassBackgroundStyle ImGuiCompassBackgroundStyle;
-        public Vector4 ImGuiBackgroundColor = new Vector4(0.2f,0.2f,0.2f,0.2f);
-        public float ImGuiCompassBackgroundRouding = 10f;
+        public bool ImGuiCompassEnableBackground = true;
+        public bool ImGuiCompassDrawBorder = true;
+        public bool ImGuiCompassFillBackground = false;
+        public Vector4 ImGuiBackgroundColour = new(0.2f,0.2f,0.2f,0.2f);
+        public Vector4 ImGuiBackgroundBorderColour = new(0.2f,0.2f,0.2f,1f);
+        public float ImGuiCompassBackgroundRounding = 10f;
 
-        public bool ImGuiCompassDisableCenterMarker;
+        public bool ImGuiCompassEnableCenterMarker = true;
         public bool ImGuiCompassFlipCentreMarker;
         public int ImGuiCompassCentreMarkerOffset = 27;
         public bool ImGuiCompassEnable = true;
 
         public bool HideOnAreaMap;
         public bool HideOnDialogueBox;
+        public bool HideOnBattleTalk;
         public bool HideOnInventories;
         public bool HideOnSkillTooltip;
         public bool HideOnItemTooltip;
@@ -42,10 +45,4 @@ namespace Compass
         public int Version { get; set; } = 0;
     }
 
-    public enum ImGuiCompassBackgroundStyle
-    {
-        Filled,
-        Border
-    }
-    
 }

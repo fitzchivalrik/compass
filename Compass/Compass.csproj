@@ -84,9 +84,6 @@
 
   <ItemGroup>
     <None Remove="res\compass.png" />
-    <Content Include="res\compass.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   
 

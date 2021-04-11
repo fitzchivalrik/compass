@@ -37,8 +37,7 @@ Does the Minimap gets updated at all when minimap is disabled? -> Appears so
   - 23: White Arrow
      
       
-- 060955.tex // Arrow Down on QuestMarker 
-- 071021.tex // Quest Marker
+- 060955.tex // Arrow Down on QuestMarker
 - 060954.tex // Arrow UP on QuestMarker
 - 071025.tex // Quest Complete Marker
 - 060443.tex // Player Marker
@@ -56,6 +55,20 @@ Does the Minimap gets updated at all when minimap is disabled? -> Appears so
 - 060508.tex // Fate markers
 - 060546.tex // Arrow Down on Circle Area
 - 060542.tex // Arrow UP on Circle Area
+- 060414.tex // Dungeon Symbol
+- 060430 // Small Aetherythe Symbol
+- 071021 // Quest Marker
+- 071003 // MSQ Ongoing Marker
+- 071005 // MSQ Complete Marker
+- 071023 // Quest Ongoing Marker
+- 071025 // Quest Complete Marker
+- 071063 // BookQuest Ongoing Marker
+- 071065 // BookQuest Complete Marker
+- 071083 // LeveQuest Ongoing Marker
+- 071085 // LeveQuest Complete Marker
+- 071143 // BlueQuest Ongoing Marker
+- 071145 // BlueQuest Complete Marker
+  
 
 ### Notes
 
