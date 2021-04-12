@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if DEBUG
+using System;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
 using FFXIVClientStructs.Component.GUI;
@@ -45,3 +46,4 @@ namespace SimpleTweaksPlugin.Helper
 
     }
 }
+#endif

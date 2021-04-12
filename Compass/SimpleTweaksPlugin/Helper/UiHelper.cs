@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if DEBUG
+using System;
 using System.Runtime.InteropServices;
 using Dalamud.Game.Chat.SeStringHandling;
 using Dalamud.Game.Chat.SeStringHandling.Payloads;
@@ -205,3 +206,4 @@ namespace SimpleTweaksPlugin.Helper {
         }
     }
 }
+#endif

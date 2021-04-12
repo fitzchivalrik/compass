@@ -1,31 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Dalamud.Data.LuminaExtensions;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
-using Dalamud.Game.Internal;
 using Dalamud.Hooking;
 using Dalamud.Plugin;
 using FFXIVClientStructs.Component.GUI;
-using FFXIVClientStructs.Component.GUI.ULD;
 using ImGuiNET;
-using ImGuiScene;
-using Lumina.Data.Files;
 using SimpleTweaksPlugin;
-using SimpleTweaksPlugin.Helper;
 using FFXIVAction = Lumina.Excel.GeneratedSheets.Action;
-using static Compass.Extensions;
+
 
 // TODO 5 Refactor DrawCombo to generic
 namespace Compass
 {
-    public unsafe partial class Compass : IDisposable
+    public partial class Compass : IDisposable
     {
         public const string PluginName = "Compass";
         private const string Command = "/compass";
@@ -35,14 +26,14 @@ namespace Compass
         private readonly DalamudPluginInterface _pluginInterface;
         private delegate void SetCameraRotationDelegate(nint cameraThis, float degree);
 
-        private ImGuiCompass _imGuiCompass;
+        private string[] _uiIdentifiers;
         private nint _maybeCameraStruct;
         private int _currentUiObjectIndex;
         private bool _buildingConfigUi;
         private bool _isDisposed;
         private bool _shouldHideCompass;
         private bool _shouldHideCompassIteration;
-        
+
 
         public Compass(DalamudPluginInterface pi, Configuration config)
         {
@@ -126,7 +117,7 @@ namespace Compass
         
             #endregion
             
-            _imGuiCompass = ImGuiCompass.CreateImGuiCompass(_config);
+            _uiIdentifiers = UpdateUiIdentifiers(_config);
             _pluginInterface.ClientState.OnLogin += OnLogin;
             _pluginInterface.ClientState.OnLogout += OnLogout;
 
@@ -180,7 +171,8 @@ namespace Compass
             _pluginInterface.UiBuilder.OnBuildUi += BuildUi;
         }
 
-        private void BuildImGuiCompass()
+        // TODO Cut this s@>!? in smaller methods
+        private unsafe void BuildImGuiCompass()
         {
             UpdateHideCompass();
             if (_shouldHideCompass) return;
@@ -222,8 +214,9 @@ namespace Compass
             // NOTE (Chiv) This is the position of the player in the minimap coordinate system
             const int playerX = 72, playerY = 72;
             const uint whiteColor = 0xFFFFFFFF;
+            // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
+            // We want PI/2 to be east
             var cameraRotationInRadian = -*(float*) (_maybeCameraStruct + 0x130);
-            //SimpleLog.Log($"{-cameraRotationInRadian}");
             var miniMapIconsRootComponentNode = (AtkComponentNode*) naviMap->ULDData.NodeList[2];
             // Minimap rotation thingy is even already flipped!
             // And apparently even accessible & updated if _NaviMap is disabled
@@ -245,16 +238,11 @@ namespace Compass
             var halfWidthOfCompass = widthOfCompass * 0.5f;
             var halfHeightOfCompass = windowHeight * 0.5f * scale;
             var compassUnit = widthOfCompass / (2f*(float)Math.PI);
-            var westCardinalAtkImageNode = (AtkImageNode*) naviMap->ULDData.NodeList[11];
-            // TODO (Chiv) Cache on TerritoryChange/Initialisation?
-            var naviMapTextureD3D11ShaderResourceView = new IntPtr(
-                westCardinalAtkImageNode->PartsList->Parts[0]
-                    .ULDTexture->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
-            );
 
             var drawList = ImGui.GetWindowDrawList();
             var backgroundDrawList = ImGui.GetBackgroundDrawList();
-            var cursorPosition = ImGui.GetCursorScreenPos() - new Vector2(7, 0);
+            //A little offset due to padding.
+            var cursorPosition = ImGui.GetCursorScreenPos();
             var compassCentre =
                 new Vector2(cursorPosition.X + halfWidthOfCompass, cursorPosition.Y + halfHeightOfCompass);
             var halfWidth32 = 16 * scale;
@@ -263,66 +251,9 @@ namespace Compass
             var backgroundPMax = new Vector2(compassCentre.X + 5 + halfWidthOfCompass,
                 compassCentre.Y + halfHeightOfCompass * 0.5f + 2);
             //First, the background
-            if (_config.ImGuiCompassEnableBackground)
-            {
-                if (_config.ImGuiCompassFillBackground)
-                    backgroundDrawList.AddRectFilled(
-                        backgroundPMin
-                        , backgroundPMax
-                        , ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour)
-                        , _config.ImGuiCompassBackgroundRounding
-                    );
-                if (_config.ImGuiCompassDrawBorder)
-                    backgroundDrawList.AddRect(
-                        backgroundPMin - Vector2.One
-                        , backgroundPMax + Vector2.One
-                        , ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour)
-                        , _config.ImGuiCompassBackgroundRounding
-                    );
-            }
-
+            DrawImGuiCompassBackground( backgroundPMin, backgroundPMax);
             // Second, we position our Cardinals
-            //TODO (Chiv) Uhm, no, east is the other way. Again, coordinate system mismatch?
-            var east = -Vector2.UnitX;
-            var south = -Vector2.UnitY;
-            var west = Vector2.UnitX;
-            var north = Vector2.UnitY;
-            // TODO (Chiv) Yeah, the minus  here is bogus as hell too.
-            // TODO (chiv) actually, SignedAngle first arg is FROM, not TO
-            var eastOffset = compassUnit * -SignedAngle(east, playerForward);
-            var halfWidth20 = 10 * scale;
-            backgroundDrawList.AddImage(
-                naviMapTextureD3D11ShaderResourceView
-                , new Vector2(compassCentre.X - halfWidth20 + eastOffset, compassCentre.Y - halfWidth32) // Width = 20
-                , new Vector2(compassCentre.X + eastOffset + halfWidth20, compassCentre.Y + halfWidth32)
-                , new Vector2(0.5446429f, 0.8301887f)
-                , new Vector2(0.5892857f, 0.9811321f)
-            );
-            var southOffset = compassUnit * -SignedAngle(south, playerForward);
-            backgroundDrawList.AddImage(
-                naviMapTextureD3D11ShaderResourceView
-                , new Vector2(compassCentre.X - halfWidth20 + southOffset, compassCentre.Y - halfWidth32)
-                , new Vector2(compassCentre.X + southOffset + halfWidth20, compassCentre.Y + halfWidth32)
-                , new Vector2(0.5892857f, 0.8301887f)
-                , new Vector2(0.6339286f, 0.9811321f)
-            );
-            var westOffset = compassUnit * -SignedAngle(west, playerForward);
-            backgroundDrawList.AddImage(
-                naviMapTextureD3D11ShaderResourceView
-                , new Vector2(compassCentre.X - halfWidth32 + westOffset, compassCentre.Y - halfWidth32)
-                , new Vector2(compassCentre.X + westOffset + halfWidth32, compassCentre.Y + halfWidth32)
-                , new Vector2(0.4732143f, 0.8301887f)
-                , new Vector2(0.5446429f, 0.9811321f)
-            );
-            var northOffset = compassUnit * -SignedAngle(north, playerForward);
-            backgroundDrawList.AddImage(
-                naviMapTextureD3D11ShaderResourceView
-                , new Vector2(compassCentre.X - halfWidth32 + northOffset, compassCentre.Y - halfWidth32)
-                , new Vector2(compassCentre.X + northOffset + halfWidth32, compassCentre.Y + halfWidth32)
-                , new Vector2(0.4017857f, 0.8301887f)
-                , new Vector2(0.4732143f, 0.9811321f)
-                , ImGui.ColorConvertFloat4ToU32(new Vector4(176f / 255f, 100f / 255f, 0f, 1))
-            );
+            DrawCardinals(compassUnit, playerForward, scale, naviMap, compassCentre, halfWidth32);
 
             try
             {
@@ -503,12 +434,108 @@ namespace Compass
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
+        private static unsafe void DrawCardinals(float compassUnit, Vector2 playerForward, float scale,
+            AtkUnitBase* naviMap, Vector2 compassCentre,
+            float halfWidth32)
+        {
+            var backgroundDrawList = ImGui.GetBackgroundDrawList();
+            var westCardinalAtkImageNode = (AtkImageNode*) naviMap->ULDData.NodeList[11];
+            // TODO (Chiv) Cache on TerritoryChange/Initialisation?
+            var naviMapTextureD3D11ShaderResourceView = new IntPtr(
+                westCardinalAtkImageNode->PartsList->Parts[0]
+                    .ULDTexture->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
+            );
+            //TODO (Chiv) Uhm, no, east is the other way. Again, coordinate system mismatch?
+            var east = -Vector2.UnitX;
+            var south = -Vector2.UnitY;
+            var west = Vector2.UnitX;
+            var north = Vector2.UnitY;
+            // TODO (Chiv) Yeah, the minus  here is bogus as hell too.
+            // TODO (chiv) actually, SignedAngle first arg is FROM, not TO
+            var eastOffset = compassUnit * -SignedAngle(east, playerForward);
+            var halfWidth20 = 10 * scale;
+            backgroundDrawList.AddImage(
+                naviMapTextureD3D11ShaderResourceView
+                , new Vector2(compassCentre.X - halfWidth20 + eastOffset, compassCentre.Y - halfWidth32) // Width = 20
+                , new Vector2(compassCentre.X + eastOffset + halfWidth20, compassCentre.Y + halfWidth32)
+                , new Vector2(0.5446429f, 0.8301887f)
+                , new Vector2(0.5892857f, 0.9811321f)
+            );
+            var southOffset = compassUnit * -SignedAngle(south, playerForward);
+            backgroundDrawList.AddImage(
+                naviMapTextureD3D11ShaderResourceView
+                , new Vector2(compassCentre.X - halfWidth20 + southOffset, compassCentre.Y - halfWidth32)
+                , new Vector2(compassCentre.X + southOffset + halfWidth20, compassCentre.Y + halfWidth32)
+                , new Vector2(0.5892857f, 0.8301887f)
+                , new Vector2(0.6339286f, 0.9811321f)
+            );
+            var westOffset = compassUnit * -SignedAngle(west, playerForward);
+            backgroundDrawList.AddImage(
+                naviMapTextureD3D11ShaderResourceView
+                , new Vector2(compassCentre.X - halfWidth32 + westOffset, compassCentre.Y - halfWidth32)
+                , new Vector2(compassCentre.X + westOffset + halfWidth32, compassCentre.Y + halfWidth32)
+                , new Vector2(0.4732143f, 0.8301887f)
+                , new Vector2(0.5446429f, 0.9811321f)
+            );
+            var northOffset = compassUnit * -SignedAngle(north, playerForward);
+            backgroundDrawList.AddImage(
+                naviMapTextureD3D11ShaderResourceView
+                , new Vector2(compassCentre.X - halfWidth32 + northOffset, compassCentre.Y - halfWidth32)
+                , new Vector2(compassCentre.X + northOffset + halfWidth32, compassCentre.Y + halfWidth32)
+                , new Vector2(0.4017857f, 0.8301887f)
+                , new Vector2(0.4732143f, 0.9811321f)
+                , ImGui.ColorConvertFloat4ToU32(new Vector4(176f / 255f, 100f / 255f, 0f, 1))
+            );
+        }
+
+        private void DrawImGuiCompassBackground(Vector2 backgroundPMin,
+            Vector2 backgroundPMax)
+        {
+            if (!_config.ImGuiCompassEnableBackground) return;
+            var backgroundDrawList = ImGui.GetBackgroundDrawList();
+            if (_config.ImGuiCompassFillBackground)
+                backgroundDrawList.AddRectFilled(
+                    backgroundPMin
+                    , backgroundPMax
+                    , ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour)
+                    , _config.ImGuiCompassBackgroundRounding
+                );
+            if (_config.ImGuiCompassDrawBorder)
+                backgroundDrawList.AddRect(
+                    backgroundPMin - Vector2.One
+                    , backgroundPMax + Vector2.One
+                    , ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour)
+                    , _config.ImGuiCompassBackgroundRounding
+                );
+        }
+
+        private unsafe void UpdateHideCompass()
+        {
+            for (var i = 0; i < 8; i++)
+            {
+                var uiIdentifier = _uiIdentifiers[_currentUiObjectIndex++];
+                _currentUiObjectIndex %= _uiIdentifiers.Length;
+                if (_currentUiObjectIndex == 0)
+                {
+                    _shouldHideCompassIteration |= _config.HideInCombat && _pluginInterface.ClientState.Condition[ConditionFlag.InCombat];
+                    _shouldHideCompass = _shouldHideCompassIteration;
+                    _shouldHideCompassIteration = false;
+                }
+                var unitBase = _pluginInterface.Framework.Gui.GetUiObjectByName(uiIdentifier, 1);
+                if (unitBase == IntPtr.Zero) continue;
+                _shouldHideCompassIteration |= ((AtkUnitBase*) unitBase)->IsVisible;
+            }
+        }
+
+       
+        #region Math related methods
+        
+             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
             Vector2 playerPos, Vector2 playerForward, AtkComponentNode* mapIconComponentNode,
             AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre)
         {
-            // TODO Distinguish between Circles for quests and circles for Fates (colour?)
+            // TODO Distinguish between Circles for quests and circles for Fates (colour?) for filtering
             var (scaleArea, angleArea, distanceArea) = CalculateDrawVariables(
                 playerPos,
                 new Vector2(
@@ -522,7 +549,7 @@ namespace Compass
                          (mapIconComponentNode->AtkResNode.Width - mapIconComponentNode->AtkResNode.OriginX);
             // TODO Ring, ring, SignedAngle first arg is FROM !
             // TODO (Chiv) Ehhh, the minus before SignedAngle
-            // NOTE (Chiv) We asumme part.Width == part.Height == 32
+            // NOTE (Chiv) We assume part.Width == part.Height == 32
             var areaCircleOffset = compassUnit * -angleArea;
             var areaHalfWidth = halfWidth32 * scaleArea;
             if (distanceArea >= radius)
@@ -539,13 +566,13 @@ namespace Compass
                 , new Vector2(compassCentre.X + areaHalfWidth, compassCentre.Y + areaHalfWidth)
                 , tintColour, true);
         }
-
-        //TODO Extract to Extensions
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static (float scaleFactor, float signedAngle, float distance) CalculateDrawVariables(Vector2 from,
             Vector2 to, Vector2 forward, float distanceScaling)
         {
             const float lowestScaleFactor = 0.3f;
+            // TODO (Chiv) Distance Offset adjustments
             var distanceOffset = 40f * distanceScaling; //80f @Max Zoom(==2) _NaviMap
             var maxDistance = 180f * distanceScaling; //360f @Max Zoom(==2) _NaviMap
             //TODO (Chiv) Oh boy, check the math
@@ -554,8 +581,7 @@ namespace Compass
             //return (scaleFactor,SignedAngle(to  - from, forward), distance);
             return (scaleFactor, SignedAngle(from - to, forward), distance);
         }
-
-        //TODO Extract to Extensions
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float CalculateSignedAngle(in float rotation, in Vector2 forward)
         {
@@ -565,7 +591,7 @@ namespace Compass
             var objectForward = new Vector2(-sinObject, cosObject);
             return SignedAngle(objectForward, forward);
         }
-
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float SignedAngle(Vector2 from, Vector2 to)
         {
@@ -574,55 +600,31 @@ namespace Compass
             return (float)Math.Acos(dot) * sign;
         }
         
-        private void UpdateHideCompass()
-        {
-            for (var i = 0; i < 8; i++)
-            {
-                var (uiIdentifiers, disable, _) = _config.ShouldHideOnUiObject[_currentUiObjectIndex++];
-                _currentUiObjectIndex %= _config.ShouldHideOnUiObject.Length;
-                if (_currentUiObjectIndex == 0)
-                {
-                    if (_config.HideInCombat)
-                    {
-                        _shouldHideCompassIteration |= _pluginInterface.ClientState.Condition[ConditionFlag.InCombat];
-                    }
-                    _shouldHideCompass = _shouldHideCompassIteration;
-                    _shouldHideCompassIteration = false;
-                }
-                if (!disable) continue;
-                foreach (var identifier in uiIdentifiers)
-                {
-                    var unitBase = _pluginInterface.Framework.Gui.GetUiObjectByName(identifier, 1);
-                    if (unitBase == IntPtr.Zero) continue;
-                    _shouldHideCompassIteration |= ((AtkUnitBase*) unitBase)->IsVisible;
-                }                
-            }
-        }
-
-       
-        
+        #endregion
 
         #region UI
 
         private void BuildUi()
         {
-            /*
-            _imGuiCompass.BuildImGuiCompass(
-                _config,
-                _pluginInterface.Framework,
-                _pluginInterface.ClientState.Condition,
-                _buildingConfigUi, _maybeCameraStruct);
-                */
+            
             BuildImGuiCompass();
             if (!_buildingConfigUi) return;
             var (shouldBuildConfigUi, changedConfig) = ConfigurationUi.DrawConfigUi(_config);
             if (changedConfig)
             {
                 _pluginInterface.SavePluginConfig(_config);
-                _imGuiCompass = ImGuiCompass.CreateImGuiCompass(_config);
+                _uiIdentifiers = UpdateUiIdentifiers(_config);
             }
 
             if (!shouldBuildConfigUi) _buildingConfigUi = false;
+        }
+
+        private static string[] UpdateUiIdentifiers(Configuration config)
+        {
+            return config.ShouldHideOnUiObject
+                .Where(it => it.disable)
+                .SelectMany(it => it.getUiObjectIdentifier)
+                .ToArray();
         }
 
 

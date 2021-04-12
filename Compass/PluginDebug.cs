@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if DEBUG
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,7 +17,6 @@ using SimpleTweaksPlugin;
 using SimpleTweaksPlugin.Helper;
 using static Compass.Extensions;
 
-#if DEBUG
 namespace Compass
 {
     public unsafe partial class Compass
