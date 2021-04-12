@@ -31,18 +31,7 @@ namespace Compass
         
         // Radians-to-degrees conversion constant (RO).
         public const float Rad2Deg = 1F / Deg2Rad;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float RoundUpToMultipleOf(float f, float multiple)
-        {
-            var remainder = Math.Abs(f) % multiple;
-            if (remainder == 0)
-                return f;
-
-            if (f < 0)
-                return -(Math.Abs(f) - remainder);
-            return f + multiple - remainder;
-        }
+        
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ImageRotated(IntPtr tex_id, Vector2 center, Vector2 size, float angle, Vector2 uv, Vector2 uv1, ImDrawListPtr? drawList = null)
@@ -76,35 +65,7 @@ namespace Compass
             drawList.Value.AddImageQuad(tex_id, pos[0], pos[1], pos[2], pos[3], uvs[0], uvs[1], uvs[2], uvs[3]);
         }
         
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Angle(Vector2 from, Vector2 to)
-        {
-            // TODO (chiv) Replace with LengthSquared -> potentially impure. I have not enough knowledge
-            // TODO which of those optimizations is best, if any: in vs Inlining vs Impure vs LengthSquared 
-            // sqrt(a) * sqrt(b) = sqrt(a * b) -- valid for real numbers
-            /*
-            var denominator = (float)Math.Sqrt(from.LengthSquared() * to.LengthSquared());
-            if (denominator < kEpsilonNormalSqrt)
-                return 0F;
-            
-            //TODO Replace with Math clamp or something
-            //var dot = Clamp(Vector2.Dot(from, to) / denominator, -1F, 1F);
-            */
-            // TODO Do all in RAD
-            var dot = Vector2.Dot(Vector2.Normalize(from), Vector2.Normalize(to));
-            return (float)Math.Acos(dot);
-        }
         
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float SignedAngle(Vector2 from, Vector2 to)
-        {
-            var unsignedAngle = Angle(from, to);
-            var sign = (from.X * to.Y - from.Y * to.X) >= 0 ? 1 : -1;
-            return unsignedAngle * sign;
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Sign(float f) { return f >= 0F ? 1F : -1F; }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Clamp(float value, float min, float max)

@@ -8,8 +8,6 @@ using FFXIVClientStructs.Component.GUI.ULD;
 namespace SimpleTweaksPlugin.Helper {
     public static unsafe partial class UiHelper {
         
-        //TODO ADDITIONs
-
         public static AtkUnitBase* CloneNode(AtkUnitBase* original,
             bool keepObjects = false,
             bool keepTextures = false,

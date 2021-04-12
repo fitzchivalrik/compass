@@ -3,15 +3,11 @@ using System.ComponentModel;
 using System.Numerics;
 using Dalamud.Configuration;
 using Newtonsoft.Json;
-using SimpleTweaksPlugin.Debugging;
 
 namespace Compass
 {
     public class Configuration : IPluginConfiguration
     {
-#if DEBUG
-        public DebugConfig Debugging = new();
-#endif
         [JsonIgnore] public Vector2 AddonCompassOffset = new(0,0);
         [JsonIgnore] public float AddonCompassScale = 1f;
         [JsonIgnore] public int AddonCompassWidth = 550;

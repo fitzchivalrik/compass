@@ -17,7 +17,6 @@ using ImGuiNET;
 using ImGuiScene;
 using Lumina.Data.Files;
 using SimpleTweaksPlugin;
-using SimpleTweaksPlugin.Debugging;
 using SimpleTweaksPlugin.Helper;
 using FFXIVAction = Lumina.Excel.GeneratedSheets.Action;
 using static Compass.Extensions;
@@ -30,73 +29,24 @@ namespace Compass
         public const string PluginName = "Compass";
         private const string Command = "/compass";
 
-        private delegate float ClampToMinusPiAndPiDelegate(float degree);
         private delegate void SetCameraRotationDelegate(nint cameraThis, float degree);
-        private delegate long AtkUnitBase_SetPosition(nint thisUnitBase, short x, short y);
-        private delegate void AtkResNode_SetPositionShort(nint thisRedNode, short x, short y);
-        private delegate void AtkResNode_SetPositionFloat(nint thisRedNode, float x, float y);
-
-        // NOTE This is Maybe Component::GUI::AtkUnitManager/Client::UI::RaptureAtkUnitManager +0x28
-        // OR NOT
-        // Component::GUI::AtkComponentBase +0x8 maybe?
-        private delegate nint CreateAtkNode(nint thisUnused, NodeType type);
-        private delegate nint AtkImageNode_Destroy(nint thisatkImageNode, bool freeMemory);
-        private readonly Hook<ClampToMinusPiAndPiDelegate> _clampToMinusPiAndPi;
-
-
         private readonly Hook<SetCameraRotationDelegate> _setCameraRotation;
-        private AtkResNode_SetPositionFloat _atkResNodeSetPositionFloat;
-        private AtkResNode_SetPositionShort _atkResNodeSetPositionShort;
-        private AtkUnitBase_SetPosition _atkUnitBaseSetPosition;
-        private AtkImageNode* _background;
-        private bool _buildingConfigUi;
-        private float _calledWithDegree;
-        private float _calledWithDegreeFromSetCameraRotation;
-        private nint _cameraBase;
-        private nint _cameraManager;
-
-        private readonly AtkImageNode*[] _cardinalsClonedImageNodes = new AtkImageNode*[4];
-
-        //NOTE (Chiv) 202 Component Nodes for the Icons on the minimap + 1*4 pointers for the Cardinals
-        // Actually, there are 101*3 and 101*4 Component nodes but this it easier to deal with +
-        // one can abuse the first 101,4 for something else
-        // like [1,3] == backgroundNode
-        private readonly AtkImageNode*[,] _clonedImageNodes = new AtkImageNode*[202, 4];
-        private CreateAtkNode _createAtkNode;
-        private AtkImageNode_Destroy _destroyAtkImageNode;
         private Configuration _config;
         private DalamudPluginInterface _pluginInterface;
-        private List<nint> _imageNodes = new(150);
-        private bool _isDisposed;
+        
         private nint _maybeCameraStruct;
         private int _currentUiObjectIndex;
+        private bool _buildingConfigUi;
+        private bool _isDisposed;
         private bool _shouldHideCompass;
         private bool _shouldHideCompassIteration;
-        private readonly TextureWrap _naviMap;
-        private bool _reset;
-        private float _scale = 1;
-        private nint _sceneCameraObject;
-        private float _setToDegree;
-        private bool _shouldUpdate;
-        private nint _unknown;
+        
 
         public Compass(DalamudPluginInterface pi, Configuration config)
         {
             #region Signatures
 
-            const string clampToMinusPiAndPiSignature = "F3 0F ?? ?? ?? ?? ?? ?? 0F 57 ?? 0F 2F ?? 0F 28 ?? 72";
             const string setCameraRotationSignature = "40 ?? 48 83 EC ?? 0F 2F ?? ?? ?? ?? ?? 48 8B";
-            const string sceneCameraCtorSig = "E8 ?? ?? ?? ?? 4C 8B E0 49 8B CC";
-            const string gameCameraCtorSig = "88 83 ?? ?? ?? ?? 48 8D 05 ?? ?? ?? ?? 48 89 03 C6 83 ?? ?? ?? ?? ?? ";
-            const string cameraBaseSig = "48 8D 05 ?? ?? ?? ?? 48 8B D9 48 89 01 48 83 C1 10 E8 ?? ?? ?? ?? 33 C0";
-            const string cameraManagerSignature = "48 8B 05 ?? ?? ?? ?? 48 89 4C D0 ??";
-            const string atkUnitBaseSetPositionSignature = "4C 8B 89 ?? ?? ?? ?? 41 0F BF C0 ";
-            const string atkResNodeSetPositionShortSignature = "E8 ?? ?? ?? ?? 49 FF CC";
-            const string atkResNodeSetPositionFloatSignature = "E8 ?? ?? ?? ?? 8B 45 B8 ";
-            const string createAtkNodeSignature = "E8 ?? ?? ?? ?? 48 8B 4C 24 ?? 48 8B 51 08";
-            // NOTE All Destroys are basically identical, almost only the size of FreeMemory() changes.
-            const string atkImageNodeDestroySignature =
-                "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 48 8D 05 ?? ?? ?? ?? 48 8B F1 48 89 01 8B FA 48 83 C1 18 E8 ?? ?? ?? ?? 48 8D 4E 18 E8 ?? ?? ?? ?? 48 8D 05 ?? ?? ?? ?? 48 89 06 40 F6 C7 01 74 0D BA ?? ?? ?? ?? 48 8B CE E8 ?? ?? ?? ?? 48 8B 5C 24 ?? 48 8B C6 48 8B 74 24 ?? 48 83 C4 20 5F C3 40 53 48 83 EC 20 48 8D 05 ?? ?? ?? ?? 48 8B D9 48 89 01 F6 C2 01 74 0A BA ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B C3 48 83 C4 20 5B C3 CC CC CC CC CC 48 89 5C 24 ??";
 
             #endregion
 
@@ -158,6 +108,7 @@ namespace Compass
                 , (new [] {"GrandCompanyExchange"}, false, "Grand Company Shop")
                 , (new [] {"MiragePrismPrismBox"}, true, "Glamour Dresser")
                 , (new [] {"Currency"}, true, "Currency")
+                , (new [] {"_MainCross"}, true, "Controller Main Menu")
             };
 
             
@@ -172,37 +123,17 @@ namespace Compass
             }
         
             #endregion
+            
             _pluginInterface.ClientState.OnLogin += OnLogin;
             _pluginInterface.ClientState.OnLogout += OnLogout;
 
             #region Hooks, Functions and Addresses
-
-            _clampToMinusPiAndPi = new Hook<ClampToMinusPiAndPiDelegate>(
-                _pluginInterface.TargetModuleScanner.ScanText(clampToMinusPiAndPiSignature),
-                (ClampToMinusPiAndPiDelegate) ClampToMinusPiAndPi);
-            _clampToMinusPiAndPi.Enable();
-
+            
             _setCameraRotation = new Hook<SetCameraRotationDelegate>(
                 _pluginInterface.TargetModuleScanner.ScanText(setCameraRotationSignature),
-                (SetCameraRotationDelegate) SetCameraRotation);
+                (SetCameraRotationDelegate) SetCameraRotationDetour);
             _setCameraRotation.Enable();
-
-            _sceneCameraObject = _pluginInterface.TargetModuleScanner.GetStaticAddressFromSig(sceneCameraCtorSig, 0xC);
-            _cameraBase = _pluginInterface.TargetModuleScanner.GetStaticAddressFromSig(cameraBaseSig);
-            _cameraManager = _pluginInterface.TargetModuleScanner.GetStaticAddressFromSig(cameraManagerSignature);
-
-
-            _atkUnitBaseSetPosition = Marshal.GetDelegateForFunctionPointer<AtkUnitBase_SetPosition>(
-                _pluginInterface.TargetModuleScanner.ScanText(atkUnitBaseSetPositionSignature));
-            _atkResNodeSetPositionShort = Marshal.GetDelegateForFunctionPointer<AtkResNode_SetPositionShort>(
-                _pluginInterface.TargetModuleScanner.ScanText(atkResNodeSetPositionShortSignature));
-            _atkResNodeSetPositionFloat = Marshal.GetDelegateForFunctionPointer<AtkResNode_SetPositionFloat>(
-                _pluginInterface.TargetModuleScanner.ScanText(atkResNodeSetPositionFloatSignature));
-            _createAtkNode = Marshal.GetDelegateForFunctionPointer<CreateAtkNode>(
-                _pluginInterface.TargetModuleScanner.ScanText(createAtkNodeSignature));
-            _destroyAtkImageNode = Marshal.GetDelegateForFunctionPointer<AtkImageNode_Destroy>(
-                _pluginInterface.TargetModuleScanner.ScanText(atkImageNodeDestroySignature));
-
+            
             #endregion
 
             #region Excel Data
@@ -216,24 +147,7 @@ namespace Compass
             });
 
 #if DEBUG
-            pi.CommandManager.AddHandler($"{Command}debug", new CommandInfo((_, _) =>
-            {
-                _pluginInterface.UiBuilder.OnBuildUi -= BuildDebugUi;
-                _pluginInterface.UiBuilder.OnBuildUi += BuildDebugUi;
-            })
-            {
-                HelpMessage = $"Open {PluginName} Debug menu.",
-                ShowInHelp = false
-            });
-            if (_pluginInterface.ClientState.LocalPlayer is not null)
-            {
-                OnLogin(null!, null!);
-                _pluginInterface.UiBuilder.OnBuildUi += BuildDebugUi;
-                _buildingConfigUi = true;
-            }
-
-            _UIDebug = new UIDebug(this);
-            UiHelper.Setup(_pluginInterface.TargetModuleScanner);
+            DebugCtor();
 #else
 
             if (_pluginInterface.Reason == PluginLoadReason.Installer
@@ -243,43 +157,24 @@ namespace Compass
 #endif
         }
 
-        private void SetCameraRotation(nint cameraThis, float degree)
+        private void SetCameraRotationDetour(nint cameraThis, float degree)
         {
-            _shouldUpdate = true;
-            _setCameraRotation.Original(cameraThis, degree);
-            _shouldUpdate = false;
             _maybeCameraStruct = cameraThis;
-            _calledWithDegreeFromSetCameraRotation = degree;
-#if RELEASE
-           _setCameraRotation.Disable(); 
-#endif
+            _setCameraRotation.Original(cameraThis, degree);
+            _setCameraRotation.Disable();
         }
-
-        private float ClampToMinusPiAndPi(float degree)
-        {
-            var original = _clampToMinusPiAndPi.Original(degree);
-            if (!_shouldUpdate) return original;
-            _calledWithDegree = degree;
-            _setToDegree = original;
-
-            return original;
-        }
-
+        
 
         private void OnLogout(object sender, EventArgs e)
         {
             _pluginInterface.UiBuilder.OnOpenConfigUi -= OnOpenConfigUi;
             _pluginInterface.UiBuilder.OnBuildUi -= BuildUi;
-            //_pluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdateSetupAddonNodes;
-            //_pluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdateUpdateAddonCompass;
         }
 
         private void OnLogin(object sender, EventArgs e)
         {
             _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
             _pluginInterface.UiBuilder.OnBuildUi += BuildUi;
-            //_pluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdate;
-            //_pluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdateSetupAddonNodes;
         }
 
         private void BuildImGuiCompass()
@@ -605,6 +500,7 @@ namespace Compass
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
             Vector2 playerPos, Vector2 playerForward, AtkComponentNode* mapIconComponentNode,
             AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre)
@@ -667,6 +563,14 @@ namespace Compass
             return SignedAngle(objectForward, forward);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static float SignedAngle(Vector2 from, Vector2 to)
+        {
+            var dot = Vector2.Dot(Vector2.Normalize(from), Vector2.Normalize(to));
+            var sign = (from.X * to.Y - from.Y * to.X) >= 0 ? 1 : -1;
+            return (float)Math.Acos(dot) * sign;
+        }
+        
         private void UpdateHideCompass()
         {
             for (var i = 0; i < 8; i++)
@@ -692,275 +596,9 @@ namespace Compass
             }
         }
 
-        //TODO (Chiv) While this is nice and somehow works, it still explodes 1-30 seconds later, so I give up on that for now
-        private void OnFrameworkUpdateUpdateAddonCompass(Framework framework)
-        {
-            // TODO (Chiv) Why use this and not the rotation on the minimap rotation thingy?
-            // Minimap rotation thingy is even already flipped!
-            // And apparently even accessible & updated if _NaviMap is disabled
-            var cameraRotationInRadian = -*(float*) (_maybeCameraStruct + 0x130);
+       
 
-            var navimapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
-            if (navimapPtr == IntPtr.Zero) return;
-            var naviMap = (AtkUnitBase*) navimapPtr;
-            //NOTE (chiv) 3 means fully loaded
-            if (naviMap->ULDData.LoadedState != 3) return;
-            if (!naviMap->IsVisible) return;
-
-            try
-            {
-                // NOTE (Chiv) This is the position of the player in the minimap coordinate system
-                const int playerX = 72, playerY = 72;
-                const float distanceOffset = 80f;
-                const float maxDistance = 350f;
-                const float lowestScaleFactor = 0.3f;
-                var playerPos = new Vector2(playerX, playerY);
-                var scale = 1f / naviMap->Scale * _config.AddonCompassScale;
-                var scaleFactorForRotationBasedDistance =
-                    Math.Max(1f - distanceOffset / maxDistance, lowestScaleFactor);
-                // TODO (Chiv) My math must be bogus somewhere, cause I need to do same things differently then math would say
-                // I think my and the games coordinate system do not agree
-                // TODO (Chiv) Redo the math for not locked _NaviMap (might be easier? Should be the same?)
-                var playerCos = (float) Math.Cos(cameraRotationInRadian);
-                var playerSin = (float) Math.Sin(cameraRotationInRadian);
-                //TODO (Chiv) Uhm, actually with H=1, it should be new Vector(cos,sin); that breaks calculations though...
-                // Is my Coordinate System the same as the games' minimap?
-                var playerViewVector = new Vector2(-playerSin, playerCos);
-                // TODO (Chiv) do it all in Radians
-                var compassUnit = _config.AddonCompassWidth / 360f;
-                //First, the background
-                UiHelper.SetSize(_background, _config.AddonCompassWidth, 50);
-                _background->PartId = (ushort) _config.AddonCompassBackgroundPartId;
-                UiHelper.SetPosition(
-                    _background,
-                    _config.AddonCompassOffset.X - _config.AddonCompassWidth / 2f,
-                    _config.AddonCompassOffset.Y);
-                _background->AtkResNode.ScaleX = _background->AtkResNode.ScaleY = scale;
-                UiHelper.SetVisible((AtkResNode*) _background, !_config.AddonCompassDisableBackground);
-                // Second, we position our Cardinals
-                //TODO (Chiv) Uhm, no, east is the other way. Again, coordinate system mismatch?
-                var east = -Vector2.UnitX;
-                // TODO (Chiv) Yeah, the minus  here is bogus as hell too.
-                var south = -Vector2.UnitY;
-                var west = Vector2.UnitX;
-                var north = Vector2.UnitY;
-                // TODO (chiv) actually, SignedAngle first arg is FROM, not TO
-                UiHelper.SetPosition(
-                    _cardinalsClonedImageNodes[0],
-                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(east, playerViewVector),
-                    _config.AddonCompassOffset.Y);
-                UiHelper.SetPosition(
-                    _cardinalsClonedImageNodes[1],
-                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(south, playerViewVector),
-                    _config.AddonCompassOffset.Y);
-                UiHelper.SetPosition(
-                    _cardinalsClonedImageNodes[2],
-                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(west, playerViewVector),
-                    _config.AddonCompassOffset.Y);
-                UiHelper.SetPosition(
-                    _cardinalsClonedImageNodes[3],
-                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(north, playerViewVector),
-                    _config.AddonCompassOffset.Y);
-
-                _cardinalsClonedImageNodes[0]->AtkResNode.ScaleX =
-                    _cardinalsClonedImageNodes[0]->AtkResNode.ScaleY = scale;
-                _cardinalsClonedImageNodes[1]->AtkResNode.ScaleX =
-                    _cardinalsClonedImageNodes[1]->AtkResNode.ScaleY = scale;
-                _cardinalsClonedImageNodes[2]->AtkResNode.ScaleX =
-                    _cardinalsClonedImageNodes[2]->AtkResNode.ScaleY = scale;
-                _cardinalsClonedImageNodes[3]->AtkResNode.ScaleX =
-                    _cardinalsClonedImageNodes[3]->AtkResNode.ScaleY = scale;
-
-                //Then, we do the dance through all relevant nodes on _NaviMap
-                var iconsRootComponentNode = (AtkComponentNode*) naviMap->ULDData.NodeList[2];
-                for (var i = 4; i < iconsRootComponentNode->Component->ULDData.NodeListCount; i++)
-                {
-                    var iconComponentNode =
-                        (AtkComponentNode*) iconsRootComponentNode->Component->ULDData.NodeList[i];
-                    for (var j = 2; j < iconComponentNode->Component->ULDData.NodeListCount; j++)
-                    {
-                        // NOTE (Chiv) Invariant: From 2 onward, only ImageNodes
-                        var clone = _clonedImageNodes[i - 4, j - 2];
-                        var imgNode = (AtkImageNode*) iconComponentNode->Component->ULDData.NodeList[j];
-                        if (imgNode->AtkResNode.Type != NodeType.Image)
-                        {
-                            SimpleLog.Error($"{i}{j} was not an ImageNode");
-                            continue;
-                        }
-
-                        clone->PartId = 0;
-
-                        var show = iconComponentNode->AtkResNode.IsVisible && imgNode->AtkResNode.IsVisible;
-                        if (!show)
-                        {
-                            // NOTE (Chiv) Shown + PartsList null explodes
-                            UiHelper.Hide(clone);
-                            clone->PartsList = null;
-                            continue;
-                        }
-
-                        ;
-                        clone->PartsList = imgNode->PartsList;
-                        clone->PartId = imgNode->PartId;
-                        clone->WrapMode = imgNode->WrapMode;
-                        clone->AtkResNode.Width = imgNode->AtkResNode.Width;
-                        clone->AtkResNode.Height = imgNode->AtkResNode.Height;
-                        clone->AtkResNode.AddBlue = imgNode->AtkResNode.AddBlue;
-                        clone->AtkResNode.AddGreen = imgNode->AtkResNode.AddGreen;
-                        clone->AtkResNode.AddRed = imgNode->AtkResNode.AddRed;
-                        clone->AtkResNode.MultiplyBlue = imgNode->AtkResNode.MultiplyBlue;
-                        clone->AtkResNode.MultiplyGreen = imgNode->AtkResNode.MultiplyGreen;
-                        clone->AtkResNode.MultiplyRed = imgNode->AtkResNode.MultiplyRed;
-                        clone->AtkResNode.Color = imgNode->AtkResNode.Color;
-                        clone->AtkResNode.ScaleX = clone->AtkResNode.ScaleY = scale;
-                        UiHelper.Show(clone);
-                        var part = imgNode->PartsList->Parts[imgNode->PartId];
-                        var type = part.ULDTexture->AtkTexture.TextureType;
-                        // OR?? //NOTE (CHIV) It should always be a resource
-                        if (type != TextureType.Resource)
-                        {
-                            SimpleLog.Error($"{i}{j} was not a Resource Texture");
-                            continue;
-                        }
-
-                        ;
-                        var texFileNamePtr =
-                            part.ULDTexture->AtkTexture.Resource->TexFileResourceHandle->ResourceHandle
-                                .FileName;
-                        var texString = Marshal.PtrToStringAnsi(new IntPtr(texFileNamePtr));
-                        switch (texString)
-                        {
-                            case var _ when texString?.EndsWith("060443.tex",
-                                StringComparison.InvariantCultureIgnoreCase) ?? false: //Player Marker
-                                UiHelper.SetPosition(
-                                    clone,
-                                    _config.AddonCompassOffset.X,
-                                    _config.AddonCompassOffset.Y);
-                                break;
-                            case var _ when texString?.EndsWith("060457.tex",
-                                StringComparison.InvariantCultureIgnoreCase) ?? false: // Area Transition Bullet Thingy
-                                var toObject = new Vector2(playerX - iconComponentNode->AtkResNode.X,
-                                    playerY - iconComponentNode->AtkResNode.Y);
-                                var distanceToObject = Vector2.Distance(
-                                    new Vector2(iconComponentNode->AtkResNode.X, iconComponentNode->AtkResNode.Y),
-                                    playerPos) - distanceOffset;
-                                var scaleFactor = Math.Max(1f - distanceToObject / maxDistance, lowestScaleFactor);
-                                clone->AtkResNode.ScaleX = clone->AtkResNode.ScaleY = scale * scaleFactor;
-                                // TODO (Chiv) Ehhh, the minus before SignedAngle
-                                UiHelper.SetPosition(
-                                    clone,
-                                    _config.AddonCompassOffset.X +
-                                    compassUnit * -SignedAngle(toObject, playerViewVector),
-                                    _config.AddonCompassOffset.Y);
-                                break;
-                            case var _ when (texString?.EndsWith("NaviMap.tex",
-                                StringComparison.InvariantCultureIgnoreCase) ?? false) && imgNode->PartId == 21:
-                                UiHelper.Hide(clone);
-                                break;
-                            case var _ when iconComponentNode->AtkResNode.Rotation == 0:
-                                var toObject2 = new Vector2(playerX - iconComponentNode->AtkResNode.X,
-                                    playerY - iconComponentNode->AtkResNode.Y);
-                                var distanceToObject2 = Vector2.Distance(
-                                    new Vector2(iconComponentNode->AtkResNode.X, iconComponentNode->AtkResNode.Y),
-                                    playerPos) - distanceOffset;
-                                var scaleFactor2 = Math.Max(1f - distanceToObject2 / maxDistance, lowestScaleFactor);
-                                clone->AtkResNode.ScaleX = clone->AtkResNode.ScaleY = scale * scaleFactor2;
-                                // TODO (Chiv) Ehhh, the minus before SignedAngle
-                                UiHelper.SetPosition(
-                                    clone,
-                                    _config.AddonCompassOffset.X +
-                                    compassUnit * -SignedAngle(toObject2, playerViewVector),
-                                    _config.AddonCompassOffset.Y);
-                                break;
-                            default:
-                                var cosArrow = (float) Math.Cos(iconComponentNode->AtkResNode.Rotation);
-                                var sinArrow = (float) Math.Sin(iconComponentNode->AtkResNode.Rotation);
-                                // TODO (Chiv) Wrong again!
-                                var toObject3 = new Vector2(-sinArrow, cosArrow);
-                                clone->AtkResNode.ScaleX = clone->AtkResNode.ScaleY =
-                                    scale * scaleFactorForRotationBasedDistance;
-                                // TODO (Chiv) Ehhh, the minus before SignedAngle
-                                UiHelper.SetPosition(
-                                    clone,
-                                    _config.AddonCompassOffset.X +
-                                    compassUnit * -SignedAngle(toObject3, playerViewVector),
-                                    _config.AddonCompassOffset.Y);
-                                break;
-                        }
-                    }
-                }
-
-                //TODO (Chiv) Later, we might do that for AreaMap too
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        //TODO (Chiv) See comment on OnFrameworkUpdateUpdateAddonCompass
-        private void OnFrameworkUpdateSetupAddonNodes(Framework framework)
-        {
-            try
-            {
-                var navimapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
-                if (navimapPtr == IntPtr.Zero) return;
-                var naviMap = (AtkUnitBase*) navimapPtr;
-                //NOTE (chiv) 3 means fully loaded
-                if (naviMap->ULDData.LoadedState != 3) return;
-                //NOTE (chiv) There should be no real need to care for visibility for cloning but oh well, untested.
-                if (!naviMap->IsVisible) return;
-                //NOTE (chiv) 19 should be the unmodified default
-                //if (naviMap->ULDData.NodeListCount != 19) return;
-
-                UiHelper.ExpandNodeList(naviMap, (ushort) _clonedImageNodes.Length);
-                var prototypeImgNode = naviMap->ULDData.NodeList[11];
-                var currentNodeId = uint.MaxValue;
-
-                //First, Background (Reusing empty slot)
-                _background = (AtkImageNode*) CloneAndAttach(
-                    ref naviMap->ULDData,
-                    naviMap->RootNode,
-                    prototypeImgNode,
-                    currentNodeId--);
-                _background->WrapMode = 2;
-                if (_config.AddonCompassDisableBackground) UiHelper.Hide(_background);
-
-                // Next, Cardinals
-                for (var i = 0; i < _cardinalsClonedImageNodes.Length; i++)
-                    _cardinalsClonedImageNodes[i] = (AtkImageNode*) CloneAndAttach(
-                        ref naviMap->ULDData,
-                        naviMap->RootNode,
-                        naviMap->ULDData.NodeList[i + 9],
-                        currentNodeId--);
-
-                // NOTE (Chiv) Set for rest
-                // This is overkill but we are basically mimicking the amount of nodes in _NaviMap.
-                // It could be that all are used!
-                for (var i = 0; i < _clonedImageNodes.GetLength(0); i++)
-                for (var j = 0; j < _clonedImageNodes.GetLength(1); j++)
-                {
-                    _clonedImageNodes[i, j] = (AtkImageNode*) CloneAndAttach(
-                        ref naviMap->ULDData,
-                        naviMap->RootNode,
-                        prototypeImgNode,
-                        currentNodeId--);
-                    // Explodes if PartsList = null before Hiding it
-                    UiHelper.Hide(_clonedImageNodes[i, j]);
-                    _clonedImageNodes[i, j]->PartId = 0;
-                    _clonedImageNodes[i, j]->PartsList = null;
-                }
-
-                //TODO (Chiv) Search for PlayerIcon and set it up too?
-
-                _pluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdateSetupAddonNodes;
-                _pluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdateUpdateAddonCompass;
-            }
-            catch (Exception e)
-            {
-                SimpleLog.Error(e);
-            }
-        }
+       
 
         private static AtkResNode* CloneAndAttach(ref ULDData uld, AtkResNode* parent, AtkResNode* prototype,
             uint nodeId = uint.MaxValue)
@@ -1019,12 +657,9 @@ namespace Compass
                 _pluginInterface.ClientState.OnLogout -= OnLogout;
                 _pluginInterface.CommandManager.RemoveHandler(Command);
 
-                _clampToMinusPiAndPi?.Disable();
-                _clampToMinusPiAndPi?.Dispose();
                 _setCameraRotation?.Disable();
                 _setCameraRotation?.Dispose();
                 
-                _naviMap?.Dispose();
 #if DEBUG
                 _pluginInterface.UiBuilder.OnBuildUi -= BuildDebugUi;
                 _pluginInterface.CommandManager.RemoveHandler($"{Command}debug");
