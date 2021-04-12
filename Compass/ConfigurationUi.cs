@@ -64,7 +64,7 @@ namespace Compass
             ImGui.EndTabItem();
         }
 
-        private static bool DrawDummyTreeCombo(string label, ref bool open, Func<bool> drawConfig)
+        private static bool DrawTreeCheckbox(string label, ref bool open, Func<bool> drawConfig)
         {
             var changed = ImGui.Checkbox($"###{label.GetHashCode()}", ref open);
             ImGui.SameLine();
@@ -97,20 +97,19 @@ namespace Compass
             {
                 ImGui.Indent();
                 ImGui.PushItemWidth(200f * scale);
-                changed |= ImGui.DragFloat("Scale###ImGui", ref config.ImGuiCompassScale, 0.1f, 0.1f, 3f);
-                changed |= ImGui.Checkbox("Enable Centre Marker##ImGui", ref config.ImGuiCompassEnableCenterMarker);
-                if (config.ImGuiCompassEnableCenterMarker)
+                changed |= ImGui.DragFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.1f, 0.1f, 3f);
+                changed |= DrawTreeCheckbox("Enable Centre Marker", ref config.ImGuiCompassEnableCenterMarker, () =>
+                    {
+                        var changed = false;
+                        ImGui.SetNextItemWidth(35 * scale);
+                        changed |= ImGui.DragInt("Centre Marker Offset##ImGui",
+                            ref config.ImGuiCompassCentreMarkerOffset);
+                        changed |= ImGui.Checkbox("Flip Centre Marker##ImGui", ref config.ImGuiCompassFlipCentreMarker);
+                        return changed;
+                    });
+                changed |= DrawTreeCheckbox("Enable Background", ref config.ImGuiCompassEnableBackground, () =>
                 {
-                    ImGui.Indent();
-                    ImGui.SetNextItemWidth(35 * scale);
-                    changed |= ImGui.DragInt("Centre Marker Offset##ImGui", ref config.ImGuiCompassCentreMarkerOffset);
-                    changed |= ImGui.Checkbox("Flip Centre Marker##ImGui", ref config.ImGuiCompassFlipCentreMarker);
-                    ImGui.Unindent();
-                }
-                changed |= ImGui.Checkbox("Enable Background##ImGui", ref config.ImGuiCompassEnableBackground);
-                if (config.ImGuiCompassEnableBackground)
-                {
-                    ImGui.Indent();
+                    var changed = false;
                     var backgroundStyle = config.ImGuiCompassDrawBorder 
                         ? config.ImGuiCompassFillBackground
                             ? 2
@@ -132,7 +131,22 @@ namespace Compass
                     if(config.ImGuiCompassDrawBorder)
                         changed |= ImGui.ColorEdit4("Background Border Colour##ImGui", ref config.ImGuiBackgroundBorderColour);
                     changed |= ImGui.DragFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding);
-                    ImGui.Unindent();
+                    return changed;
+                });
+                changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);
+                if (ImGui.TreeNodeEx("Hide Compass when ... window is open."))
+                {
+                    for (var i = 0; i < config.ShouldHideOnUiObject.Length; i++)
+                    {
+                        changed |= ImGui.Checkbox(
+                            config.ShouldHideOnUiObject[i].userFacingIdentifier
+                            , ref config.ShouldHideOnUiObject[i].disable);
+                        if (changed)
+                        {
+                            config.ShouldHideOnUiObjectSerializer[i] = config.ShouldHideOnUiObject[i].disable;
+                        }
+                    }
+                    ImGui.TreePop();
                 }
                 ImGui.PopItemWidth();
                 ImGui.Unindent();
@@ -145,7 +159,7 @@ namespace Compass
 
         private static bool DrawImGuiTree(Configuration config, float scale, bool changed)
         {
-            changed |= DrawDummyTreeCombo("Enable Compass", ref config.ImGuiCompassEnable, () =>
+            changed |= DrawTreeCheckbox("Enable Compass", ref config.ImGuiCompassEnable, () =>
             {
                 // ReSharper disable once VariableHidesOuterVariable
                 changed = false;
@@ -167,7 +181,7 @@ namespace Compass
 
         private static bool DrawNativeUITree(Configuration config, float scale, bool changed)
         {
-            changed |= DrawDummyTreeCombo("Native UI Compass", ref config.AddonCompassEnable, () =>
+            changed |= DrawTreeCheckbox("Native UI Compass", ref config.AddonCompassEnable, () =>
             {
                 // ReSharper disable once VariableHidesOuterVariable
                 changed = false;

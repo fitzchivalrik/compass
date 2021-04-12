@@ -92,7 +92,7 @@ namespace Compass
             */
             // TODO Do all in RAD
             var dot = Vector2.Dot(Vector2.Normalize(from), Vector2.Normalize(to));
-            return (float)Math.Acos(dot) * Rad2Deg;
+            return (float)Math.Acos(dot);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

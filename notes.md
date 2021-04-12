@@ -4,8 +4,6 @@ Does the Minimap gets updated at all when minimap is disabled? -> Appears so
 
 ### TODO
 
-- 060443.tex // Player Marker PreLoad and fixed position
-- S/W/N/E markers preload
 
 ### Tex Mappings
 

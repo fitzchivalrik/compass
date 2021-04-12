@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Dalamud.Data.LuminaExtensions;
+using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
 using Dalamud.Game.Internal;
 using Dalamud.Hooking;
@@ -16,6 +17,7 @@ using ImGuiNET;
 using ImGuiScene;
 using Lumina.Data.Files;
 using SimpleTweaksPlugin;
+using SimpleTweaksPlugin.Debugging;
 using SimpleTweaksPlugin.Helper;
 using FFXIVAction = Lumina.Excel.GeneratedSheets.Action;
 using static Compass.Extensions;
@@ -23,18 +25,26 @@ using static Compass.Extensions;
 // TODO 5 Refactor DrawCombo to generic
 namespace Compass
 {
-    public unsafe class Compass : IDisposable
+    public unsafe partial class Compass : IDisposable
     {
-        private const string Command = "/compass";
         public const string PluginName = "Compass";
+        private const string Command = "/compass";
+
+        private delegate float ClampToMinusPiAndPiDelegate(float degree);
+        private delegate void SetCameraRotationDelegate(nint cameraThis, float degree);
+        private delegate long AtkUnitBase_SetPosition(nint thisUnitBase, short x, short y);
+        private delegate void AtkResNode_SetPositionShort(nint thisRedNode, short x, short y);
+        private delegate void AtkResNode_SetPositionFloat(nint thisRedNode, float x, float y);
+
+        // NOTE This is Maybe Component::GUI::AtkUnitManager/Client::UI::RaptureAtkUnitManager +0x28
+        // OR NOT
+        // Component::GUI::AtkComponentBase +0x8 maybe?
+        private delegate nint CreateAtkNode(nint thisUnused, NodeType type);
+        private delegate nint AtkImageNode_Destroy(nint thisatkImageNode, bool freeMemory);
         private readonly Hook<ClampToMinusPiAndPiDelegate> _clampToMinusPiAndPi;
 
 
-        private readonly Hook<AtkResNode_SetPositionFloat> _resNodePositionFloatHook;
-        private readonly Hook<AtkResNode_SetPositionShort> _resNodePositionShortHook;
         private readonly Hook<SetCameraRotationDelegate> _setCameraRotation;
-        private readonly Stopwatch _stopwatch = new();
-        private readonly Hook<AtkUnitBase_SetPosition> _unitBaseSetPositionHook;
         private AtkResNode_SetPositionFloat _atkResNodeSetPositionFloat;
         private AtkResNode_SetPositionShort _atkResNodeSetPositionShort;
         private AtkUnitBase_SetPosition _atkUnitBaseSetPosition;
@@ -52,19 +62,16 @@ namespace Compass
         // one can abuse the first 101,4 for something else
         // like [1,3] == backgroundNode
         private readonly AtkImageNode*[,] _clonedImageNodes = new AtkImageNode*[202, 4];
-        private AtkTextNode* _clonedTxtNode;
-        private AtkUnitBase* _clonedUnitBase;
-        private readonly TextureWrap _compassImage;
-        private Vector2 _compassOffset = new(-360, 150);
         private CreateAtkNode _createAtkNode;
         private AtkImageNode_Destroy _destroyAtkImageNode;
-        private bool _dirty;
-        private nint _gameCameraObject;
-
+        private Configuration _config;
+        private DalamudPluginInterface _pluginInterface;
         private List<nint> _imageNodes = new(150);
         private bool _isDisposed;
-        private long _logTicks = Stopwatch.Frequency * 2;
         private nint _maybeCameraStruct;
+        private int _currentUiObjectIndex;
+        private bool _shouldHideCompass;
+        private bool _shouldHideCompassIteration;
         private readonly TextureWrap _naviMap;
         private bool _reset;
         private float _scale = 1;
@@ -94,40 +101,107 @@ namespace Compass
             #endregion
 
 
-            PluginInterface = pi;
-            PluginConfig = config;
+            _pluginInterface = pi;
+            _config = config;
 
-            PluginInterface.ClientState.OnLogin += OnLogin;
-            PluginInterface.ClientState.OnLogout += OnLogout;
+            #region Configuration Setup
+
+            config.ShouldHideOnUiObject = new[]
+            {
+                  (new [] {"_BattleTalk"}, true, "Dialogue Box During Battle")
+                , (new [] {"Talk"}, true, "Dialogue Box")
+                , (new [] {"AreaMap"}, true, "Map")
+                , (new [] {"Character"}, true, "Character")
+                , (new [] {"ConfigCharacter"}, true, "Character Configuration")
+                , (new [] {"ConfigSystem"}, false, "System Configuration")
+                , (new [] {"Inventory", "InventoryLarge", "InventoryExpansion"}, true, "Inventory")
+                , (new [] {"InventoryRetainer", "InventoryRetainerLarge"}, false, "Retainer Inventory")
+                , (new [] {"InventoryBuddy"}, false, "Saddle Bag")
+                , (new [] {"ArmouryBoard"}, false, "Armoury")
+                , (new [] {"Shop", "InclusionShop", "ShopExchangeCurrency"}, true, "Shops")
+                , (new [] {"Teleport"}, false, "Teleport")
+                , (new [] {"ContentsInfo"}, false, "Timers")
+                , (new [] {"ContentsFinder"}, false, "Duty")
+                , (new [] {"LookingForGroup"}, false, "Party Finder")
+                , (new [] {"AOZNotebook"}, false, "Bluemage Notebook")
+                , (new [] {"MountNoteBook"}, false, "Mount Guide")
+                , (new [] {"MinionNoteBook"}, false, "Minion Guide")
+                , (new [] {"Achievement"}, false, "Achievements")
+                , (new [] {"GoldSaucerInfo"}, false, "Action Help")
+                , (new [] {"PvpProfile"}, false, "PVP Profile")
+                , (new [] {"LinkShell"}, false, "Linkshell")
+                , (new [] {"CrossWorldLinkshell"}, false, "Crossworld Linkshell")
+                , (new [] {"ActionDetail"}, false, "Action Help (Tooltip)")
+                , (new [] {"ItemDetail"}, false, "Item Tooltip")
+                , (new [] {"ActionMenu"}, false, "Action List")
+                , (new [] {"QuestRedo", "QuestRedoHud"}, true, "New Game+")
+                , (new [] {"Journal"}, false, "Journal")
+                , (new [] {"RecipeNote"}, true, "Crafting Log")
+                , (new [] {"AdventureNoteBook"}, false, "Sightseeing Log")
+                , (new [] {"GatheringNote"}, false, "Gathering Log")
+                , (new [] {"FishingNote"}, false, "Fishing Log")
+                , (new [] {"FishGuide"}, false, "Fishing Guide")
+                , (new [] {"Orchestrion"}, false, "Orchestrion List")
+                , (new [] {"ContentsNote"}, false, "Challenge Log")
+                , (new [] {"MonsterNote"}, false, "Hunting Log")
+                , (new [] {"PartyMemberList"}, false, "Party Members")
+                , (new [] {"FriendList"}, false, "Friend list")
+                , (new [] {"BlackList"}, false, "Black List")
+                , (new [] {"SocialList"}, true, "Player Search")
+                , (new [] {"Emote"}, false, "Emote")
+                , (new [] {"FreeCompany"}, false, "Free Company")
+                , (new [] {"SupportDesk"}, true, "Support Desk")
+                , (new [] {"ConfigKeybind"}, true, "Keybinds")
+                , (new [] {"_HudLayoutScreen"}, true, "HUD Manager")
+                , (new [] {"Macro"}, true, "Macro")
+                , (new [] {"GrandCompanySupplyList"}, false, "Grand Company Delivery")
+                , (new [] {"GrandCompanyExchange"}, false, "Grand Company Shop")
+                , (new [] {"MiragePrismPrismBox"}, true, "Glamour Dresser")
+                , (new [] {"Currency"}, true, "Currency")
+            };
+
+            
+            for (var i = 0; i < config.ShouldHideOnUiObjectSerializer.Length; i++)
+            {
+                config.ShouldHideOnUiObject[i].disable = config.ShouldHideOnUiObjectSerializer[i];
+            }
+
+            if (config.ShouldHideOnUiObjectSerializer.Length < config.ShouldHideOnUiObject.Length)
+            {
+                Array.Resize(ref config.ShouldHideOnUiObjectSerializer, config.ShouldHideOnUiObject.Length);
+            }
+        
+            #endregion
+            _pluginInterface.ClientState.OnLogin += OnLogin;
+            _pluginInterface.ClientState.OnLogout += OnLogout;
 
             #region Hooks, Functions and Addresses
 
             _clampToMinusPiAndPi = new Hook<ClampToMinusPiAndPiDelegate>(
-                PluginInterface.TargetModuleScanner.ScanText(clampToMinusPiAndPiSignature),
+                _pluginInterface.TargetModuleScanner.ScanText(clampToMinusPiAndPiSignature),
                 (ClampToMinusPiAndPiDelegate) ClampToMinusPiAndPi);
             _clampToMinusPiAndPi.Enable();
 
             _setCameraRotation = new Hook<SetCameraRotationDelegate>(
-                PluginInterface.TargetModuleScanner.ScanText(setCameraRotationSignature),
+                _pluginInterface.TargetModuleScanner.ScanText(setCameraRotationSignature),
                 (SetCameraRotationDelegate) SetCameraRotation);
             _setCameraRotation.Enable();
 
-            _sceneCameraObject = PluginInterface.TargetModuleScanner.GetStaticAddressFromSig(sceneCameraCtorSig, 0xC);
-            _gameCameraObject = PluginInterface.TargetModuleScanner.GetStaticAddressFromSig(gameCameraCtorSig);
-            _cameraBase = PluginInterface.TargetModuleScanner.GetStaticAddressFromSig(cameraBaseSig);
-            _cameraManager = PluginInterface.TargetModuleScanner.GetStaticAddressFromSig(cameraManagerSignature);
+            _sceneCameraObject = _pluginInterface.TargetModuleScanner.GetStaticAddressFromSig(sceneCameraCtorSig, 0xC);
+            _cameraBase = _pluginInterface.TargetModuleScanner.GetStaticAddressFromSig(cameraBaseSig);
+            _cameraManager = _pluginInterface.TargetModuleScanner.GetStaticAddressFromSig(cameraManagerSignature);
 
 
             _atkUnitBaseSetPosition = Marshal.GetDelegateForFunctionPointer<AtkUnitBase_SetPosition>(
-                PluginInterface.TargetModuleScanner.ScanText(atkUnitBaseSetPositionSignature));
+                _pluginInterface.TargetModuleScanner.ScanText(atkUnitBaseSetPositionSignature));
             _atkResNodeSetPositionShort = Marshal.GetDelegateForFunctionPointer<AtkResNode_SetPositionShort>(
-                PluginInterface.TargetModuleScanner.ScanText(atkResNodeSetPositionShortSignature));
+                _pluginInterface.TargetModuleScanner.ScanText(atkResNodeSetPositionShortSignature));
             _atkResNodeSetPositionFloat = Marshal.GetDelegateForFunctionPointer<AtkResNode_SetPositionFloat>(
-                PluginInterface.TargetModuleScanner.ScanText(atkResNodeSetPositionFloatSignature));
+                _pluginInterface.TargetModuleScanner.ScanText(atkResNodeSetPositionFloatSignature));
             _createAtkNode = Marshal.GetDelegateForFunctionPointer<CreateAtkNode>(
-                PluginInterface.TargetModuleScanner.ScanText(createAtkNodeSignature));
+                _pluginInterface.TargetModuleScanner.ScanText(createAtkNodeSignature));
             _destroyAtkImageNode = Marshal.GetDelegateForFunctionPointer<AtkImageNode_Destroy>(
-                PluginInterface.TargetModuleScanner.ScanText(atkImageNodeDestroySignature));
+                _pluginInterface.TargetModuleScanner.ScanText(atkImageNodeDestroySignature));
 
             #endregion
 
@@ -162,17 +236,12 @@ namespace Compass
             UiHelper.Setup(_pluginInterface.TargetModuleScanner);
 #else
 
-            if (PluginInterface.Reason == PluginLoadReason.Installer
-                   || PluginInterface.ClientState.LocalPlayer is not null
+            if (_pluginInterface.Reason == PluginLoadReason.Installer
+                   || _pluginInterface.ClientState.LocalPlayer is not null
             )
                 OnLogin(null!, null!);
 #endif
         }
-
-        public Configuration PluginConfig { get; }
-
-        public DalamudPluginInterface PluginInterface { get; }
-
 
         private void SetCameraRotation(nint cameraThis, float degree)
         {
@@ -199,36 +268,33 @@ namespace Compass
 
         private void OnLogout(object sender, EventArgs e)
         {
-            PluginInterface.UiBuilder.OnOpenConfigUi -= OnOpenConfigUi;
-            PluginInterface.UiBuilder.OnBuildUi -= BuildUi;
-            //_pluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdate;
+            _pluginInterface.UiBuilder.OnOpenConfigUi -= OnOpenConfigUi;
+            _pluginInterface.UiBuilder.OnBuildUi -= BuildUi;
             //_pluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdateSetupAddonNodes;
             //_pluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdateUpdateAddonCompass;
         }
 
         private void OnLogin(object sender, EventArgs e)
         {
-            PluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
-            PluginInterface.UiBuilder.OnBuildUi += BuildUi;
+            _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
+            _pluginInterface.UiBuilder.OnBuildUi += BuildUi;
             //_pluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdate;
             //_pluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdateSetupAddonNodes;
         }
 
         private void BuildImGuiCompass()
         {
-            // TODO (Chiv) Why use this and not the rotation on the minimap rotation thingy?
-            // Minimap rotation thingy is even already flipped!
-            // And apparently even accessible & updated if _NaviMap is disabled
-            if (!PluginConfig.ImGuiCompassEnable) return;
-            var naviMapPtr = PluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+            UpdateHideCompass();
+            if (_shouldHideCompass) return;
+            if (!_config.ImGuiCompassEnable) return;
+            var naviMapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             if (naviMapPtr == IntPtr.Zero) return;
             var naviMap = (AtkUnitBase*) naviMapPtr;
             //NOTE (chiv) 3 means fully loaded
             if (naviMap->ULDData.LoadedState != 3) return;
             // TODO (chiv) Check the flag if _NaviMap is hidden in the HUD
             if (!naviMap->IsVisible) return;
-            if (ShouldHideCompass()) return;
-            var scale = PluginConfig.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
+            var scale = _config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
             const float windowHeight = 50f;
             const ImGuiWindowFlags flags = ImGuiWindowFlags.NoDecoration
                                            | ImGuiWindowFlags.NoMove
@@ -259,10 +325,12 @@ namespace Compass
             const int playerX = 72, playerY = 72;
             const uint whiteColor = 0xFFFFFFFF;
             var cameraRotationInRadian = -*(float*) (_maybeCameraStruct + 0x130);
+            //SimpleLog.Log($"{-cameraRotationInRadian}");
             var miniMapIconsRootComponentNode = (AtkComponentNode*) naviMap->ULDData.NodeList[2];
-            // This leads to jerky behaviour
+            // Minimap rotation thingy is even already flipped!
+            // And apparently even accessible & updated if _NaviMap is disabled
+            // => This leads to jerky behaviour though
             //var cameraRotationInRadian = miniMapIconsRootComponentNode->Component->ULDData.NodeList[2]->Rotation;
-            //var scaleFactorForRotationBasedDistance = Math.Max(1f - 0 / maxDistance, lowestScaleFactor) * ImGui.GetIO().FontGlobalScale;
             var scaleFactorForRotationBasedDistance = scale;
             // TODO (Chiv) My math must be bogus somewhere, cause I need to do some things differently then math would say
             // TODO I think my and the games coordinate system do not agree
@@ -278,7 +346,7 @@ namespace Compass
             var widthOfCompass = ImGui.GetWindowContentRegionWidth();
             var halfWidthOfCompass = widthOfCompass * 0.5f;
             var halfHeightOfCompass = windowHeight * 0.5f * scale;
-            var compassUnit = widthOfCompass / 360f;
+            var compassUnit = widthOfCompass / (2f*(float)Math.PI);
             var westCardinalAtkImageNode = (AtkImageNode*) naviMap->ULDData.NodeList[11];
             // TODO (Chiv) Cache on TerritoryChange/Initialisation?
             var naviMapTextureD3D11ShaderResourceView = new IntPtr(
@@ -296,23 +364,22 @@ namespace Compass
                 compassCentre.Y - halfHeightOfCompass * 0.5f - 2);
             var backgroundPMax = new Vector2(compassCentre.X + 5 + halfWidthOfCompass,
                 compassCentre.Y + halfHeightOfCompass * 0.5f + 2);
-            // TODO (Chiv) Draw Background
             //First, the background
-            if (PluginConfig.ImGuiCompassEnableBackground)
+            if (_config.ImGuiCompassEnableBackground)
             {
-                if (PluginConfig.ImGuiCompassFillBackground)
+                if (_config.ImGuiCompassFillBackground)
                     backgroundDrawList.AddRectFilled(
                         backgroundPMin
                         , backgroundPMax
-                        , ImGui.ColorConvertFloat4ToU32(PluginConfig.ImGuiBackgroundColour)
-                        , PluginConfig.ImGuiCompassBackgroundRounding
+                        , ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour)
+                        , _config.ImGuiCompassBackgroundRounding
                     );
-                if (PluginConfig.ImGuiCompassDrawBorder)
+                if (_config.ImGuiCompassDrawBorder)
                     backgroundDrawList.AddRect(
                         backgroundPMin - Vector2.One
                         , backgroundPMax + Vector2.One
-                        , ImGui.ColorConvertFloat4ToU32(PluginConfig.ImGuiBackgroundBorderColour)
-                        , PluginConfig.ImGuiCompassBackgroundRounding
+                        , ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour)
+                        , _config.ImGuiCompassBackgroundRounding
                     );
             }
 
@@ -324,7 +391,6 @@ namespace Compass
             var north = Vector2.UnitY;
             // TODO (Chiv) Yeah, the minus  here is bogus as hell too.
             // TODO (chiv) actually, SignedAngle first arg is FROM, not TO
-            // TODO (Chiv) Draw it all manually via the Drawlist, no need for same line
             var eastOffset = compassUnit * -SignedAngle(east, playerForward);
             var halfWidth20 = 10 * scale;
             backgroundDrawList.AddImage(
@@ -431,6 +497,8 @@ namespace Compass
                                 
                                 uv = new Vector2(u, v);
                                 uv1 = new Vector2(u1, v1);
+                                // Arrows and such are always rotation based
+                                // TODO (Chiv) Glowing thingy is not
                                 goto case 1;
                             case 1: // Rotation Based icons go here after setting up their UVs
                                 // TODO Ring, ring, SignedAngle first arg is FROM !
@@ -447,15 +515,15 @@ namespace Compass
                                     compassCentre.Y + rotationIconHalfWidth);
                                 break;
                             case 060443: //Player Marker
-                                if (!PluginConfig.ImGuiCompassEnableCenterMarker) continue;
+                                if (!_config.ImGuiCompassEnableCenterMarker) continue;
                                 drawList = backgroundDrawList;
                                 pMin = new Vector2(compassCentre.X - halfWidth32,
-                                    compassCentre.Y + PluginConfig.ImGuiCompassCentreMarkerOffset * scale -
+                                    compassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * scale -
                                     halfWidth32);
                                 pMax = new Vector2(compassCentre.X + halfWidth32,
-                                    compassCentre.Y + PluginConfig.ImGuiCompassCentreMarkerOffset * scale +
+                                    compassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * scale +
                                     halfWidth32);
-                                uv1 = PluginConfig.ImGuiCompassFlipCentreMarker ? new Vector2(1, -1) : oneVec;
+                                uv1 = _config.ImGuiCompassFlipCentreMarker ? new Vector2(1, -1) : oneVec;
                                 break;
                             case 060495: // Small Area Circle
                             case 060496: // Big Area Circle
@@ -471,7 +539,7 @@ namespace Compass
                                         backgroundPMin
                                         , backgroundPMax
                                         , 0x33FFFFFF & tintColour //Set A to 0.2
-                                        , PluginConfig.ImGuiCompassBackgroundRounding
+                                        , _config.ImGuiCompassBackgroundRounding
                                     );
                                 break;
                             case 060542: // Arrow UP on Circle
@@ -489,8 +557,12 @@ namespace Compass
                             case 071143: // BlueQuest Ongoing Marker
                             case 071145: // BlueQuest Complete Marker
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
+                                    // => The current quest marker is inside the mask and should be
+                                    // treated as a map point
                                     goto default;
-                                goto case 1; //No UV setup needed
+                                // => The current quest marker is outside the mask and should be
+                                // treated as a rotation
+                                goto case 1; //No UV setup needed for quest markers
                             case 060457: // Area Transition Bullet Thingy
                             default:
                                 var (iconScaleFactor, iconAngle, _) = CalculateDrawVariables(
@@ -595,10 +667,29 @@ namespace Compass
             return SignedAngle(objectForward, forward);
         }
 
-        private bool ShouldHideCompass()
+        private void UpdateHideCompass()
         {
-            //TODO ShouldHideCOmpass
-            return false;
+            for (var i = 0; i < 8; i++)
+            {
+                var (uiIdentifiers, disable, _) = _config.ShouldHideOnUiObject[_currentUiObjectIndex++];
+                _currentUiObjectIndex %= _config.ShouldHideOnUiObject.Length;
+                if (_currentUiObjectIndex == 0)
+                {
+                    if (_config.HideInCombat)
+                    {
+                        _shouldHideCompassIteration |= _pluginInterface.ClientState.Condition[ConditionFlag.InCombat];
+                    }
+                    _shouldHideCompass = _shouldHideCompassIteration;
+                    _shouldHideCompassIteration = false;
+                }
+                if (!disable) continue;
+                foreach (var identifier in uiIdentifiers)
+                {
+                    var unitBase = _pluginInterface.Framework.Gui.GetUiObjectByName(identifier, 1);
+                    if (unitBase == IntPtr.Zero) continue;
+                    _shouldHideCompassIteration |= ((AtkUnitBase*) unitBase)->IsVisible;
+                }                
+            }
         }
 
         //TODO (Chiv) While this is nice and somehow works, it still explodes 1-30 seconds later, so I give up on that for now
@@ -609,7 +700,7 @@ namespace Compass
             // And apparently even accessible & updated if _NaviMap is disabled
             var cameraRotationInRadian = -*(float*) (_maybeCameraStruct + 0x130);
 
-            var navimapPtr = PluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+            var navimapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             if (navimapPtr == IntPtr.Zero) return;
             var naviMap = (AtkUnitBase*) navimapPtr;
             //NOTE (chiv) 3 means fully loaded
@@ -624,7 +715,7 @@ namespace Compass
                 const float maxDistance = 350f;
                 const float lowestScaleFactor = 0.3f;
                 var playerPos = new Vector2(playerX, playerY);
-                var scale = 1f / naviMap->Scale * PluginConfig.AddonCompassScale;
+                var scale = 1f / naviMap->Scale * _config.AddonCompassScale;
                 var scaleFactorForRotationBasedDistance =
                     Math.Max(1f - distanceOffset / maxDistance, lowestScaleFactor);
                 // TODO (Chiv) My math must be bogus somewhere, cause I need to do same things differently then math would say
@@ -636,16 +727,16 @@ namespace Compass
                 // Is my Coordinate System the same as the games' minimap?
                 var playerViewVector = new Vector2(-playerSin, playerCos);
                 // TODO (Chiv) do it all in Radians
-                var compassUnit = PluginConfig.AddonCompassWidth / 360f;
+                var compassUnit = _config.AddonCompassWidth / 360f;
                 //First, the background
-                UiHelper.SetSize(_background, PluginConfig.AddonCompassWidth, 50);
-                _background->PartId = (ushort) PluginConfig.AddonCompassBackgroundPartId;
+                UiHelper.SetSize(_background, _config.AddonCompassWidth, 50);
+                _background->PartId = (ushort) _config.AddonCompassBackgroundPartId;
                 UiHelper.SetPosition(
                     _background,
-                    PluginConfig.AddonCompassOffset.X - PluginConfig.AddonCompassWidth / 2f,
-                    PluginConfig.AddonCompassOffset.Y);
+                    _config.AddonCompassOffset.X - _config.AddonCompassWidth / 2f,
+                    _config.AddonCompassOffset.Y);
                 _background->AtkResNode.ScaleX = _background->AtkResNode.ScaleY = scale;
-                UiHelper.SetVisible((AtkResNode*) _background, !PluginConfig.AddonCompassDisableBackground);
+                UiHelper.SetVisible((AtkResNode*) _background, !_config.AddonCompassDisableBackground);
                 // Second, we position our Cardinals
                 //TODO (Chiv) Uhm, no, east is the other way. Again, coordinate system mismatch?
                 var east = -Vector2.UnitX;
@@ -656,20 +747,20 @@ namespace Compass
                 // TODO (chiv) actually, SignedAngle first arg is FROM, not TO
                 UiHelper.SetPosition(
                     _cardinalsClonedImageNodes[0],
-                    PluginConfig.AddonCompassOffset.X + compassUnit * -SignedAngle(east, playerViewVector),
-                    PluginConfig.AddonCompassOffset.Y);
+                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(east, playerViewVector),
+                    _config.AddonCompassOffset.Y);
                 UiHelper.SetPosition(
                     _cardinalsClonedImageNodes[1],
-                    PluginConfig.AddonCompassOffset.X + compassUnit * -SignedAngle(south, playerViewVector),
-                    PluginConfig.AddonCompassOffset.Y);
+                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(south, playerViewVector),
+                    _config.AddonCompassOffset.Y);
                 UiHelper.SetPosition(
                     _cardinalsClonedImageNodes[2],
-                    PluginConfig.AddonCompassOffset.X + compassUnit * -SignedAngle(west, playerViewVector),
-                    PluginConfig.AddonCompassOffset.Y);
+                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(west, playerViewVector),
+                    _config.AddonCompassOffset.Y);
                 UiHelper.SetPosition(
                     _cardinalsClonedImageNodes[3],
-                    PluginConfig.AddonCompassOffset.X + compassUnit * -SignedAngle(north, playerViewVector),
-                    PluginConfig.AddonCompassOffset.Y);
+                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(north, playerViewVector),
+                    _config.AddonCompassOffset.Y);
 
                 _cardinalsClonedImageNodes[0]->AtkResNode.ScaleX =
                     _cardinalsClonedImageNodes[0]->AtkResNode.ScaleY = scale;
@@ -743,8 +834,8 @@ namespace Compass
                                 StringComparison.InvariantCultureIgnoreCase) ?? false: //Player Marker
                                 UiHelper.SetPosition(
                                     clone,
-                                    PluginConfig.AddonCompassOffset.X,
-                                    PluginConfig.AddonCompassOffset.Y);
+                                    _config.AddonCompassOffset.X,
+                                    _config.AddonCompassOffset.Y);
                                 break;
                             case var _ when texString?.EndsWith("060457.tex",
                                 StringComparison.InvariantCultureIgnoreCase) ?? false: // Area Transition Bullet Thingy
@@ -758,9 +849,9 @@ namespace Compass
                                 // TODO (Chiv) Ehhh, the minus before SignedAngle
                                 UiHelper.SetPosition(
                                     clone,
-                                    PluginConfig.AddonCompassOffset.X +
+                                    _config.AddonCompassOffset.X +
                                     compassUnit * -SignedAngle(toObject, playerViewVector),
-                                    PluginConfig.AddonCompassOffset.Y);
+                                    _config.AddonCompassOffset.Y);
                                 break;
                             case var _ when (texString?.EndsWith("NaviMap.tex",
                                 StringComparison.InvariantCultureIgnoreCase) ?? false) && imgNode->PartId == 21:
@@ -777,9 +868,9 @@ namespace Compass
                                 // TODO (Chiv) Ehhh, the minus before SignedAngle
                                 UiHelper.SetPosition(
                                     clone,
-                                    PluginConfig.AddonCompassOffset.X +
+                                    _config.AddonCompassOffset.X +
                                     compassUnit * -SignedAngle(toObject2, playerViewVector),
-                                    PluginConfig.AddonCompassOffset.Y);
+                                    _config.AddonCompassOffset.Y);
                                 break;
                             default:
                                 var cosArrow = (float) Math.Cos(iconComponentNode->AtkResNode.Rotation);
@@ -791,9 +882,9 @@ namespace Compass
                                 // TODO (Chiv) Ehhh, the minus before SignedAngle
                                 UiHelper.SetPosition(
                                     clone,
-                                    PluginConfig.AddonCompassOffset.X +
+                                    _config.AddonCompassOffset.X +
                                     compassUnit * -SignedAngle(toObject3, playerViewVector),
-                                    PluginConfig.AddonCompassOffset.Y);
+                                    _config.AddonCompassOffset.Y);
                                 break;
                         }
                     }
@@ -812,7 +903,7 @@ namespace Compass
         {
             try
             {
-                var navimapPtr = PluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+                var navimapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
                 if (navimapPtr == IntPtr.Zero) return;
                 var naviMap = (AtkUnitBase*) navimapPtr;
                 //NOTE (chiv) 3 means fully loaded
@@ -833,7 +924,7 @@ namespace Compass
                     prototypeImgNode,
                     currentNodeId--);
                 _background->WrapMode = 2;
-                if (PluginConfig.AddonCompassDisableBackground) UiHelper.Hide(_background);
+                if (_config.AddonCompassDisableBackground) UiHelper.Hide(_background);
 
                 // Next, Cardinals
                 for (var i = 0; i < _cardinalsClonedImageNodes.Length; i++)
@@ -862,8 +953,8 @@ namespace Compass
 
                 //TODO (Chiv) Search for PlayerIcon and set it up too?
 
-                PluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdateSetupAddonNodes;
-                PluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdateUpdateAddonCompass;
+                _pluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdateSetupAddonNodes;
+                _pluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdateUpdateAddonCompass;
             }
             catch (Exception e)
             {
@@ -886,25 +977,6 @@ namespace Compass
             uld.NodeList[uld.NodeListCount++] = clone;
             return clone;
         }
-        
-        
-        private delegate float ClampToMinusPiAndPiDelegate(float degree);
-
-        private delegate void SetCameraRotationDelegate(nint cameraThis, float degree);
-
-
-        private delegate long AtkUnitBase_SetPosition(nint thisUnitBase, short x, short y);
-
-        private delegate void AtkResNode_SetPositionShort(nint thisRedNode, short x, short y);
-
-        private delegate void AtkResNode_SetPositionFloat(nint thisRedNode, float x, float y);
-
-        // NOTE This is Maybe Component::GUI::AtkUnitManager/Client::UI::RaptureAtkUnitManager +0x28
-        // OR NOT
-        // Component::GUI::AtkComponentBase +0x8 maybe?
-        private delegate nint CreateAtkNode(nint thisUnused, NodeType type);
-
-        private delegate nint AtkImageNode_Destroy(nint thisatkImageNode, bool freeMemory);
 
         #region UI
 
@@ -912,9 +984,9 @@ namespace Compass
         {
             BuildImGuiCompass();
             if (!_buildingConfigUi) return;
-            var (shouldBuildConfigUi, changedConfig) = ConfigurationUi.DrawConfigUi(PluginConfig);
+            var (shouldBuildConfigUi, changedConfig) = ConfigurationUi.DrawConfigUi(_config);
             if (changedConfig)
-                PluginInterface.SavePluginConfig(PluginConfig);
+                _pluginInterface.SavePluginConfig(_config);
 
             if (!shouldBuildConfigUi) _buildingConfigUi = false;
         }
@@ -943,16 +1015,15 @@ namespace Compass
                 // TODO (Chiv) Still not quite sure about correct dispose
                 // NOTE (Chiv) Explicit, non GC? call - remove managed thingies too.
                 OnLogout(null!, null!);
-                PluginInterface.ClientState.OnLogin -= OnLogin;
-                PluginInterface.ClientState.OnLogout -= OnLogout;
-                PluginInterface.CommandManager.RemoveHandler(Command);
+                _pluginInterface.ClientState.OnLogin -= OnLogin;
+                _pluginInterface.ClientState.OnLogout -= OnLogout;
+                _pluginInterface.CommandManager.RemoveHandler(Command);
 
                 _clampToMinusPiAndPi?.Disable();
                 _clampToMinusPiAndPi?.Dispose();
                 _setCameraRotation?.Disable();
                 _setCameraRotation?.Dispose();
-
-                _compassImage?.Dispose();
+                
                 _naviMap?.Dispose();
 #if DEBUG
                 _pluginInterface.UiBuilder.OnBuildUi -= BuildDebugUi;

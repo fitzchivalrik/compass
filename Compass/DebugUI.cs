@@ -167,7 +167,6 @@ namespace Compass
             ImGui.Text($"MaybeCameraStruct {_maybeCameraStruct.ToString("X")}");
             ImGui.Text($"Camera Base {_cameraBase.ToString("X")}");
             ImGui.Text($"SceneCameraObject {_sceneCameraObject.ToString("X")}");
-            ImGui.Text($"GameCameraObject {_gameCameraObject.ToString("X")}");
             ImGui.Text($"CameraManager {_cameraManager.ToString("X")}");
             ImGui.Separator();
             var cameraRotationInRadian = -*(float*) (_maybeCameraStruct + 0x130);
@@ -369,8 +368,7 @@ namespace Compass
                 ImGui.Text($"Radius {circle.radius} {circle.distance} Distance");
             }
             ImGui.Separator();
-            ImGui.DragFloat2("Compass Offset", ref _compassOffset);
-            ImGui.Separator();
+            
             ImGui.InputFloat("Rotation", ref _rotation);
             ImGui.InputInt("PartId", ref _partId);
             ImGui.InputInt("WrapMode", ref _wrapMode);
@@ -402,17 +400,9 @@ namespace Compass
                 
             }
             ImGui.Separator();
-            if (_clonedUnitBase != null)
-            {
-                _UIDebug.DrawUnitBase(_clonedUnitBase);
-                
-            }
             ImGui.Separator();
             ImGui.Separator();
-            if (_clonedTxtNode != null)
-            {
-                _UIDebug.PrintNode((AtkResNode*)_clonedTxtNode, false);
-            }
+            
             ImGui.Separator();
             _UIDebug.Draw();
             var naviMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
@@ -473,9 +463,7 @@ namespace Compass
                         //        sin);
                         //var dot = Vector2.Dot(Vector2.Normalize(new Vector2(playerX - x, playerY - y)), playerViewVector);
                         //var playerViewVector2 = new Vector2(-sin, cos);
-                        var widthOfCompass = _compassImage.Width;
-                        var compassUnit = widthOfCompass / 360f;
-                        var toObject = new Vector2(playerX -x, playerY - y);
+                        
                                     
                         
                         ImGui.Text($"{part.U} {part.V} {part.Width} {part.Height}");            

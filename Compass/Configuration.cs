@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Numerics;
 using Dalamud.Configuration;
 using Newtonsoft.Json;
@@ -31,13 +32,9 @@ namespace Compass
         public bool ImGuiCompassFlipCentreMarker;
         public int ImGuiCompassCentreMarkerOffset = 27;
         public bool ImGuiCompassEnable = true;
-
-        public bool HideOnAreaMap;
-        public bool HideOnDialogueBox;
-        public bool HideOnBattleTalk;
-        public bool HideOnInventories;
-        public bool HideOnSkillTooltip;
-        public bool HideOnItemTooltip;
+        
+        public bool[] ShouldHideOnUiObjectSerializer = new bool[0];
+        [JsonIgnore] public (string[] getUiIdentifier,bool disable, string userFacingIdentifier)[] ShouldHideOnUiObject = null!;
         public bool HideInCombat;
         public bool HideInPvPMaps;
         public bool HideInInstances;
