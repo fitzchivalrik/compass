@@ -338,6 +338,22 @@ namespace Compass
             }
         }
 
+        private static AtkResNode* CloneAndAttach(ref ULDData uld, AtkResNode* parent, AtkResNode* prototype,
+            uint nodeId = uint.MaxValue)
+        {
+            var clone = UiHelper.CloneNode(prototype);
+            clone->NodeID = nodeId;
+            clone->ParentNode = parent;
+            var currentLastSibling = parent->ChildNode;
+            while (currentLastSibling->PrevSiblingNode != null)
+                currentLastSibling = currentLastSibling->PrevSiblingNode;
+            clone->PrevSiblingNode = null;
+            clone->NextSiblingNode = currentLastSibling;
+            currentLastSibling->PrevSiblingNode = clone;
+            uld.NodeList[uld.NodeListCount++] = clone;
+            return clone;
+        }
+
     }
 }
 #endif
