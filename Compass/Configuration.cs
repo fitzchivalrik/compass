@@ -30,7 +30,7 @@ namespace Compass
         public bool ImGuiCompassEnable = true;
         
         public bool[] ShouldHideOnUiObjectSerializer = new bool[0];
-        [JsonIgnore] public (string[] getUiIdentifier,bool disable, string userFacingIdentifier)[] ShouldHideOnUiObject = null!;
+        [JsonIgnore] public (string[] getUiObjectIdentifier,bool disable, string userFacingIdentifier)[] ShouldHideOnUiObject = null!;
         public bool HideInCombat;
         public bool HideInPvPMaps;
         public bool HideInInstances;

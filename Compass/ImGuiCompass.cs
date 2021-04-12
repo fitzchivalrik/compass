@@ -1,198 +1,55 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Dalamud.Data.LuminaExtensions;
 using Dalamud.Game.ClientState;
-using Dalamud.Game.Command;
 using Dalamud.Game.Internal;
-using Dalamud.Hooking;
-using Dalamud.Plugin;
 using FFXIVClientStructs.Component.GUI;
-using FFXIVClientStructs.Component.GUI.ULD;
 using ImGuiNET;
-using ImGuiScene;
-using Lumina.Data.Files;
 using SimpleTweaksPlugin;
-using SimpleTweaksPlugin.Helper;
-using FFXIVAction = Lumina.Excel.GeneratedSheets.Action;
-using static Compass.Extensions;
 
-// TODO 5 Refactor DrawCombo to generic
 namespace Compass
 {
-    public unsafe partial class Compass : IDisposable
+    public class ImGuiCompass
     {
-        public const string PluginName = "Compass";
-        private const string Command = "/compass";
-
-        private readonly Hook<SetCameraRotationDelegate> _setCameraRotation;
-        private readonly Configuration _config;
-        private readonly DalamudPluginInterface _pluginInterface;
-        private delegate void SetCameraRotationDelegate(nint cameraThis, float degree);
-
-        private ImGuiCompass _imGuiCompass;
-        private nint _maybeCameraStruct;
+        private const int UiObjectsCheckPerFrame = 8;
+        private readonly string[] _uiIdentifiers;
         private int _currentUiObjectIndex;
-        private bool _buildingConfigUi;
-        private bool _isDisposed;
-        private bool _shouldHideCompass;
         private bool _shouldHideCompassIteration;
+        private bool _shouldHideCompass;
+
         
-
-        public Compass(DalamudPluginInterface pi, Configuration config)
+        public static ImGuiCompass CreateImGuiCompass(Configuration config)
         {
-            #region Signatures
+            var uiIdentifiers = config.ShouldHideOnUiObject
+                .Where(it => it.disable)
+                .SelectMany(it => it.getUiObjectIdentifier)
+                .ToArray();
+            return new ImGuiCompass(uiIdentifiers);
+        }
 
-            const string setCameraRotationSignature = "40 ?? 48 83 EC ?? 0F 2F ?? ?? ?? ?? ?? 48 8B";
+        private ImGuiCompass(string[] uiIdentifiers)
+        {
+            _uiIdentifiers = uiIdentifiers;
+        }
 
-            #endregion
-
-
-            _pluginInterface = pi;
-            _config = config;
-
-            #region Configuration Setup
-
-            config.ShouldHideOnUiObject = new[]
-            {
-                  (new [] {"_BattleTalk"}, true, "Dialogue Box During Battle")
-                , (new [] {"Talk"}, true, "Dialogue Box")
-                , (new [] {"AreaMap"}, true, "Map")
-                , (new [] {"Character"}, true, "Character")
-                , (new [] {"ConfigCharacter"}, true, "Character Configuration")
-                , (new [] {"ConfigSystem"}, false, "System Configuration")
-                , (new [] {"Inventory", "InventoryLarge", "InventoryExpansion"}, true, "Inventory")
-                , (new [] {"InventoryRetainer", "InventoryRetainerLarge"}, false, "Retainer Inventory")
-                , (new [] {"InventoryBuddy"}, false, "Saddle Bag")
-                , (new [] {"ArmouryBoard"}, false, "Armoury")
-                , (new [] {"Shop", "InclusionShop", "ShopExchangeCurrency"}, true, "Shops")
-                , (new [] {"Teleport"}, false, "Teleport")
-                , (new [] {"ContentsInfo"}, false, "Timers")
-                , (new [] {"ContentsFinder"}, false, "Duty")
-                , (new [] {"LookingForGroup"}, false, "Party Finder")
-                , (new [] {"AOZNotebook"}, false, "Bluemage Notebook")
-                , (new [] {"MountNoteBook"}, false, "Mount Guide")
-                , (new [] {"MinionNoteBook"}, false, "Minion Guide")
-                , (new [] {"Achievement"}, false, "Achievements")
-                , (new [] {"GoldSaucerInfo"}, false, "Action Help")
-                , (new [] {"PvpProfile"}, false, "PVP Profile")
-                , (new [] {"LinkShell"}, false, "Linkshell")
-                , (new [] {"CrossWorldLinkshell"}, false, "Crossworld Linkshell")
-                , (new [] {"ActionDetail"}, false, "Action Help (Tooltip)")
-                , (new [] {"ItemDetail"}, false, "Item Tooltip")
-                , (new [] {"ActionMenu"}, false, "Action List")
-                , (new [] {"QuestRedo", "QuestRedoHud"}, true, "New Game+")
-                , (new [] {"Journal"}, false, "Journal")
-                , (new [] {"RecipeNote"}, true, "Crafting Log")
-                , (new [] {"AdventureNoteBook"}, false, "Sightseeing Log")
-                , (new [] {"GatheringNote"}, false, "Gathering Log")
-                , (new [] {"FishingNote"}, false, "Fishing Log")
-                , (new [] {"FishGuide"}, false, "Fishing Guide")
-                , (new [] {"Orchestrion"}, false, "Orchestrion List")
-                , (new [] {"ContentsNote"}, false, "Challenge Log")
-                , (new [] {"MonsterNote"}, false, "Hunting Log")
-                , (new [] {"PartyMemberList"}, false, "Party Members")
-                , (new [] {"FriendList"}, false, "Friend list")
-                , (new [] {"BlackList"}, false, "Black List")
-                , (new [] {"SocialList"}, true, "Player Search")
-                , (new [] {"Emote"}, false, "Emote")
-                , (new [] {"FreeCompany"}, false, "Free Company")
-                , (new [] {"SupportDesk"}, true, "Support Desk")
-                , (new [] {"ConfigKeybind"}, true, "Keybinds")
-                , (new [] {"_HudLayoutScreen"}, true, "HUD Manager")
-                , (new [] {"Macro"}, true, "Macro")
-                , (new [] {"GrandCompanySupplyList"}, false, "Grand Company Delivery")
-                , (new [] {"GrandCompanyExchange"}, false, "Grand Company Shop")
-                , (new [] {"MiragePrismPrismBox"}, true, "Glamour Dresser")
-                , (new [] {"Currency"}, true, "Currency")
-                , (new [] {"_MainCross"}, true, "Controller Main Menu")
-            };
-
-            
-            for (var i = 0; i < config.ShouldHideOnUiObjectSerializer.Length; i++)
-            {
-                config.ShouldHideOnUiObject[i].disable = config.ShouldHideOnUiObjectSerializer[i];
-            }
-
-            if (config.ShouldHideOnUiObjectSerializer.Length < config.ShouldHideOnUiObject.Length)
-            {
-                Array.Resize(ref config.ShouldHideOnUiObjectSerializer, config.ShouldHideOnUiObject.Length);
-            }
         
-            #endregion
-            
-            _imGuiCompass = ImGuiCompass.CreateImGuiCompass(_config);
-            _pluginInterface.ClientState.OnLogin += OnLogin;
-            _pluginInterface.ClientState.OnLogout += OnLogout;
-
-            #region Hooks, Functions and Addresses
-            
-            _setCameraRotation = new Hook<SetCameraRotationDelegate>(
-                _pluginInterface.TargetModuleScanner.ScanText(setCameraRotationSignature),
-                (SetCameraRotationDelegate) SetCameraRotationDetour);
-            _setCameraRotation.Enable();
-            
-            #endregion
-
-            #region Excel Data
-
-            #endregion
-            
-            pi.CommandManager.AddHandler(Command, new CommandInfo((_, _) => { OnOpenConfigUi(null!, null!); })
-            {
-                HelpMessage = $"Open {PluginName} configuration menu.",
-                ShowInHelp = true
-            });
-
-#if DEBUG
-            DebugCtor();
-#else
-
-            if (_pluginInterface.Reason == PluginLoadReason.Installer
-                   || _pluginInterface.ClientState.LocalPlayer is not null
-            )
-                OnLogin(null!, null!);
-#endif
-        }
-
-        private void SetCameraRotationDetour(nint cameraThis, float degree)
+        // TODO Cut this s@>!? in smaller methods
+        public unsafe void BuildImGuiCompass(Configuration config, Framework framework,
+            Condition condition, bool configureable, nint maybeCameraStruct)
         {
-            _maybeCameraStruct = cameraThis;
-            _setCameraRotation.Original(cameraThis, degree);
-            _setCameraRotation.Disable();
-        }
-        
-
-        private void OnLogout(object sender, EventArgs e)
-        {
-            _pluginInterface.UiBuilder.OnOpenConfigUi -= OnOpenConfigUi;
-            _pluginInterface.UiBuilder.OnBuildUi -= BuildUi;
-        }
-
-        private void OnLogin(object sender, EventArgs e)
-        {
-            _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
-            _pluginInterface.UiBuilder.OnBuildUi += BuildUi;
-        }
-
-        private void BuildImGuiCompass()
-        {
-            UpdateHideCompass();
+            UpdateHideCompass(config, framework, condition);
             if (_shouldHideCompass) return;
-            if (!_config.ImGuiCompassEnable) return;
-            var naviMapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+            if (!config.ImGuiCompassEnable) return;
+            var naviMapPtr = framework.Gui.GetUiObjectByName("_NaviMap", 1);
             if (naviMapPtr == IntPtr.Zero) return;
             var naviMap = (AtkUnitBase*) naviMapPtr;
             //NOTE (chiv) 3 means fully loaded
             if (naviMap->ULDData.LoadedState != 3) return;
             // TODO (chiv) Check the flag if _NaviMap is hidden in the HUD
             if (!naviMap->IsVisible) return;
-            var scale = _config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
+            var scale = config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
             const float windowHeight = 50f;
             const ImGuiWindowFlags flags = ImGuiWindowFlags.NoDecoration
                                            | ImGuiWindowFlags.NoMove
@@ -206,7 +63,7 @@ namespace Compass
                 new Vector2(250f, (windowHeight + 20) * scale),
                 new Vector2(int.MaxValue, (windowHeight + 20) * scale));
             if (!ImGui.Begin("###ImGuiCompassWindow"
-                , _buildingConfigUi
+                , configureable
                     ? ImGuiWindowFlags.NoCollapse
                       | ImGuiWindowFlags.NoTitleBar
                       | ImGuiWindowFlags.NoFocusOnAppearing
@@ -222,8 +79,7 @@ namespace Compass
             // NOTE (Chiv) This is the position of the player in the minimap coordinate system
             const int playerX = 72, playerY = 72;
             const uint whiteColor = 0xFFFFFFFF;
-            var cameraRotationInRadian = -*(float*) (_maybeCameraStruct + 0x130);
-            //SimpleLog.Log($"{-cameraRotationInRadian}");
+            var cameraRotationInRadian = -*(float*) (maybeCameraStruct + 0x130);
             var miniMapIconsRootComponentNode = (AtkComponentNode*) naviMap->ULDData.NodeList[2];
             // Minimap rotation thingy is even already flipped!
             // And apparently even accessible & updated if _NaviMap is disabled
@@ -263,21 +119,21 @@ namespace Compass
             var backgroundPMax = new Vector2(compassCentre.X + 5 + halfWidthOfCompass,
                 compassCentre.Y + halfHeightOfCompass * 0.5f + 2);
             //First, the background
-            if (_config.ImGuiCompassEnableBackground)
+            if (config.ImGuiCompassEnableBackground)
             {
-                if (_config.ImGuiCompassFillBackground)
+                if (config.ImGuiCompassFillBackground)
                     backgroundDrawList.AddRectFilled(
                         backgroundPMin
                         , backgroundPMax
-                        , ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour)
-                        , _config.ImGuiCompassBackgroundRounding
+                        , ImGui.ColorConvertFloat4ToU32(config.ImGuiBackgroundColour)
+                        , config.ImGuiCompassBackgroundRounding
                     );
-                if (_config.ImGuiCompassDrawBorder)
+                if (config.ImGuiCompassDrawBorder)
                     backgroundDrawList.AddRect(
                         backgroundPMin - Vector2.One
                         , backgroundPMax + Vector2.One
-                        , ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour)
-                        , _config.ImGuiCompassBackgroundRounding
+                        , ImGui.ColorConvertFloat4ToU32(config.ImGuiBackgroundBorderColour)
+                        , config.ImGuiCompassBackgroundRounding
                     );
             }
 
@@ -365,9 +221,11 @@ namespace Compass
                                 .FileName;
                         // NOTE (Chiv) We are in a try-catch, so we just throw if the read failed.
                         // Cannot act anyways if the texture path is butchered
-                        var textureFileName = Marshal.PtrToStringAnsi(new IntPtr(texFileNamePtr))!;
+                        SimpleLog.Log($"Trying to new string with pointer");
+                        var textureFileName = new string((sbyte*) texFileNamePtr);
+                        SimpleLog.Log($"Read {textureFileName}");
+                        
                         //var success = uint.TryParse(textureFileName.Substring(textureFileName.LastIndexOf('/')+1, 6), out var iconId);
-
                         var _ = uint.TryParse(textureFileName.Substring(textureFileName.Length - 10, 6),
                             out var iconId);
                         //iconId = 0 (==> success == false as IconID will never be 0) Must have been NaviMap (and only that hopefully)
@@ -413,15 +271,15 @@ namespace Compass
                                     compassCentre.Y + rotationIconHalfWidth);
                                 break;
                             case 060443: //Player Marker
-                                if (!_config.ImGuiCompassEnableCenterMarker) continue;
+                                if (!config.ImGuiCompassEnableCenterMarker) continue;
                                 drawList = backgroundDrawList;
                                 pMin = new Vector2(compassCentre.X - halfWidth32,
-                                    compassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * scale -
+                                    compassCentre.Y + config.ImGuiCompassCentreMarkerOffset * scale -
                                     halfWidth32);
                                 pMax = new Vector2(compassCentre.X + halfWidth32,
-                                    compassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * scale +
+                                    compassCentre.Y + config.ImGuiCompassCentreMarkerOffset * scale +
                                     halfWidth32);
-                                uv1 = _config.ImGuiCompassFlipCentreMarker ? new Vector2(1, -1) : oneVec;
+                                uv1 = config.ImGuiCompassFlipCentreMarker ? new Vector2(1, -1) : oneVec;
                                 break;
                             case 060495: // Small Area Circle
                             case 060496: // Big Area Circle
@@ -437,7 +295,7 @@ namespace Compass
                                         backgroundPMin
                                         , backgroundPMax
                                         , 0x33FFFFFF & tintColour //Set A to 0.2
-                                        , _config.ImGuiCompassBackgroundRounding
+                                        , config.ImGuiCompassBackgroundRounding
                                     );
                                 break;
                             case 060542: // Arrow UP on Circle
@@ -503,12 +361,35 @@ namespace Compass
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
+        private unsafe void UpdateHideCompass(Configuration config, Framework framework, Condition condition)
+        {
+            for (var i = 0; i < UiObjectsCheckPerFrame; i++)
+            {
+                var uiIdentifier = _uiIdentifiers[_currentUiObjectIndex++];
+                _currentUiObjectIndex %= _uiIdentifiers.Length;
+                if (_currentUiObjectIndex == 0)
+                {
+                    _shouldHideCompassIteration |= config.HideInCombat && condition[ConditionFlag.InCombat];
+                    _shouldHideCompass = _shouldHideCompassIteration;
+                    _shouldHideCompassIteration = false;
+                }
+                var unitBase = framework.Gui.GetUiObjectByName(uiIdentifier, 1);
+                if (unitBase == IntPtr.Zero) continue;
+                _shouldHideCompassIteration |= ((AtkUnitBase*) unitBase)->IsVisible;
+                                
+            }
+        }
+        
+
+
+        #region Math related methods
+        
+             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
             Vector2 playerPos, Vector2 playerForward, AtkComponentNode* mapIconComponentNode,
             AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre)
         {
-            // TODO Distinguish between Circles for quests and circles for Fates (colour?)
+            // TODO Distinguish between Circles for quests and circles for Fates (colour?) for filtering
             var (scaleArea, angleArea, distanceArea) = CalculateDrawVariables(
                 playerPos,
                 new Vector2(
@@ -522,7 +403,7 @@ namespace Compass
                          (mapIconComponentNode->AtkResNode.Width - mapIconComponentNode->AtkResNode.OriginX);
             // TODO Ring, ring, SignedAngle first arg is FROM !
             // TODO (Chiv) Ehhh, the minus before SignedAngle
-            // NOTE (Chiv) We asumme part.Width == part.Height == 32
+            // NOTE (Chiv) We assume part.Width == part.Height == 32
             var areaCircleOffset = compassUnit * -angleArea;
             var areaHalfWidth = halfWidth32 * scaleArea;
             if (distanceArea >= radius)
@@ -539,13 +420,13 @@ namespace Compass
                 , new Vector2(compassCentre.X + areaHalfWidth, compassCentre.Y + areaHalfWidth)
                 , tintColour, true);
         }
-
-        //TODO Extract to Extensions
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static (float scaleFactor, float signedAngle, float distance) CalculateDrawVariables(Vector2 from,
             Vector2 to, Vector2 forward, float distanceScaling)
         {
             const float lowestScaleFactor = 0.3f;
+            // TODO (Chiv) Distance Offset adjustments
             var distanceOffset = 40f * distanceScaling; //80f @Max Zoom(==2) _NaviMap
             var maxDistance = 180f * distanceScaling; //360f @Max Zoom(==2) _NaviMap
             //TODO (Chiv) Oh boy, check the math
@@ -554,8 +435,7 @@ namespace Compass
             //return (scaleFactor,SignedAngle(to  - from, forward), distance);
             return (scaleFactor, SignedAngle(from - to, forward), distance);
         }
-
-        //TODO Extract to Extensions
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float CalculateSignedAngle(in float rotation, in Vector2 forward)
         {
@@ -565,7 +445,7 @@ namespace Compass
             var objectForward = new Vector2(-sinObject, cosObject);
             return SignedAngle(objectForward, forward);
         }
-
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float SignedAngle(Vector2 from, Vector2 to)
         {
@@ -574,102 +454,6 @@ namespace Compass
             return (float)Math.Acos(dot) * sign;
         }
         
-        private void UpdateHideCompass()
-        {
-            for (var i = 0; i < 8; i++)
-            {
-                var (uiIdentifiers, disable, _) = _config.ShouldHideOnUiObject[_currentUiObjectIndex++];
-                _currentUiObjectIndex %= _config.ShouldHideOnUiObject.Length;
-                if (_currentUiObjectIndex == 0)
-                {
-                    if (_config.HideInCombat)
-                    {
-                        _shouldHideCompassIteration |= _pluginInterface.ClientState.Condition[ConditionFlag.InCombat];
-                    }
-                    _shouldHideCompass = _shouldHideCompassIteration;
-                    _shouldHideCompassIteration = false;
-                }
-                if (!disable) continue;
-                foreach (var identifier in uiIdentifiers)
-                {
-                    var unitBase = _pluginInterface.Framework.Gui.GetUiObjectByName(identifier, 1);
-                    if (unitBase == IntPtr.Zero) continue;
-                    _shouldHideCompassIteration |= ((AtkUnitBase*) unitBase)->IsVisible;
-                }                
-            }
-        }
-
-       
-        
-
-        #region UI
-
-        private void BuildUi()
-        {
-            /*
-            _imGuiCompass.BuildImGuiCompass(
-                _config,
-                _pluginInterface.Framework,
-                _pluginInterface.ClientState.Condition,
-                _buildingConfigUi, _maybeCameraStruct);
-                */
-            BuildImGuiCompass();
-            if (!_buildingConfigUi) return;
-            var (shouldBuildConfigUi, changedConfig) = ConfigurationUi.DrawConfigUi(_config);
-            if (changedConfig)
-            {
-                _pluginInterface.SavePluginConfig(_config);
-                _imGuiCompass = ImGuiCompass.CreateImGuiCompass(_config);
-            }
-
-            if (!shouldBuildConfigUi) _buildingConfigUi = false;
-        }
-
-
-        private void OnOpenConfigUi(object sender, EventArgs e)
-        {
-            _buildingConfigUi = !_buildingConfigUi;
-        }
-
-        #endregion
-
-        #region Dispose
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if (_isDisposed) return;
-            if (disposing)
-            {
-                // TODO (Chiv) Still not quite sure about correct dispose
-                // NOTE (Chiv) Explicit, non GC? call - remove managed thingies too.
-                OnLogout(null!, null!);
-                _pluginInterface.ClientState.OnLogin -= OnLogin;
-                _pluginInterface.ClientState.OnLogout -= OnLogout;
-                _pluginInterface.CommandManager.RemoveHandler(Command);
-
-                _setCameraRotation?.Disable();
-                _setCameraRotation?.Dispose();
-                
-#if DEBUG
-                _pluginInterface.UiBuilder.OnBuildUi -= BuildDebugUi;
-                _pluginInterface.CommandManager.RemoveHandler($"{Command}debug");
-#endif
-            }
-
-            _isDisposed = true;
-        }
-
-        ~Compass()
-        {
-            Dispose(false);
-        }
-
         #endregion
     }
 }
