@@ -146,9 +146,13 @@ namespace Compass
 #else
 
             if (_pluginInterface.Reason == PluginLoadReason.Installer
-                   || _pluginInterface.ClientState.LocalPlayer is not null
+                || _pluginInterface.ClientState.LocalPlayer is not null
             )
+            {
                 OnLogin(null!, null!);
+                _buildingConfigUi = true;
+                _config.FreshInstall = true;
+            }
 #endif
         }
 
@@ -200,6 +204,7 @@ namespace Compass
             ImGui.SetNextWindowSizeConstraints(
                 new Vector2(250f, (windowHeight + 20) * heightScale),
                 new Vector2(int.MaxValue, (windowHeight + 20) * heightScale));
+            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(Vector2.Zero, ImGuiCond.FirstUseEver);
             if (!ImGui.Begin("###ImGuiCompassWindow"
                 , _buildingConfigUi
                     ? ImGuiWindowFlags.NoCollapse
@@ -213,7 +218,6 @@ namespace Compass
                 ImGui.End();
                 return;
             }
-
             // NOTE (Chiv) This is the position of the player in the minimap coordinate system
             const int playerX = 72, playerY = 72;
             const uint whiteColor = 0xFFFFFFFF;
@@ -573,7 +577,7 @@ namespace Compass
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static (float scaleFactor, float signedAngle, float distance) CalculateDrawVariables(Vector2 from,
-            Vector2 to, Vector2 forward, float distanceScaling, float maxDistance = 180f, float distanceOffset = 45f)
+            Vector2 to, Vector2 forward, float distanceScaling, float maxDistance = 180f, float distanceOffset = 40f)
         {
             const float lowestScaleFactor = 0.2f;
             // TODO (Chiv) Distance Offset adjustments

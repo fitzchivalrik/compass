@@ -1,15 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using Dalamud.Configuration;
 using Dalamud.Interface;
-using Dalamud.Plugin;
-using Compass.Interop;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
-using Newtonsoft.Json;
 using FFXIVAction = Lumina.Excel.GeneratedSheets.Action;
 
 namespace Compass
@@ -22,14 +14,19 @@ namespace Compass
             var changed = false;
             var scale = ImGui.GetIO().FontGlobalScale;
             ImGuiHelpers.ForceNextWindowMainViewport();
-            ImGui.SetNextWindowSize(new Vector2(375 * scale, 400 * scale), ImGuiCond.FirstUseEver);
-            ImGui.SetNextWindowSizeConstraints(new Vector2(350 * scale, 200 * scale),
+            ImGui.SetNextWindowSize(new Vector2(400 * scale, 410 * scale), ImGuiCond.FirstUseEver);
+            ImGui.SetNextWindowSizeConstraints(new Vector2(410 * scale, 200 * scale),
                 new Vector2(float.MaxValue, float.MaxValue));
             if (!ImGui.Begin($"{Compass.PluginName} Configuration", ref shouldBuildConfigUi,
                 ImGuiWindowFlags.NoCollapse))
             {
                 ImGui.End();
                 return (shouldBuildConfigUi, changed);
+            }
+            
+            if (config.FreshInstall)
+            {
+                DrawFreshInstallNotice(config, scale);
             }
 
             if(ImGui.BeginTabBar("ConfigTabBar", ImGuiTabBarFlags.NoTooltip))
@@ -43,23 +40,72 @@ namespace Compass
             return (shouldBuildConfigUi, changed);
         }
 
+        private static void DrawFreshInstallNotice(Configuration config, float scale)
+        {
+            ImGui.OpenPopup("Compass Note");
+            var contentSize = ImGuiHelpers.MainViewport.Size;
+            var modalSize = new Vector2(410 * scale, 195 * scale);
+            var modalPosition = new Vector2(contentSize.X / 2 - modalSize.X / 2, contentSize.Y / 2 - modalSize.Y / 2);
+            ImGui.SetNextWindowSize(modalSize, ImGuiCond.Always);
+            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(modalPosition, ImGuiCond.Always);
+            if (!ImGui.BeginPopupModal("Compass Note")) return;
+            ImGui.Text("Thank you for installing the Compass plugin.");
+            ImGui.Text("The compass should be in upper left corner of the game window.");
+            ImGui.Text("Please have a look at the configuration, especially at the FAQ section,");
+            ImGui.Text("for a quick explanation of the current caveats and settings needed");
+            ImGui.Text("for the compass to work.");
+            ImGui.Text("May Hydaelyn protect you in your exploration of Eorzea and beyond!");
+            ImGui.Spacing();
+            if (ImGui.Button("Continue the adventure##FreshInstallPopUp"))
+            {
+                config.FreshInstall = false;
+                ImGui.CloseCurrentPopup();
+            }
+            ImGui.EndPopup();
+
+        }
+
         private static void DrawHelpTab()
         {
             if (!ImGui.BeginTabItem("FAQ")) return;
             if (ImGui.TreeNode("How does this work?"))
             {
+                ImGui.TextWrapped($"The current implementation reads the mini map data and");
+                ImGui.Text($"displays it on the monodimensional compass.");
+                ImGui.Text($"This also works when the mini map HUD element is hidden. ");
                 ImGui.TreePop();
             }
+
             if (ImGui.TreeNode("What are the current limitations?"))
             {
+                ImGui.TextWrapped($"Because of the current implementation,");
+                ImGui.Text($"only data the mini map knows about can be displayed.");
+                ImGui.Text($"This usually means icons in the vicinity of around 200 units");
+                ImGui.Text($"of the player plus object markers for the current tracked quests.");
+                ImGui.Text($"Different zoom levels of the mini map influence not the overall");
+                ImGui.Text($"distance but how soon the 'arrow' icon for tracked quests");
+                ImGui.Text($"turn into a more proper goal icon (e.g. area circle).");
+                ImGui.Text($"I therefore would recommend zooming out as much as possible");
+                ImGui.Text($"but this is entirely up to preference.");
                 ImGui.TreePop();
             }
+
             if (ImGui.TreeNode("The icons are all placed wrong, what gives?"))
             {
+                ImGui.TextWrapped("The current math only supports");
+                ImGui.Text("a mini map which is locked  (meaning north is always upwards).");
+                ImGui.Text("The mini map can be locked with a click on the cog");
+                ImGui.Text($"on the mini map HUD element.");
+                ImGui.Text("(In the case of Material UI, its a lock, not a cog.)");
                 ImGui.TreePop();
             }
-            if (ImGui.TreeNode("How can I resize the compass?"))
+            if (ImGui.TreeNode("How can I resize/move the compass?"))
             {
+                ImGui.TextWrapped($"The icons on the compass can be resized in this settings menu");
+                ImGui.Text($"(other tab), the overall size of the compass (e.g. the height) is");
+                ImGui.Text($"influenced by the global font scale set in the Dalamud settings.");
+                ImGui.Text($"As long as the configuration window is open,");
+                ImGui.Text($"the compass width and position can also be adjusted.");
                 ImGui.TreePop();
             }
             ImGui.EndTabItem();
