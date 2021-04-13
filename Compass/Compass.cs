@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
 using Dalamud.Hooking;
+using Dalamud.Interface;
 using Dalamud.Plugin;
 using FFXIVClientStructs.Component.GUI;
 using ImGuiNET;
@@ -185,6 +186,7 @@ namespace Compass
             // TODO (chiv) Check the flag if _NaviMap is hidden in the HUD
             if (!naviMap->IsVisible) return;
             var scale = _config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
+            var heightScale = ImGui.GetIO().FontGlobalScale;
             const float windowHeight = 50f;
             const ImGuiWindowFlags flags = ImGuiWindowFlags.NoDecoration
                                            | ImGuiWindowFlags.NoMove
@@ -194,9 +196,10 @@ namespace Compass
                                            | ImGuiWindowFlags.NoNav
                                            | ImGuiWindowFlags.NoInputs
                                            | ImGuiWindowFlags.NoCollapse;
+            ImGuiHelpers.ForceNextWindowMainViewport();
             ImGui.SetNextWindowSizeConstraints(
-                new Vector2(250f, (windowHeight + 20) * scale),
-                new Vector2(int.MaxValue, (windowHeight + 20) * scale));
+                new Vector2(250f, (windowHeight + 20) * heightScale),
+                new Vector2(int.MaxValue, (windowHeight + 20) * heightScale));
             if (!ImGui.Begin("###ImGuiCompassWindow"
                 , _buildingConfigUi
                     ? ImGuiWindowFlags.NoCollapse
@@ -236,7 +239,7 @@ namespace Compass
             // TODO (Chiv) do it all in Radians
             var widthOfCompass = ImGui.GetWindowContentRegionWidth();
             var halfWidthOfCompass = widthOfCompass * 0.5f;
-            var halfHeightOfCompass = windowHeight * 0.5f * scale;
+            var halfHeightOfCompass = windowHeight * 0.5f * heightScale;
             var compassUnit = widthOfCompass / (2f*(float)Math.PI);
 
             var drawList = ImGui.GetWindowDrawList();
@@ -296,10 +299,10 @@ namespace Compass
                                 .FileName;
                         // NOTE (Chiv) We are in a try-catch, so we just throw if the read failed.
                         // Cannot act anyways if the texture path is butchered
-                        var textureFileName = Marshal.PtrToStringAnsi(new IntPtr(texFileNamePtr))!;
+                        var textureFileName = new string((sbyte*) texFileNamePtr);
                         //var success = uint.TryParse(textureFileName.Substring(textureFileName.LastIndexOf('/')+1, 6), out var iconId);
-
-                        var _ = uint.TryParse(textureFileName.Substring(textureFileName.Length - 10, 6),
+                        //We assume all ui elements beside navimap.tex start with  'ui/icon/XXXXXX/', followerd by a six-digit number
+                        var _ = uint.TryParse(textureFileName.Substring(15, 6),
                             out var iconId);
                         //iconId = 0 (==> success == false as IconID will never be 0) Must have been NaviMap (and only that hopefully)
                         var textureIdPtr = new IntPtr(tex->D3D11ShaderResourceView);
@@ -401,7 +404,8 @@ namespace Compass
                                         mapIconComponentNode->AtkResNode.Y
                                     ),
                                     playerForward,
-                                    mapScale);
+                                    mapScale
+                                );
                                 // TODO Ring, ring, SignedAngle first arg is FROM !
                                 // TODO (Chiv) Ehhh, the minus before SignedAngle
                                 // NOTE (Chiv) We assume part.Width == part.Height == 32
@@ -569,12 +573,12 @@ namespace Compass
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static (float scaleFactor, float signedAngle, float distance) CalculateDrawVariables(Vector2 from,
-            Vector2 to, Vector2 forward, float distanceScaling)
+            Vector2 to, Vector2 forward, float distanceScaling, float maxDistance = 180f, float distanceOffset = 45f)
         {
-            const float lowestScaleFactor = 0.3f;
+            const float lowestScaleFactor = 0.2f;
             // TODO (Chiv) Distance Offset adjustments
-            var distanceOffset = 40f * distanceScaling; //80f @Max Zoom(==2) _NaviMap
-            var maxDistance = 180f * distanceScaling; //360f @Max Zoom(==2) _NaviMap
+            distanceOffset *= distanceScaling; //80f @Max Zoom(==2) _NaviMap, default
+            maxDistance *= distanceScaling; //360f @Max Zoom(==2) _NaviMap, default
             //TODO (Chiv) Oh boy, check the math
             var distance = Vector2.Distance(to, from);
             var scaleFactor = Math.Max(1f - (distance - distanceOffset) / maxDistance, lowestScaleFactor);

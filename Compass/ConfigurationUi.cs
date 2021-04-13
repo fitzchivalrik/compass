@@ -21,7 +21,8 @@ namespace Compass
             var shouldBuildConfigUi = true;
             var changed = false;
             var scale = ImGui.GetIO().FontGlobalScale;
-            ImGui.SetNextWindowSize(new Vector2(575 * scale, 400 * scale), ImGuiCond.FirstUseEver);
+            ImGuiHelpers.ForceNextWindowMainViewport();
+            ImGui.SetNextWindowSize(new Vector2(375 * scale, 400 * scale), ImGuiCond.FirstUseEver);
             ImGui.SetNextWindowSizeConstraints(new Vector2(350 * scale, 200 * scale),
                 new Vector2(float.MaxValue, float.MaxValue));
             if (!ImGui.Begin($"{Compass.PluginName} Configuration", ref shouldBuildConfigUi,
