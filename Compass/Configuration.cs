@@ -21,12 +21,12 @@ namespace Compass
         public bool ImGuiCompassDrawBorder = true;
         public bool ImGuiCompassFillBackground = false;
         public Vector4 ImGuiBackgroundColour = new(0.2f,0.2f,0.2f,0.2f);
-        public Vector4 ImGuiBackgroundBorderColour = new(0.2f,0.2f,0.2f,1f);
+        public Vector4 ImGuiBackgroundBorderColour = new(0.4f,0.4f,0.4f,1f);
         public float ImGuiCompassBackgroundRounding = 10f;
 
         public bool ImGuiCompassEnableCenterMarker = true;
         public bool ImGuiCompassFlipCentreMarker;
-        public int ImGuiCompassCentreMarkerOffset = 27;
+        public int ImGuiCompassCentreMarkerOffset = 20;
         public bool ImGuiCompassEnable = true;
         
         public bool[] ShouldHideOnUiObjectSerializer = new bool[0];

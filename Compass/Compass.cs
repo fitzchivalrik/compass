@@ -300,8 +300,7 @@ namespace Compass
                         // Cannot act anyways if the texture path is butchered
                         var textureFileName = new string((sbyte*) texFileNamePtr);
                         //var success = uint.TryParse(textureFileName.Substring(textureFileName.LastIndexOf('/')+1, 6), out var iconId);
-                        //We assume all ui elements beside navimap.tex start with  'ui/icon/XXXXXX/', followerd by a six-digit number
-                        var _ = uint.TryParse(textureFileName.Substring(15, 6),
+                        var _ = uint.TryParse(textureFileName.Substring(textureFileName.LastIndexOf('/')+1, 6),
                             out var iconId);
                         //iconId = 0 (==> success == false as IconID will never be 0) Must have been NaviMap (and only that hopefully)
                         var textureIdPtr = new IntPtr(tex->D3D11ShaderResourceView);
@@ -335,7 +334,7 @@ namespace Compass
                                                                playerForward);
                                 // We hope width == height
                                 const int naviMapIconHalfWidth = 12;
-                                var naviMapYOffset = 7 * scale;
+                                var naviMapYOffset = 12 * scale;
                                 pMin = new Vector2(compassCentre.X - naviMapIconHalfWidth + naviMapCutIconOffset,
                                     compassCentre.Y - naviMapYOffset - naviMapIconHalfWidth);
                                 pMax = new Vector2(
@@ -399,6 +398,7 @@ namespace Compass
                             case 071085: // LeveQuest Complete Marker
                             case 071143: // BlueQuest Ongoing Marker
                             case 071145: // BlueQuest Complete Marker
+                            case 060955: //Arrow down for quests
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                     // => The current quest marker is inside the mask and should be
                                     // treated as a map point
