@@ -229,7 +229,7 @@ namespace Compass
             // And apparently even accessible & updated if _NaviMap is disabled
             // => This leads to jerky behaviour though
             //var cameraRotationInRadian = miniMapIconsRootComponentNode->Component->ULDData.NodeList[2]->Rotation;
-            var scaleFactorForRotationBasedDistance = scale;
+            var distanceScaleFactorForRotationIcons = scale * 0.7f;
             // TODO (Chiv) My math must be bogus somewhere, cause I need to do some things differently then math would say
             // TODO I think my and the games coordinate system do not agree
             // TODO (Chiv) Redo the math for not locked _NaviMap (might be easier? Should be the same?)
@@ -333,17 +333,28 @@ namespace Compass
                                 
                                 uv = new Vector2(u, v);
                                 uv1 = new Vector2(u1, v1);
-                                // Arrows and such are always rotation based
+                                // Arrows and such are always rotation based, we draw them slightly on top
                                 // TODO (Chiv) Glowing thingy is not
-                                goto case 1;
-                            case 1: // Rotation Based icons go here after setting up their UVs
+                                var naviMapCutIconOffset = compassUnit *
+                                                         -CalculateSignedAngle(mapIconComponentNode->AtkResNode.Rotation,
+                                                             playerForward);
+                                // We hope width == height
+                                const int naviMapIconHalfWidth = 12;
+                                var naviMapYOffset = 7 * scale;
+                                pMin = new Vector2(compassCentre.X - naviMapIconHalfWidth + naviMapCutIconOffset,
+                                    compassCentre.Y - naviMapYOffset - naviMapIconHalfWidth);
+                                pMax = new Vector2(
+                                    compassCentre.X + naviMapCutIconOffset + naviMapIconHalfWidth,
+                                    compassCentre.Y - naviMapYOffset + naviMapIconHalfWidth);
+                                break;
+                            case 1: // Rotation icons (except naviMap arrows) go here after setting up their UVs
                                 // TODO Ring, ring, SignedAngle first arg is FROM !
                                 // TODO (Chiv) Ehhh, the minus before SignedAngle
                                 var rotationIconOffset = compassUnit *
                                                        -CalculateSignedAngle(mapIconComponentNode->AtkResNode.Rotation,
                                                            playerForward);
                                 // We hope width == height
-                                var rotationIconHalfWidth = part.Width * 0.5f * scaleFactorForRotationBasedDistance;
+                                var rotationIconHalfWidth = 12f * distanceScaleFactorForRotationIcons;
                                 pMin = new Vector2(compassCentre.X - rotationIconHalfWidth + rotationIconOffset,
                                     compassCentre.Y - rotationIconHalfWidth);
                                 pMax = new Vector2(
@@ -401,7 +412,7 @@ namespace Compass
                                 goto case 1; //No UV setup needed for quest markers
                             case 060457: // Area Transition Bullet Thingy
                             default:
-                                var (iconScaleFactor, iconAngle, _) = CalculateDrawVariables(
+                                var (distanceScaleFactor, iconAngle, _) = CalculateDrawVariables(
                                     playerPos,
                                     new Vector2(
                                         mapIconComponentNode->AtkResNode.X,
@@ -414,7 +425,7 @@ namespace Compass
                                 // TODO (Chiv) Ehhh, the minus before SignedAngle
                                 // NOTE (Chiv) We assume part.Width == part.Height == 32
                                 var iconOffset = compassUnit * -iconAngle;
-                                var iconHalfWidth = halfWidth32 * iconScaleFactor;
+                                var iconHalfWidth = halfWidth32 * distanceScaleFactor;
                                 pMin = new Vector2(compassCentre.X - iconHalfWidth + iconOffset,
                                     compassCentre.Y - iconHalfWidth);
                                 pMax = new Vector2(
@@ -576,7 +587,7 @@ namespace Compass
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static (float scaleFactor, float signedAngle, float distance) CalculateDrawVariables(Vector2 from,
+        private static (float distanceScaleFactor, float signedAngle, float distance) CalculateDrawVariables(Vector2 from,
             Vector2 to, Vector2 forward, float distanceScaling, float maxDistance = 180f, float distanceOffset = 40f)
         {
             const float lowestScaleFactor = 0.2f;
@@ -667,8 +678,7 @@ namespace Compass
                 _setCameraRotation?.Dispose();
                 
 #if DEBUG
-                _pluginInterface.UiBuilder.OnBuildUi -= BuildDebugUi;
-                _pluginInterface.CommandManager.RemoveHandler($"{Command}debug");
+                DebugDtor();
 #endif
             }
 
