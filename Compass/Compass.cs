@@ -258,7 +258,13 @@ namespace Compass
             //First, the background
             DrawImGuiCompassBackground( backgroundPMin, backgroundPMax);
             // Second, we position our Cardinals
-            DrawCardinals(compassUnit, playerForward, scale, naviMap, compassCentre, halfWidth32);
+            var westCardinalAtkImageNode = (AtkImageNode*) naviMap->ULDData.NodeList[11];
+            // TODO (Chiv) Cache on TerritoryChange/Initialisation?
+            var naviMapTextureD3D11ShaderResourceView = new IntPtr(
+                westCardinalAtkImageNode->PartsList->Parts[0]
+                    .ULDTexture->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
+            );
+            DrawCardinals(compassUnit, playerForward, scale, naviMapTextureD3D11ShaderResourceView, compassCentre, halfWidth32);
 
             try
             {
@@ -447,19 +453,306 @@ namespace Compass
 #endif
             }
         }
+        
+         private unsafe void BuildImGuiCompassArea()
+        {
+            UpdateHideCompass();
+            if (_shouldHideCompass) return;
+            if (!_config.ImGuiCompassEnable) return;
+            var areaMapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
+            if (areaMapPtr == IntPtr.Zero) return;
+            var areaMap = (AtkUnitBase*) areaMapPtr;
+            //NOTE (chiv) 3 means fully loaded
+            if (areaMap->ULDData.LoadedState != 3) return;
+            if (!areaMap->IsVisible) return;
+            var scale = _config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
+            var heightScale = ImGui.GetIO().FontGlobalScale;
+            const float windowHeight = 50f;
+            const ImGuiWindowFlags flags = ImGuiWindowFlags.NoDecoration
+                                           | ImGuiWindowFlags.NoMove
+                                           | ImGuiWindowFlags.NoMouseInputs
+                                           | ImGuiWindowFlags.NoFocusOnAppearing
+                                           | ImGuiWindowFlags.NoBackground
+                                           | ImGuiWindowFlags.NoNav
+                                           | ImGuiWindowFlags.NoInputs
+                                           | ImGuiWindowFlags.NoCollapse;
+            ImGuiHelpers.ForceNextWindowMainViewport();
+            ImGui.SetNextWindowSizeConstraints(
+                new Vector2(250f, (windowHeight + 20) * heightScale),
+                new Vector2(int.MaxValue, (windowHeight + 20) * heightScale));
+            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(Vector2.Zero, ImGuiCond.FirstUseEver);
+            if (!ImGui.Begin("###ImGuiCompassWindow"
+                , _buildingConfigUi
+                    ? ImGuiWindowFlags.NoCollapse
+                      | ImGuiWindowFlags.NoTitleBar
+                      | ImGuiWindowFlags.NoFocusOnAppearing
+                      | ImGuiWindowFlags.NoScrollbar
+                      | ImGuiWindowFlags.NoBackground
+                    : flags)
+            )
+            {
+                ImGui.End();
+                return;
+            }
+            // NOTE (Chiv) This is the position of the player in the area map coordinate system is
+            // not always the same (only if 'Center map on location' is activated)
+            // The coordinate system has positive down Y grow, we do calculations in a 'default' coordinate system
+            // with positive up Y grow
+            // => All game Y needs to be flipped.
+            var playerX = 72;
+            var playerY = -72;
+            const uint whiteColor = 0xFFFFFFFF;
+            // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
+            var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
+            var areaMapIconsRootComponentNode = (AtkComponentNode*) areaMap->ULDData.NodeList[3];
+            if (areaMapIconsRootComponentNode->Component->ULDData.NodeListCount != 265)
+            {
+                ImGui.End();
+                return;
+            }
+            var distanceScaleFactorForRotationIcons = scale * 0.7f;
+            var cosPlayer = (float) Math.Cos(cameraRotationInRadian);
+            var sinPlayer = (float) Math.Sin(cameraRotationInRadian);
+            // NOTE (Chiv) Interpret game's camera rotation as
+            // 0 => (0,1) (North), PI/2 => (-1,0) (West)  in default coordinate system
+            // Games Map coordinate system origin is upper left, with positive Y grow
+            var playerForward = new Vector2(-sinPlayer, cosPlayer);
+            var zeroVec = Vector2.Zero;
+            var oneVec = Vector2.One;
+            var widthOfCompass = ImGui.GetWindowContentRegionWidth();
+            var halfWidthOfCompass = widthOfCompass * 0.5f;
+            var halfHeightOfCompass = windowHeight * 0.5f * heightScale;
+            var compassUnit = widthOfCompass / (2f*(float)Math.PI);
+
+            var drawList = ImGui.GetWindowDrawList();
+            var backgroundDrawList = ImGui.GetBackgroundDrawList();
+            var cursorPosition = ImGui.GetCursorScreenPos();
+            var compassCentre =
+                new Vector2(cursorPosition.X + halfWidthOfCompass, cursorPosition.Y + halfHeightOfCompass);
+            var halfWidth32 = 16 * scale;
+            var backgroundPMin = new Vector2(compassCentre.X - 5 - halfWidthOfCompass,
+                compassCentre.Y - halfHeightOfCompass * 0.5f - 2);
+            var backgroundPMax = new Vector2(compassCentre.X + 5 + halfWidthOfCompass,
+                compassCentre.Y + halfHeightOfCompass * 0.5f + 2);
+            //First, the background
+            DrawImGuiCompassBackground( backgroundPMin, backgroundPMax);
+            // Second, we position our Cardinals
+            var rotationTriangleImageNode = (AtkImageNode*) areaMapIconsRootComponentNode->Component->ULDData.NodeList[5];
+            // TODO (Chiv) Cache on TerritoryChange/Initialisation?
+            var naviMapTextureD3D11ShaderResourceView = new IntPtr(
+                rotationTriangleImageNode->PartsList->Parts[0]
+                    .ULDTexture->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
+            );
+            DrawCardinals(compassUnit, playerForward, scale, naviMapTextureD3D11ShaderResourceView, compassCentre, halfWidth32);
+            try
+            {
+                // Then, we do the dance through all relevant nodes on _NaviMap
+                // I imagine this throws sometimes because of racing conditions -> We try to access an already freed texture e.g.
+                // So we just ignore those small exceptions, it works a few frames later anyways
+                var mapSlider =
+                    (AtkComponentNode*)areaMap->ULDData.NodeList[32]; //maxZoom level == 2
+                // NOTE (Chiv) Slider position value is at this address
+                var mapScale = *(byte*) ((nint)(mapSlider->Component)+0xF0) + 1;
+                var playerPos = Vector2.Zero;
+                // NOTE (Chiv) We go down because we assume
+                // (a) The first visible node will always be the player marker and give us the player positoin
+                // (b) everything higher than 231 is region text node which we ignore (for now)
+                //231 && 6
+                for (var i = 231; i > 6; i--)
+                {
+                    var mapIconComponentNode =
+                        (AtkComponentNode*) areaMapIconsRootComponentNode->Component->ULDData.NodeList[i];
+                    if (!mapIconComponentNode->AtkResNode.IsVisible) continue;
+                    //SimpleLog.Log($"Player pos {playerPos}");
+                    for (var j = 3; j < 6; j++)
+                    {
+                        var imgNode = (AtkImageNode*) mapIconComponentNode->Component->ULDData.NodeList[j];
+                        if (imgNode->AtkResNode.Type != NodeType.Image)
+                        {
+                            continue;
+                        }
+                        if (!imgNode->AtkResNode.IsVisible || !imgNode->AtkResNode.ParentNode->IsVisible) continue;
+                        var part = imgNode->PartsList->Parts[imgNode->PartId];
+                        //NOTE (CHIV) Invariant: It should always be a resource
+#if DEBUG
+                        var type = part.ULDTexture->AtkTexture.TextureType;
+                        if (type != TextureType.Resource)
+                        {
+                            SimpleLog.Error($"{i} {j} was not a Resource texture");
+                            continue;
+                        };
+#endif
+                        var tex = part.ULDTexture->AtkTexture.Resource->KernelTextureObject;
+                        var texFileNamePtr =
+                            part.ULDTexture->AtkTexture.Resource->TexFileResourceHandle->ResourceHandle
+                                .FileName;
+                        // NOTE (Chiv) We are in a try-catch, so we just throw if the read failed.
+                        // Cannot act anyways if the texture path is butchered
+                        var textureFileName = new string((sbyte*) texFileNamePtr);
+                        //var success = uint.TryParse(textureFileName.Substring(textureFileName.LastIndexOf('/')+1, 6), out var iconId);
+                        var _ = uint.TryParse(textureFileName.Substring(textureFileName.LastIndexOf('/')+1, 6),
+                            out var iconId);
+                        //iconId = 0 (==> success == false as IconID will never be 0) Must have been NaviMap (and only that hopefully)
+                        var textureIdPtr = new IntPtr(tex->D3D11ShaderResourceView);
+                        Vector2 pMin;
+                        Vector2 pMax;
+                        var uv = zeroVec;
+                        var uv1 = oneVec;
+                        var tintColour = whiteColor;
+
+                        switch (iconId)
+                        {
+                            case 0: //Arrows to quests and fates, glowy thingy
+                                continue; //Nothing here in AreaMap we wanna draw
+                                // NOTE (Chiv) We assume part.Width == part.Height == 24
+                                // NOTE (Chiv) We assume tex.Width == 448 && tex.Height == 212
+                                //TODO (Chiv) Will break on glowy under thingy, need to test if 'if' or 'read' is slower, I assume if
+                                var u = (float) part.U / 448; // = (float) part.U / tex->Width;
+                                var v = (float) part.V / 212; // = (float) part.V / tex->Height;
+                                var u1 = (float) (part.U + 24) / 448; // = (float) (part.U + part.Width) / tex->Width;
+                                var v1 = (float) (part.V + 24) / 212; // = (float) (part.V + part.Height) / tex->Height;
+                                //var u = (float) part.U / tex->Width;
+                                //var v = (float) part.V / tex->Height; 
+                                //var u1 = (float) (part.U + part.Width) / tex->Width; 
+                                //var v1 = (float) (part.V + part.Height) / tex->Height;
+                                
+                                uv = new Vector2(u, v);
+                                uv1 = new Vector2(u1, v1);
+                                // Arrows and such are always rotation based, we draw them slightly on top
+                                // TODO (Chiv) Glowing thingy is not
+                                var naviMapCutIconOffset = compassUnit *
+                                                           SignedAngle(mapIconComponentNode->AtkResNode.Rotation,
+                                                               playerForward);
+                                // We hope width == height
+                                const int naviMapIconHalfWidth = 12;
+                                var naviMapYOffset = 12 * scale;
+                                pMin = new Vector2(compassCentre.X - naviMapIconHalfWidth + naviMapCutIconOffset,
+                                    compassCentre.Y - naviMapYOffset - naviMapIconHalfWidth);
+                                pMax = new Vector2(
+                                    compassCentre.X + naviMapCutIconOffset + naviMapIconHalfWidth,
+                                    compassCentre.Y - naviMapYOffset + naviMapIconHalfWidth);
+                                //SimpleLog.Log($"{i} {j}");
+                                break;
+                            case 1: // Rotation icons (except naviMap arrows) go here after setting up their UVs
+                                // NOTE (Chiv) Rotations for icons on the map are mirrowed from the
+                                var rotationIconOffset = compassUnit *
+                                                       SignedAngle(mapIconComponentNode->AtkResNode.Rotation,
+                                                           playerForward);
+                                // We hope width == height
+                                var rotationIconHalfWidth = 12f * distanceScaleFactorForRotationIcons;
+                                pMin = new Vector2(compassCentre.X - rotationIconHalfWidth + rotationIconOffset,
+                                    compassCentre.Y - rotationIconHalfWidth);
+                                pMax = new Vector2(
+                                    compassCentre.X + rotationIconOffset + rotationIconHalfWidth,
+                                    compassCentre.Y + rotationIconHalfWidth);
+                                break;
+                            case 060443: //Player Marker
+                                playerPos = new Vector2(mapIconComponentNode->AtkResNode.X,
+                                    -mapIconComponentNode->AtkResNode.Y);
+                                if (!_config.ImGuiCompassEnableCenterMarker) continue;
+                                drawList = backgroundDrawList;
+                                pMin = new Vector2(compassCentre.X - halfWidth32,
+                                    compassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * scale -
+                                    halfWidth32);
+                                pMax = new Vector2(compassCentre.X + halfWidth32,
+                                    compassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * scale +
+                                    halfWidth32);
+                                uv1 = _config.ImGuiCompassFlipCentreMarker ? new Vector2(1, -1) : oneVec;
+                                break;
+                            case 060495: // Small Area Circle
+                            case 060496: // Big Area Circle
+                            case 060497: // Another Circle
+                            case 060498: // One More Circle
+                                bool inArea;
+                                (pMin, pMax, tintColour, inArea)
+                                    = CalculateAreaCirlceVariables(playerPos, playerForward, mapIconComponentNode,
+                                        imgNode, mapScale, compassUnit, halfWidth32, compassCentre,
+                                        65f,5f);
+                                if (inArea)
+                                    //*((byte*) &tintColour + 3) = 0x33  == (0x33FFFFFF) & (tintColour)
+                                    backgroundDrawList.AddRectFilled(
+                                        backgroundPMin
+                                        , backgroundPMax
+                                        , 0x33FFFFFF & tintColour //Set A to 0.2
+                                        , _config.ImGuiCompassBackgroundRounding
+                                    );
+                                break;
+                            case 060542: // Arrow UP on Circle
+                            case 060543:// TODO Another Arrow UP?
+                            case 060545: // Another Arrow DOWN
+                            case 060546: // Arrow DOWN on Circle
+                                (pMin, pMax, tintColour, _)
+                                    = CalculateAreaCirlceVariables(playerPos, playerForward, mapIconComponentNode,
+                                        imgNode, mapScale, compassUnit, halfWidth32, compassCentre, 65f, 5f);
+                                break;
+                            case 071023: // Quest Ongoing Marker
+                            case 071025: // Quest Complete Marker
+                            case 071063: // BookQuest Ongoing Marker
+                            case 071065: // BookQuest Complete Marker
+                            case 071083: // LeveQuest Ongoing Marker
+                            case 071085: // LeveQuest Complete Marker
+                            case 071143: // BlueQuest Ongoing Marker
+                            case 071145: // BlueQuest Complete Marker
+                            case 060955: //Arrow down for quests
+                                if (mapIconComponentNode->AtkResNode.Rotation == 0)
+                                    // => The current quest marker is inside the mask and should be
+                                    // treated as a map point
+                                    goto default;
+                                // => The current quest marker is outside the mask and should be
+                                // treated as a rotation
+                                goto case 1; //No UV setup needed for quest markers
+                            case 060457: // Area Transition Bullet Thingy
+                            default:
+                                // NOTE (Chiv) Remember, Y needs to be flipped to transform to default coordinate system
+                                var (distanceScaleFactor, iconAngle, _) = CalculateDrawVariables(
+                                    playerPos,
+                                    new Vector2(
+                                        mapIconComponentNode->AtkResNode.X,
+                                        -mapIconComponentNode->AtkResNode.Y
+                                    ),
+                                    playerForward,
+                                    mapScale,
+                                    65f,
+                                    5f
+                                );
+                                //SimpleLog.Log($"Distance to {iconId}:{d} ");
+                                //SimpleLog.Log($"PlayerPos {playerPos}, iconPos {new Vector2(mapIconComponentNode->AtkResNode.X, -mapIconComponentNode->AtkResNode.Y)}");
+                                // NOTE (Chiv) We assume part.Width == part.Height == 32
+                                var iconOffset = compassUnit * iconAngle;
+                                var iconHalfWidth = halfWidth32 * distanceScaleFactor;
+                                pMin = new Vector2(compassCentre.X - iconHalfWidth + iconOffset,
+                                    compassCentre.Y - iconHalfWidth);
+                                pMax = new Vector2(
+                                    compassCentre.X + iconOffset + iconHalfWidth,
+                                    compassCentre.Y + iconHalfWidth);
+                                break;
+                        }
+
+                        drawList.AddImage(textureIdPtr, pMin, pMax, uv, uv1, tintColour);
+                    }
+                }
+
+                //TODO (Chiv) Later, we might do that for AreaMap too
+            }
+#if DEBUG
+            catch (Exception e)
+            {
+
+                SimpleLog.Error(e);
+#else
+            catch
+            {
+                // ignored
+#endif
+            }
+        }
 
         private static unsafe void DrawCardinals(float compassUnit, Vector2 playerForward, float scale,
-            AtkUnitBase* naviMap, Vector2 compassCentre,
+            IntPtr naviMapTextureD3D11ShaderResourceView, Vector2 compassCentre,
             float halfWidth32)
         {
             var backgroundDrawList = ImGui.GetBackgroundDrawList();
-            var westCardinalAtkImageNode = (AtkImageNode*) naviMap->ULDData.NodeList[11];
-            // TODO (Chiv) Cache on TerritoryChange/Initialisation?
-            var naviMapTextureD3D11ShaderResourceView = new IntPtr(
-                westCardinalAtkImageNode->PartsList->Parts[0]
-                    .ULDTexture->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
-            );
-            
+
             var east = Vector2.UnitX;
             var south = -Vector2.UnitY;
             var west = -Vector2.UnitX;
@@ -545,7 +838,8 @@ namespace Compass
              [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
             Vector2 playerPos, Vector2 playerForward, AtkComponentNode* mapIconComponentNode,
-            AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre)
+            AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre,
+            float maxDistance = 180f, float distanceOffset = 40f)
         {
             // TODO Distinguish between Circles for quests and circles for Fates (colour?) for filtering
             // NOTE (Chiv) Remember, Y needs to be flipped to transform to default coordinate system
@@ -556,7 +850,9 @@ namespace Compass
                     -mapIconComponentNode->AtkResNode.Y
                 ),
                 playerForward,
-                mapScale);
+                mapScale,
+                maxDistance,
+                distanceOffset);
             var radius = mapIconComponentNode->AtkResNode.ScaleX *
                          (mapIconComponentNode->AtkResNode.Width - mapIconComponentNode->AtkResNode.OriginX);
             // NOTE (Chiv) We assume part.Width == part.Height == 32
@@ -616,7 +912,7 @@ namespace Compass
         private void BuildUi()
         {
             
-            BuildImGuiCompass();
+            BuildImGuiCompassArea();
             if (!_buildingConfigUi) return;
             var (shouldBuildConfigUi, changedConfig) = ConfigurationUi.DrawConfigUi(_config);
             if (changedConfig)
