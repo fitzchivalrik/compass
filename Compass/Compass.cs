@@ -277,13 +277,10 @@ namespace Compass
                     {
                         // NOTE (Chiv) Invariant: From 2 onward, only ImageNodes
                         var imgNode = (AtkImageNode*) mapIconComponentNode->Component->ULDData.NodeList[j];
-#if DEBUG
                         if (imgNode->AtkResNode.Type != NodeType.Image)
                         {
-                            SimpleLog.Error($"{i}{j} was not an ImageNode");
                             continue;
                         }
-#endif
                         if (!imgNode->AtkResNode.IsVisible || !imgNode->AtkResNode.ParentNode->IsVisible) continue;
                         var part = imgNode->PartsList->Parts[imgNode->PartId];
                         //NOTE (CHIV) Invariant: It should always be a resource
@@ -291,7 +288,7 @@ namespace Compass
                         var type = part.ULDTexture->AtkTexture.TextureType;
                         if (type != TextureType.Resource)
                         {
-                            SimpleLog.Error($"{i}{j} was not a Resource texture");
+                            SimpleLog.Error($"{i} {j} was not a Resource texture");
                             continue;
                         };
 #endif
