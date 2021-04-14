@@ -54,7 +54,7 @@ namespace Compass
             ImGui.Text("Please have a look at the configuration, especially at the FAQ section,");
             ImGui.Text("for a quick explanation of the current caveats and settings needed");
             ImGui.Text("for the compass to work.");
-            ImGui.Text("May Hydaelyn protect you in your exploration of Eorzea and beyond!");
+            ImGui.Text("May Hydaelyn protect you in your adventures across Eorzea and beyond!");
             ImGui.Spacing();
             if (ImGui.Button("Continue the adventure##FreshInstallPopUp"))
             {

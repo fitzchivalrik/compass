@@ -390,6 +390,8 @@ namespace Compass
                                     );
                                 break;
                             case 060542: // Arrow UP on Circle
+                            case 060543:// TODO Another Arrow UP
+                            case 060545: // Another Arrow DOWN
                             case 060546: // Arrow DOWN on Circle
                                 (pMin, pMax, tintColour, _)
                                     = CalculateAreaCirlceVariables(playerPos, playerForward, mapIconComponentNode,
