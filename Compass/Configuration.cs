@@ -15,6 +15,8 @@ namespace Compass
         [JsonIgnore] public int AddonCompassBackgroundPartId = 1;
         [JsonIgnore] public bool AddonCompassDisableBackground;
         [JsonIgnore] public bool AddonCompassEnable;
+
+        public bool UseAreaMapAsSource;
         
         public float ImGuiCompassScale = 1f;
         public bool ImGuiCompassEnableBackground = true;

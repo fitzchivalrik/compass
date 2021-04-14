@@ -1,10 +1,5 @@
 ﻿name: Compass
 author: Chivalrik
 description: |-
-  Allows one to create vibration patterns for the controller and specify triggers for them.
-
-  You need to configure patterns and triggers before it will work.
-  Currently supported triggers are:
-  - Cooldowns
-  - Near Aether Current
+  Monodimensional compass for your adventures.
 repo_url: https://github.com/fitzchivalrik/compass

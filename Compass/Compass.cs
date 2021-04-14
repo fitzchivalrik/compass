@@ -146,7 +146,7 @@ namespace Compass
 #else
 
             if (_pluginInterface.Reason == PluginLoadReason.Installer
-                || _pluginInterface.ClientState.LocalPlayer is not null
+               // || _pluginInterface.ClientState.LocalPlayer is not null
             )
             {
                 OnLogin(null!, null!);
@@ -168,6 +168,9 @@ namespace Compass
         {
             _pluginInterface.UiBuilder.OnOpenConfigUi -= OnOpenConfigUi;
             _pluginInterface.UiBuilder.OnBuildUi -= BuildUi;
+
+            _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompassArea;
+            _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompassNavi;
         }
 
         private void OnLogin(object sender, EventArgs e)
@@ -175,10 +178,11 @@ namespace Compass
             _setCameraRotation.Enable();
             _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
             _pluginInterface.UiBuilder.OnBuildUi += BuildUi;
+            UpdateCompassSource();
         }
 
         // TODO Cut this s@>!? in smaller methods
-        private unsafe void BuildImGuiCompass()
+        private unsafe void BuildImGuiCompassNavi()
         {
             UpdateHideCompass();
             if (_shouldHideCompass) return;
@@ -390,10 +394,12 @@ namespace Compass
                                         , _config.ImGuiCompassBackgroundRounding
                                     );
                                 break;
+                            case 060541: // Arrow UP on Circle
                             case 060542: // Arrow UP on Circle
-                            case 060543:// TODO Another Arrow UP?
+                            case 060543: // Another Arrow UP
                             case 060545: // Another Arrow DOWN
                             case 060546: // Arrow DOWN on Circle
+                            case 060547: // Arrow DOWN on Circle
                                 (pMin, pMax, tintColour, _)
                                     = CalculateAreaCirlceVariables(playerPos, playerForward, mapIconComponentNode,
                                         imgNode, mapScale, compassUnit, halfWidth32, compassCentre);
@@ -406,7 +412,8 @@ namespace Compass
                             case 071085: // LeveQuest Complete Marker
                             case 071143: // BlueQuest Ongoing Marker
                             case 071145: // BlueQuest Complete Marker
-                            case 060955: //Arrow down for quests
+                            case 060954: // Arrow up for quests
+                            case 060955: // Arrow down for quests
                             case 060561: // Red Flag (Custom marker)
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                     // => The current quest marker is inside the mask and should be
@@ -442,7 +449,6 @@ namespace Compass
                     }
                 }
 
-                //TODO (Chiv) Later, we might do that for AreaMap too
             }
 #if DEBUG
             catch (Exception e)
@@ -457,6 +463,7 @@ namespace Compass
             }
         }
         
+        // TODO (Chiv) Remove the duplicated code between the two data sources
          private unsafe void BuildImGuiCompassArea()
         {
             UpdateHideCompass();
@@ -497,13 +504,6 @@ namespace Compass
                 ImGui.End();
                 return;
             }
-            // NOTE (Chiv) This is the position of the player in the area map coordinate system is
-            // not always the same (only if 'Center map on location' is activated)
-            // The coordinate system has positive down Y grow, we do calculations in a 'default' coordinate system
-            // with positive up Y grow
-            // => All game Y needs to be flipped.
-            var playerX = 72;
-            var playerY = -72;
             const uint whiteColor = 0xFFFFFFFF;
             // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
             var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
@@ -609,18 +609,18 @@ namespace Compass
                         switch (iconId)
                         {
                             case 0: //Arrows to quests and fates, glowy thingy
-                                continue; //Nothing here in AreaMap we wanna draw
+                                continue; //Nothing here in AreaMap we wanna draw, just glowy thing. For now.
                                 // NOTE (Chiv) We assume part.Width == part.Height == 24
                                 // NOTE (Chiv) We assume tex.Width == 448 && tex.Height == 212
                                 //TODO (Chiv) Will break on glowy under thingy, need to test if 'if' or 'read' is slower, I assume if
-                                var u = (float) part.U / 448; // = (float) part.U / tex->Width;
-                                var v = (float) part.V / 212; // = (float) part.V / tex->Height;
-                                var u1 = (float) (part.U + 24) / 448; // = (float) (part.U + part.Width) / tex->Width;
-                                var v1 = (float) (part.V + 24) / 212; // = (float) (part.V + part.Height) / tex->Height;
-                                //var u = (float) part.U / tex->Width;
-                                //var v = (float) part.V / tex->Height; 
-                                //var u1 = (float) (part.U + part.Width) / tex->Width; 
-                                //var v1 = (float) (part.V + part.Height) / tex->Height;
+                                //var u = (float) part.U / 448; // = (float) part.U / tex->Width;
+                                //var v = (float) part.V / 212; // = (float) part.V / tex->Height;
+                                //var u1 = (float) (part.U + 24) / 448; // = (float) (part.U + part.Width) / tex->Width;
+                                //var v1 = (float) (part.V + 24) / 212; // = (float) (part.V + part.Height) / tex->Height;
+                                var u = (float) part.U / tex->Width;
+                                var v = (float) part.V / tex->Height; 
+                                var u1 = (float) (part.U + part.Width) / tex->Width; 
+                                var v1 = (float) (part.V + part.Height) / tex->Height;
                                 
                                 uv = new Vector2(u, v);
                                 uv1 = new Vector2(u1, v1);
@@ -683,10 +683,12 @@ namespace Compass
                                         , _config.ImGuiCompassBackgroundRounding
                                     );
                                 break;
+                            case 060541: // Arrow UP on Circle
                             case 060542: // Arrow UP on Circle
-                            case 060543:// TODO Another Arrow UP?
+                            case 060543: // Another Arrow UP
                             case 060545: // Another Arrow DOWN
                             case 060546: // Arrow DOWN on Circle
+                            case 060547: // Arrow DOWN on Circle
                                 (pMin, pMax, tintColour, _)
                                     = CalculateAreaCirlceVariables(_lastKnownPlayerPos, playerForward, mapIconComponentNode,
                                         imgNode, mapScale, compassUnit, halfWidth32, compassCentre, maxDistance, distanceOffset, lowestScaleFactor);
@@ -699,7 +701,8 @@ namespace Compass
                             case 071085: // LeveQuest Complete Marker
                             case 071143: // BlueQuest Ongoing Marker
                             case 071145: // BlueQuest Complete Marker
-                            case 060955: //Arrow down for quests
+                            case 060954: // Arrow up for quests
+                            case 060955: // Arrow down for quests
                             case 060561: // Red Flag (Custom marker)
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                 {
@@ -768,7 +771,6 @@ namespace Compass
                     }
                 }
 
-                //TODO (Chiv) Later, we might do that for AreaMap too
             }
 #if DEBUG
             catch (Exception e)
@@ -868,7 +870,22 @@ namespace Compass
             }
         }
 
-       
+
+        private void UpdateCompassSource()
+        {
+            _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompassNavi;
+            _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompassArea;
+            if (_config.UseAreaMapAsSource)
+            {
+                _pluginInterface.UiBuilder.OnBuildUi += BuildImGuiCompassArea;
+            }
+            else
+            {
+                _pluginInterface.UiBuilder.OnBuildUi += BuildImGuiCompassNavi;
+            }
+            
+            
+        }
         #region Math related methods
         
              [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -948,13 +965,13 @@ namespace Compass
         private void BuildUi()
         {
             
-            BuildImGuiCompassArea();
             if (!_buildingConfigUi) return;
             var (shouldBuildConfigUi, changedConfig) = ConfigurationUi.DrawConfigUi(_config);
             if (changedConfig)
             {
                 _pluginInterface.SavePluginConfig(_config);
                 _uiIdentifiers = UpdateUiIdentifiers(_config);
+                UpdateCompassSource();
             }
 
             if (!shouldBuildConfigUi) _buildingConfigUi = false;
