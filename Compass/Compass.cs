@@ -127,8 +127,7 @@ namespace Compass
             _setCameraRotation = new Hook<SetCameraRotationDelegate>(
                 _pluginInterface.TargetModuleScanner.ScanText(setCameraRotationSignature),
                 (SetCameraRotationDelegate) SetCameraRotationDetour);
-            _setCameraRotation.Enable();
-            
+
             #endregion
 
             #region Excel Data
@@ -158,8 +157,8 @@ namespace Compass
 
         private void SetCameraRotationDetour(nint cameraThis, float degree)
         {
-            _maybeCameraStruct = cameraThis;
             _setCameraRotation.Original(cameraThis, degree);
+            _maybeCameraStruct = cameraThis;
             _setCameraRotation.Disable();
         }
         
@@ -172,6 +171,7 @@ namespace Compass
 
         private void OnLogin(object sender, EventArgs e)
         {
+            _setCameraRotation.Enable();
             _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
             _pluginInterface.UiBuilder.OnBuildUi += BuildUi;
         }
