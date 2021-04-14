@@ -14,7 +14,6 @@ using SimpleTweaksPlugin;
 using FFXIVAction = Lumina.Excel.GeneratedSheets.Action;
 
 
-// TODO 5 Refactor DrawCombo to generic
 namespace Compass
 {
     public partial class Compass : IDisposable
@@ -219,28 +218,27 @@ namespace Compass
                 return;
             }
             // NOTE (Chiv) This is the position of the player in the minimap coordinate system
-            const int playerX = 72, playerY = 72;
+            // It has positive down Y grow, we do calculations in a 'default' coordinate system
+            // with positive up Y grow
+            // => All game Y needs to be flipped.
+            const int playerX = 72, playerY = -72;
             const uint whiteColor = 0xFFFFFFFF;
             // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
-            // We want PI/2 to be east
-            var cameraRotationInRadian = -*(float*) (_maybeCameraStruct + 0x130);
+            var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
             var miniMapIconsRootComponentNode = (AtkComponentNode*) naviMap->ULDData.NodeList[2];
             // Minimap rotation thingy is even already flipped!
             // And apparently even accessible & updated if _NaviMap is disabled
             // => This leads to jerky behaviour though
             //var cameraRotationInRadian = miniMapIconsRootComponentNode->Component->ULDData.NodeList[2]->Rotation;
             var distanceScaleFactorForRotationIcons = scale * 0.7f;
-            // TODO (Chiv) My math must be bogus somewhere, cause I need to do some things differently then math would say
-            // TODO I think my and the games coordinate system do not agree
-            // TODO (Chiv) Redo the math for not locked _NaviMap (might be easier? Should be the same?)
-            var playerCos = (float) Math.Cos(cameraRotationInRadian);
-            var playerSin = (float) Math.Sin(cameraRotationInRadian);
-            //TODO (Chiv) Uhm, actually with H=1, it should be new Vector(cos,sin); that breaks calculations though...
-            // Is my Coordinate System the same as the games' minimap?
-            var playerForward = new Vector2(-playerSin, playerCos);
+            var cosPlayer = (float) Math.Cos(cameraRotationInRadian);
+            var sinPlayer = (float) Math.Sin(cameraRotationInRadian);
+            // NOTE (Chiv) Interpret game's camera rotation as
+            // 0 => (0,1) (North), PI/2 => (-1,0) (West)  in default coordinate system
+            // Games Map coordinate system origin is upper left, with positive Y grow
+            var playerForward = new Vector2(-sinPlayer, cosPlayer);
             var zeroVec = Vector2.Zero;
             var oneVec = Vector2.One;
-            // TODO (Chiv) do it all in Radians
             var widthOfCompass = ImGui.GetWindowContentRegionWidth();
             var halfWidthOfCompass = widthOfCompass * 0.5f;
             var halfHeightOfCompass = windowHeight * 0.5f * heightScale;
@@ -336,8 +334,8 @@ namespace Compass
                                 // Arrows and such are always rotation based, we draw them slightly on top
                                 // TODO (Chiv) Glowing thingy is not
                                 var naviMapCutIconOffset = compassUnit *
-                                                         -CalculateSignedAngle(mapIconComponentNode->AtkResNode.Rotation,
-                                                             playerForward);
+                                                           SignedAngle(mapIconComponentNode->AtkResNode.Rotation,
+                                                               playerForward);
                                 // We hope width == height
                                 const int naviMapIconHalfWidth = 12;
                                 var naviMapYOffset = 7 * scale;
@@ -348,10 +346,9 @@ namespace Compass
                                     compassCentre.Y - naviMapYOffset + naviMapIconHalfWidth);
                                 break;
                             case 1: // Rotation icons (except naviMap arrows) go here after setting up their UVs
-                                // TODO Ring, ring, SignedAngle first arg is FROM !
-                                // TODO (Chiv) Ehhh, the minus before SignedAngle
+                                // NOTE (Chiv) Rotations for icons on the map are mirrowed from the
                                 var rotationIconOffset = compassUnit *
-                                                       -CalculateSignedAngle(mapIconComponentNode->AtkResNode.Rotation,
+                                                       SignedAngle(mapIconComponentNode->AtkResNode.Rotation,
                                                            playerForward);
                                 // We hope width == height
                                 var rotationIconHalfWidth = 12f * distanceScaleFactorForRotationIcons;
@@ -390,7 +387,7 @@ namespace Compass
                                     );
                                 break;
                             case 060542: // Arrow UP on Circle
-                            case 060543:// TODO Another Arrow UP
+                            case 060543:// TODO Another Arrow UP?
                             case 060545: // Another Arrow DOWN
                             case 060546: // Arrow DOWN on Circle
                                 (pMin, pMax, tintColour, _)
@@ -414,19 +411,18 @@ namespace Compass
                                 goto case 1; //No UV setup needed for quest markers
                             case 060457: // Area Transition Bullet Thingy
                             default:
+                                // NOTE (Chiv) Remember, Y needs to be flipped to transform to default coordinate system
                                 var (distanceScaleFactor, iconAngle, _) = CalculateDrawVariables(
                                     playerPos,
                                     new Vector2(
                                         mapIconComponentNode->AtkResNode.X,
-                                        mapIconComponentNode->AtkResNode.Y
+                                        -mapIconComponentNode->AtkResNode.Y
                                     ),
                                     playerForward,
                                     mapScale
                                 );
-                                // TODO Ring, ring, SignedAngle first arg is FROM !
-                                // TODO (Chiv) Ehhh, the minus before SignedAngle
                                 // NOTE (Chiv) We assume part.Width == part.Height == 32
-                                var iconOffset = compassUnit * -iconAngle;
+                                var iconOffset = compassUnit * iconAngle;
                                 var iconHalfWidth = halfWidth32 * distanceScaleFactor;
                                 pMin = new Vector2(compassCentre.X - iconHalfWidth + iconOffset,
                                     compassCentre.Y - iconHalfWidth);
@@ -466,14 +462,12 @@ namespace Compass
                 westCardinalAtkImageNode->PartsList->Parts[0]
                     .ULDTexture->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
             );
-            //TODO (Chiv) Uhm, no, east is the other way. Again, coordinate system mismatch?
-            var east = -Vector2.UnitX;
+            
+            var east = Vector2.UnitX;
             var south = -Vector2.UnitY;
-            var west = Vector2.UnitX;
+            var west = -Vector2.UnitX;
             var north = Vector2.UnitY;
-            // TODO (Chiv) Yeah, the minus  here is bogus as hell too.
-            // TODO (chiv) actually, SignedAngle first arg is FROM, not TO
-            var eastOffset = compassUnit * -SignedAngle(east, playerForward);
+            var eastOffset = compassUnit * SignedAngle(east, playerForward);
             var halfWidth20 = 10 * scale;
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
@@ -482,7 +476,7 @@ namespace Compass
                 , new Vector2(0.5446429f, 0.8301887f)
                 , new Vector2(0.5892857f, 0.9811321f)
             );
-            var southOffset = compassUnit * -SignedAngle(south, playerForward);
+            var southOffset = compassUnit * SignedAngle(south, playerForward);
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
                 , new Vector2(compassCentre.X - halfWidth20 + southOffset, compassCentre.Y - halfWidth32)
@@ -490,7 +484,7 @@ namespace Compass
                 , new Vector2(0.5892857f, 0.8301887f)
                 , new Vector2(0.6339286f, 0.9811321f)
             );
-            var westOffset = compassUnit * -SignedAngle(west, playerForward);
+            var westOffset = compassUnit * SignedAngle(west, playerForward);
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
                 , new Vector2(compassCentre.X - halfWidth32 + westOffset, compassCentre.Y - halfWidth32)
@@ -498,7 +492,7 @@ namespace Compass
                 , new Vector2(0.4732143f, 0.8301887f)
                 , new Vector2(0.5446429f, 0.9811321f)
             );
-            var northOffset = compassUnit * -SignedAngle(north, playerForward);
+            var northOffset = compassUnit * SignedAngle(north, playerForward);
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
                 , new Vector2(compassCentre.X - halfWidth32 + northOffset, compassCentre.Y - halfWidth32)
@@ -557,21 +551,19 @@ namespace Compass
             AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre)
         {
             // TODO Distinguish between Circles for quests and circles for Fates (colour?) for filtering
+            // NOTE (Chiv) Remember, Y needs to be flipped to transform to default coordinate system
             var (scaleArea, angleArea, distanceArea) = CalculateDrawVariables(
                 playerPos,
                 new Vector2(
                     mapIconComponentNode->AtkResNode.X,
-                    mapIconComponentNode->AtkResNode.Y
+                    -mapIconComponentNode->AtkResNode.Y
                 ),
                 playerForward,
                 mapScale);
-            //TODO Adjust for different scale levels...or not.
             var radius = mapIconComponentNode->AtkResNode.ScaleX *
                          (mapIconComponentNode->AtkResNode.Width - mapIconComponentNode->AtkResNode.OriginX);
-            // TODO Ring, ring, SignedAngle first arg is FROM !
-            // TODO (Chiv) Ehhh, the minus before SignedAngle
             // NOTE (Chiv) We assume part.Width == part.Height == 32
-            var areaCircleOffset = compassUnit * -angleArea;
+            var areaCircleOffset = compassUnit * angleArea;
             var areaHalfWidth = halfWidth32 * scaleArea;
             if (distanceArea >= radius)
                 return (
@@ -596,25 +588,24 @@ namespace Compass
             // TODO (Chiv) Distance Offset adjustments
             distanceOffset *= distanceScaling; //80f @Max Zoom(==2) _NaviMap, default
             maxDistance *= distanceScaling; //360f @Max Zoom(==2) _NaviMap, default
-            //TODO (Chiv) Oh boy, check the math
             var distance = Vector2.Distance(to, from);
             var scaleFactor = Math.Max(1f - (distance - distanceOffset) / maxDistance, lowestScaleFactor);
-            //return (scaleFactor,SignedAngle(to  - from, forward), distance);
-            return (scaleFactor, SignedAngle(from - to, forward), distance);
+            return (scaleFactor,SignedAngle(to  - from, forward), distance);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float CalculateSignedAngle(in float rotation, in Vector2 forward)
+        private static float SignedAngle(float rotation,in Vector2 forward)
         {
             var cosObject = (float) Math.Cos(rotation);
             var sinObject = (float) Math.Sin(rotation);
-            // TODO Wrong math!
-            var objectForward = new Vector2(-sinObject, cosObject);
+            // Note(Chiv) Same reasoning as player rotation,
+            // but the map rotation is mirrored in comparison, which changes the sinus
+            var objectForward = new Vector2(sinObject, cosObject);
             return SignedAngle(objectForward, forward);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float SignedAngle(Vector2 from, Vector2 to)
+        private static float SignedAngle(in Vector2 from,in Vector2 to)
         {
             var dot = Vector2.Dot(Vector2.Normalize(from), Vector2.Normalize(to));
             var sign = (from.X * to.Y - from.Y * to.X) >= 0 ? 1 : -1;

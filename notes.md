@@ -94,6 +94,8 @@ NaviMap has 206
 
 ### Stuff
 
+TargetManagerAddress - 0x120 => Camera XZY Coordinates?
+
 C# 9 Delegate magic
 ```c#
 public unsafe List<Action> LearnedBlueSpells {

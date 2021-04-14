@@ -102,10 +102,9 @@ namespace Compass
          //TODO (Chiv) While this is nice and somehow works, it still explodes 1-30 seconds later, so I give up on that for now
         private void OnFrameworkUpdateUpdateAddonCompass(Framework framework)
         {
-            // TODO (Chiv) Why use this and not the rotation on the minimap rotation thingy?
             // Minimap rotation thingy is even already flipped!
             // And apparently even accessible & updated if _NaviMap is disabled
-            var cameraRotationInRadian = -*(float*) (_maybeCameraStruct + 0x130);
+            var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
 
             var navimapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             if (navimapPtr == IntPtr.Zero) return;
@@ -117,7 +116,7 @@ namespace Compass
             try
             {
                 // NOTE (Chiv) This is the position of the player in the minimap coordinate system
-                const int playerX = 72, playerY = 72;
+                const int playerX = 72, playerY = -72;
                 const float distanceOffset = 80f;
                 const float maxDistance = 350f;
                 const float lowestScaleFactor = 0.3f;
@@ -125,16 +124,10 @@ namespace Compass
                 var scale = 1f / naviMap->Scale * _config.AddonCompassScale;
                 var scaleFactorForRotationBasedDistance =
                     Math.Max(1f - distanceOffset / maxDistance, lowestScaleFactor);
-                // TODO (Chiv) My math must be bogus somewhere, cause I need to do same things differently then math would say
-                // I think my and the games coordinate system do not agree
-                // TODO (Chiv) Redo the math for not locked _NaviMap (might be easier? Should be the same?)
                 var playerCos = (float) Math.Cos(cameraRotationInRadian);
                 var playerSin = (float) Math.Sin(cameraRotationInRadian);
-                //TODO (Chiv) Uhm, actually with H=1, it should be new Vector(cos,sin); that breaks calculations though...
-                // Is my Coordinate System the same as the games' minimap?
                 var playerViewVector = new Vector2(-playerSin, playerCos);
-                // TODO (Chiv) do it all in Radians
-                var compassUnit = _config.AddonCompassWidth / 360f;
+                var compassUnit = _config.AddonCompassWidth / (2f*(float)Math.PI);
                 //First, the background
                 UiHelper.SetSize(_background, _config.AddonCompassWidth, 50);
                 _background->PartId = (ushort) _config.AddonCompassBackgroundPartId;
@@ -145,28 +138,25 @@ namespace Compass
                 _background->AtkResNode.ScaleX = _background->AtkResNode.ScaleY = scale;
                 UiHelper.SetVisible((AtkResNode*) _background, !_config.AddonCompassDisableBackground);
                 // Second, we position our Cardinals
-                //TODO (Chiv) Uhm, no, east is the other way. Again, coordinate system mismatch?
-                var east = -Vector2.UnitX;
-                // TODO (Chiv) Yeah, the minus  here is bogus as hell too.
+                var east = Vector2.UnitX;
                 var south = -Vector2.UnitY;
-                var west = Vector2.UnitX;
+                var west = -Vector2.UnitX;
                 var north = Vector2.UnitY;
-                // TODO (chiv) actually, SignedAngle first arg is FROM, not TO
                 UiHelper.SetPosition(
                     _cardinalsClonedImageNodes[0],
-                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(east, playerViewVector),
+                    _config.AddonCompassOffset.X + compassUnit * SignedAngle(east, playerViewVector),
                     _config.AddonCompassOffset.Y);
                 UiHelper.SetPosition(
                     _cardinalsClonedImageNodes[1],
-                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(south, playerViewVector),
+                    _config.AddonCompassOffset.X + compassUnit * SignedAngle(south, playerViewVector),
                     _config.AddonCompassOffset.Y);
                 UiHelper.SetPosition(
                     _cardinalsClonedImageNodes[2],
-                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(west, playerViewVector),
+                    _config.AddonCompassOffset.X + compassUnit * SignedAngle(west, playerViewVector),
                     _config.AddonCompassOffset.Y);
                 UiHelper.SetPosition(
                     _cardinalsClonedImageNodes[3],
-                    _config.AddonCompassOffset.X + compassUnit * -SignedAngle(north, playerViewVector),
+                    _config.AddonCompassOffset.X + compassUnit * SignedAngle(north, playerViewVector),
                     _config.AddonCompassOffset.Y);
 
                 _cardinalsClonedImageNodes[0]->AtkResNode.ScaleX =
@@ -242,23 +232,22 @@ namespace Compass
                                 UiHelper.SetPosition(
                                     clone,
                                     _config.AddonCompassOffset.X,
-                                    _config.AddonCompassOffset.Y);
+                                    -_config.AddonCompassOffset.Y);
                                 break;
                             case var _ when texString?.EndsWith("060457.tex",
                                 StringComparison.InvariantCultureIgnoreCase) ?? false: // Area Transition Bullet Thingy
                                 var toObject = new Vector2(playerX - iconComponentNode->AtkResNode.X,
-                                    playerY - iconComponentNode->AtkResNode.Y);
+                                    playerY - -iconComponentNode->AtkResNode.Y);
                                 var distanceToObject = Vector2.Distance(
-                                    new Vector2(iconComponentNode->AtkResNode.X, iconComponentNode->AtkResNode.Y),
+                                    new Vector2(iconComponentNode->AtkResNode.X, -iconComponentNode->AtkResNode.Y),
                                     playerPos) - distanceOffset;
                                 var scaleFactor = Math.Max(1f - distanceToObject / maxDistance, lowestScaleFactor);
                                 clone->AtkResNode.ScaleX = clone->AtkResNode.ScaleY = scale * scaleFactor;
-                                // TODO (Chiv) Ehhh, the minus before SignedAngle
                                 UiHelper.SetPosition(
                                     clone,
                                     _config.AddonCompassOffset.X +
-                                    compassUnit * -SignedAngle(toObject, playerViewVector),
-                                    _config.AddonCompassOffset.Y);
+                                    compassUnit * SignedAngle(toObject, playerViewVector),
+                                    -_config.AddonCompassOffset.Y);
                                 break;
                             case var _ when (texString?.EndsWith("NaviMap.tex",
                                 StringComparison.InvariantCultureIgnoreCase) ?? false) && imgNode->PartId == 21:
@@ -266,31 +255,28 @@ namespace Compass
                                 break;
                             case var _ when iconComponentNode->AtkResNode.Rotation == 0:
                                 var toObject2 = new Vector2(playerX - iconComponentNode->AtkResNode.X,
-                                    playerY - iconComponentNode->AtkResNode.Y);
+                                    playerY - -iconComponentNode->AtkResNode.Y);
                                 var distanceToObject2 = Vector2.Distance(
-                                    new Vector2(iconComponentNode->AtkResNode.X, iconComponentNode->AtkResNode.Y),
+                                    new Vector2(iconComponentNode->AtkResNode.X, -iconComponentNode->AtkResNode.Y),
                                     playerPos) - distanceOffset;
                                 var scaleFactor2 = Math.Max(1f - distanceToObject2 / maxDistance, lowestScaleFactor);
                                 clone->AtkResNode.ScaleX = clone->AtkResNode.ScaleY = scale * scaleFactor2;
-                                // TODO (Chiv) Ehhh, the minus before SignedAngle
                                 UiHelper.SetPosition(
                                     clone,
                                     _config.AddonCompassOffset.X +
-                                    compassUnit * -SignedAngle(toObject2, playerViewVector),
+                                    compassUnit * SignedAngle(toObject2, playerViewVector),
                                     _config.AddonCompassOffset.Y);
                                 break;
                             default:
                                 var cosArrow = (float) Math.Cos(iconComponentNode->AtkResNode.Rotation);
                                 var sinArrow = (float) Math.Sin(iconComponentNode->AtkResNode.Rotation);
-                                // TODO (Chiv) Wrong again!
-                                var toObject3 = new Vector2(-sinArrow, cosArrow);
+                                var toObject3 = new Vector2(sinArrow, cosArrow);
                                 clone->AtkResNode.ScaleX = clone->AtkResNode.ScaleY =
                                     scale * scaleFactorForRotationBasedDistance;
-                                // TODO (Chiv) Ehhh, the minus before SignedAngle
                                 UiHelper.SetPosition(
                                     clone,
                                     _config.AddonCompassOffset.X +
-                                    compassUnit * -SignedAngle(toObject3, playerViewVector),
+                                    compassUnit * SignedAngle(toObject3, playerViewVector),
                                     _config.AddonCompassOffset.Y);
                                 break;
                         }
