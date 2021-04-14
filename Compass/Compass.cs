@@ -26,6 +26,8 @@ namespace Compass
         private readonly DalamudPluginInterface _pluginInterface;
         private delegate void SetCameraRotationDelegate(nint cameraThis, float degree);
 
+        private Vector2 _lastKnownPlayerPos = Vector2.Zero;
+        
         private string[] _uiIdentifiers;
         private nint _maybeCameraStruct;
         private int _currentUiObjectIndex;
@@ -33,7 +35,7 @@ namespace Compass
         private bool _isDisposed;
         private bool _shouldHideCompass;
         private bool _shouldHideCompassIteration;
-
+        
 
         public Compass(DalamudPluginInterface pi, Configuration config)
         {
@@ -405,6 +407,7 @@ namespace Compass
                             case 071143: // BlueQuest Ongoing Marker
                             case 071145: // BlueQuest Complete Marker
                             case 060955: //Arrow down for quests
+                            case 060561: // Red Flag (Custom marker)
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                     // => The current quest marker is inside the mask and should be
                                     // treated as a map point
@@ -553,7 +556,7 @@ namespace Compass
                     (AtkComponentNode*)areaMap->ULDData.NodeList[32]; //maxZoom level == 2
                 // NOTE (Chiv) Slider position value is at this address
                 var mapScale = *(byte*) ((nint)(mapSlider->Component)+0xF0) + 1;
-                var playerPos = Vector2.Zero;
+                //SimpleLog.Log($"MapScale {mapScale}");
                 // NOTE (Chiv) We go down because we assume
                 // (a) The first visible node will always be the player marker and give us the player positoin
                 // (b) everything higher than 231 is region text node which we ignore (for now)
@@ -600,6 +603,9 @@ namespace Compass
                         var uv1 = oneVec;
                         var tintColour = whiteColor;
 
+                        const float maxDistance = 62f;
+                        const float distanceOffset = 2f;
+                        const float lowestScaleFactor = 0.5f;
                         switch (iconId)
                         {
                             case 0: //Arrows to quests and fates, glowy thingy
@@ -647,7 +653,7 @@ namespace Compass
                                     compassCentre.Y + rotationIconHalfWidth);
                                 break;
                             case 060443: //Player Marker
-                                playerPos = new Vector2(mapIconComponentNode->AtkResNode.X,
+                                _lastKnownPlayerPos = new Vector2(mapIconComponentNode->AtkResNode.X,
                                     -mapIconComponentNode->AtkResNode.Y);
                                 if (!_config.ImGuiCompassEnableCenterMarker) continue;
                                 drawList = backgroundDrawList;
@@ -665,9 +671,9 @@ namespace Compass
                             case 060498: // One More Circle
                                 bool inArea;
                                 (pMin, pMax, tintColour, inArea)
-                                    = CalculateAreaCirlceVariables(playerPos, playerForward, mapIconComponentNode,
+                                    = CalculateAreaCirlceVariables(_lastKnownPlayerPos, playerForward, mapIconComponentNode,
                                         imgNode, mapScale, compassUnit, halfWidth32, compassCentre,
-                                        65f,5f);
+                                        maxDistance,distanceOffset, lowestScaleFactor);
                                 if (inArea)
                                     //*((byte*) &tintColour + 3) = 0x33  == (0x33FFFFFF) & (tintColour)
                                     backgroundDrawList.AddRectFilled(
@@ -682,8 +688,8 @@ namespace Compass
                             case 060545: // Another Arrow DOWN
                             case 060546: // Arrow DOWN on Circle
                                 (pMin, pMax, tintColour, _)
-                                    = CalculateAreaCirlceVariables(playerPos, playerForward, mapIconComponentNode,
-                                        imgNode, mapScale, compassUnit, halfWidth32, compassCentre, 65f, 5f);
+                                    = CalculateAreaCirlceVariables(_lastKnownPlayerPos, playerForward, mapIconComponentNode,
+                                        imgNode, mapScale, compassUnit, halfWidth32, compassCentre, maxDistance, distanceOffset, lowestScaleFactor);
                                 break;
                             case 071023: // Quest Ongoing Marker
                             case 071025: // Quest Complete Marker
@@ -694,26 +700,56 @@ namespace Compass
                             case 071143: // BlueQuest Ongoing Marker
                             case 071145: // BlueQuest Complete Marker
                             case 060955: //Arrow down for quests
+                            case 060561: // Red Flag (Custom marker)
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
+                                {
+                                    var (ongoingScaleFactor, ongoingIconAngle, _) = CalculateDrawVariables(
+                                        _lastKnownPlayerPos,
+                                        new Vector2(
+                                            mapIconComponentNode->AtkResNode.X,
+                                            -mapIconComponentNode->AtkResNode.Y
+                                        ),
+                                        playerForward,
+                                        mapScale,
+                                        maxDistance,
+                                        distanceOffset,
+                                        lowestScaleFactor
+                                    );
+                                    //SimpleLog.Log($"S{iconId} ScaleFactor:{ongoingScaleFactor} ");
+                                    //SimpleLog.Log($"PlayerPos {playerPos}, iconPos {new Vector2(mapIconComponentNode->AtkResNode.X, -mapIconComponentNode->AtkResNode.Y)}");
+                                    // NOTE (Chiv) We assume part.Width == part.Height == 32
+                                    var ongoingIconOffset = compassUnit * ongoingIconAngle;
+                                    var ongoingIconHalfWidth = halfWidth32 * ongoingScaleFactor;
+                                    pMin = new Vector2(compassCentre.X - ongoingIconHalfWidth + ongoingIconOffset,
+                                        compassCentre.Y - ongoingIconHalfWidth);
+                                    pMax = new Vector2(
+                                        compassCentre.X + ongoingIconOffset + ongoingIconHalfWidth,
+                                        compassCentre.Y + ongoingIconHalfWidth);
                                     // => The current quest marker is inside the mask and should be
                                     // treated as a map point
+                                    break;
                                     goto default;
+                                }
+                                    
                                 // => The current quest marker is outside the mask and should be
                                 // treated as a rotation
                                 goto case 1; //No UV setup needed for quest markers
+                            case 060442: // Map point for area description, its just flavour
+                                continue;
                             case 060457: // Area Transition Bullet Thingy
                             default:
                                 // NOTE (Chiv) Remember, Y needs to be flipped to transform to default coordinate system
                                 var (distanceScaleFactor, iconAngle, _) = CalculateDrawVariables(
-                                    playerPos,
+                                    _lastKnownPlayerPos,
                                     new Vector2(
                                         mapIconComponentNode->AtkResNode.X,
                                         -mapIconComponentNode->AtkResNode.Y
                                     ),
                                     playerForward,
                                     mapScale,
-                                    65f,
-                                    5f
+                                    maxDistance,
+                                    distanceOffset,
+                                    0f
                                 );
                                 //SimpleLog.Log($"Distance to {iconId}:{d} ");
                                 //SimpleLog.Log($"PlayerPos {playerPos}, iconPos {new Vector2(mapIconComponentNode->AtkResNode.X, -mapIconComponentNode->AtkResNode.Y)}");
@@ -839,7 +875,7 @@ namespace Compass
         private static unsafe (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
             Vector2 playerPos, Vector2 playerForward, AtkComponentNode* mapIconComponentNode,
             AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre,
-            float maxDistance = 180f, float distanceOffset = 40f)
+            float maxDistance = 180f, float distanceOffset = 40f, float lowestScaleFactor = 0.2f)
         {
             // TODO Distinguish between Circles for quests and circles for Fates (colour?) for filtering
             // NOTE (Chiv) Remember, Y needs to be flipped to transform to default coordinate system
@@ -852,7 +888,8 @@ namespace Compass
                 playerForward,
                 mapScale,
                 maxDistance,
-                distanceOffset);
+                distanceOffset,
+                lowestScaleFactor);
             var radius = mapIconComponentNode->AtkResNode.ScaleX *
                          (mapIconComponentNode->AtkResNode.Width - mapIconComponentNode->AtkResNode.OriginX);
             // NOTE (Chiv) We assume part.Width == part.Height == 32
@@ -875,9 +912,8 @@ namespace Compass
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static (float distanceScaleFactor, float signedAngle, float distance) CalculateDrawVariables(Vector2 from,
-            Vector2 to, Vector2 forward, float distanceScaling, float maxDistance = 180f, float distanceOffset = 40f)
+            Vector2 to, Vector2 forward, float distanceScaling, float maxDistance = 180f, float distanceOffset = 40f, float lowestScaleFactor = 0.2f)
         {
-            const float lowestScaleFactor = 0.2f;
             // TODO (Chiv) Distance Offset adjustments
             distanceOffset *= distanceScaling; //80f @Max Zoom(==2) _NaviMap, default
             maxDistance *= distanceScaling; //360f @Max Zoom(==2) _NaviMap, default
