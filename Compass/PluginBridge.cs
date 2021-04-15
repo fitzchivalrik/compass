@@ -3,7 +3,7 @@ using Dalamud.Plugin;
 
 namespace Compass
 {
-    public class PluginBride : IDalamudPlugin
+    public class PluginBridge : IDalamudPlugin
     {
         private Compass _plugin = null!;
         public string Name => Compass.PluginName;
