@@ -97,7 +97,7 @@ namespace Compass
                 , (new [] {"FreeCompany"}, false, "Free Company")
                 , (new [] {"SupportDesk"}, true, "Support Desk")
                 , (new [] {"ConfigKeybind"}, true, "Keybinds")
-                , (new [] {"_HudLayoutScreen"}, true, "HUD Manager")
+                , (new [] {"_HudLayoutScreen"}, true, "HUD Layout")
                 , (new [] {"Macro"}, true, "Macro")
                 , (new [] {"GrandCompanySupplyList"}, false, "Grand Company Delivery")
                 , (new [] {"GrandCompanyExchange"}, false, "Grand Company Shop")
