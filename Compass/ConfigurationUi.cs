@@ -31,7 +31,8 @@ namespace Compass
 
             if(ImGui.BeginTabBar("ConfigTabBar", ImGuiTabBarFlags.NoTooltip))
             {
-                changed |= DrawConfigurationTab(config, scale);
+                changed |= DrawGeneralConfigurationTab(config, scale);
+                changed |= DrawOnAddonHideTab(config, scale);
                 DrawHelpTab();
                 ImGui.EndTabBar();
             }
@@ -44,7 +45,7 @@ namespace Compass
         {
             ImGui.OpenPopup("Compass Note");
             var contentSize = ImGuiHelpers.MainViewport.Size;
-            var modalSize = new Vector2(410 * scale, 195 * scale);
+            var modalSize = new Vector2(418 * scale, 195 * scale);
             var modalPosition = new Vector2(contentSize.X / 2 - modalSize.X / 2, contentSize.Y / 2 - modalSize.Y / 2);
             ImGui.SetNextWindowSize(modalSize, ImGuiCond.Always);
             ImGuiHelpers.SetNextWindowPosRelativeMainViewport(modalPosition, ImGuiCond.Always);
@@ -154,12 +155,8 @@ namespace Compass
             ImGui.SameLine();
             if (open)
             {
-                var x = ImGui.GetCursorPosX();
-                if (!ImGui.TreeNodeEx(label, ImGuiTreeNodeFlags.DefaultOpen)) return changed;
-                ImGui.SetCursorPosX(x);
-                ImGui.BeginGroup();
+                if (!ImGui.TreeNodeEx(label)) return changed;
                 changed |= drawConfig();
-                ImGui.EndGroup();
                 ImGui.TreePop();
             }
             else
@@ -169,7 +166,29 @@ namespace Compass
             return changed;
         }
 
-        private static bool DrawConfigurationTab(Configuration config, float scale)
+        private static bool DrawOnAddonHideTab(Configuration config, float scale)
+        {
+            var changed = false;
+            if (!config.ImGuiCompassEnable) return changed;
+            if (!ImGui.BeginTabItem("Hiding Options")) return changed;
+
+            ImGui.Text("Hide Compass when ... window is open.");
+            for (var i = 1; i <= config.ShouldHideOnUiObject.Length; i++)
+            {
+                if (i % 2 == 0) ImGui.SameLine(225);
+                changed |= ImGui.Checkbox(
+                    config.ShouldHideOnUiObject[i-1].userFacingIdentifier
+                    , ref config.ShouldHideOnUiObject[i-1].disable);
+                if (changed)
+                {
+                    config.ShouldHideOnUiObjectSerializer[i-1] = config.ShouldHideOnUiObject[i-1].disable;
+                }
+            }
+            ImGui.EndTabItem();
+            return changed;
+        }
+
+        private static bool DrawGeneralConfigurationTab(Configuration config, float scale)
         {
             if (!ImGui.BeginTabItem("Settings")) return false;
             var changed = false;
@@ -214,25 +233,9 @@ namespace Compass
                         changed |= ImGui.ColorEdit4("Background Colour##ImGui", ref config.ImGuiBackgroundColour);
                     if(config.ImGuiCompassDrawBorder)
                         changed |= ImGui.ColorEdit4("Background Border Colour##ImGui", ref config.ImGuiBackgroundBorderColour);
-                    changed |= ImGui.DragFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding);
+                    changed |= ImGui.DragFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding, 1f, 0f, 15f, "%d", ImGuiSliderFlags.AlwaysClamp);
                     return changed;
                 });
-                if (ImGui.TreeNodeEx("Hide Compass when ... window is open."))
-                {
-                    ImGui.BeginChild("Window options");
-                    for (var i = 0; i < config.ShouldHideOnUiObject.Length; i++)
-                    {
-                        changed |= ImGui.Checkbox(
-                            config.ShouldHideOnUiObject[i].userFacingIdentifier
-                            , ref config.ShouldHideOnUiObject[i].disable);
-                        if (changed)
-                        {
-                            config.ShouldHideOnUiObjectSerializer[i] = config.ShouldHideOnUiObject[i].disable;
-                        }
-                    }
-                    ImGui.EndChild();
-                    ImGui.TreePop();
-                }
                 changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);
                 changed |= ImGui.Checkbox("Use Map instead of minimap as source##ImGui", ref config.UseAreaMapAsSource);
                 ImGui.SameLine();

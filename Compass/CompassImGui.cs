@@ -685,7 +685,7 @@ namespace Compass
         
         private unsafe void UpdateHideCompass()
         {
-            for (var i = 0; i < 8; i++)
+            for (var i = 0; i < Math.Min(8, _uiIdentifiers.Length); i++)
             {
                 var uiIdentifier = _uiIdentifiers[_currentUiObjectIndex++];
                 _currentUiObjectIndex %= _uiIdentifiers.Length;

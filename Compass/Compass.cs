@@ -41,7 +41,9 @@ namespace Compass
         {
             #region Signatures
 
+            // 40 53 48 83 EC 20 0F 2F 0D ? ? ? ? 
             const string setCameraRotationSignature = "40 ?? 48 83 EC ?? 0F 2F ?? ?? ?? ?? ?? 48 8B";
+            //const string setCameraRotationSignature = "40 53 48 83 EC 20 0F 2F 0D ?? ?? ?? ??";
 
             #endregion
 
@@ -121,7 +123,6 @@ namespace Compass
             _uiIdentifiers = UpdateUiIdentifiers(_config);
             _config.ImGuiBackgroundColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour);
             _config.ImGuiBackgroundBorderColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour);
-            _pluginInterface.SavePluginConfig(_config);
             #endregion
             
             
@@ -171,9 +172,10 @@ namespace Compass
                // || _pluginInterface.ClientState.LocalPlayer is not null
             )
             {
-                OnLogin(null!, null!);
+                 OnLogin(null!, null!);
                 _buildingConfigUi = true;
                 _config.FreshInstall = true;
+                _pluginInterface.UiBuilder.OnBuildUi += BuildConfigUi;
             }
 #endif
         }
@@ -227,6 +229,7 @@ namespace Compass
             {
                 _pluginInterface.SavePluginConfig(_config);
                 _uiIdentifiers = UpdateUiIdentifiers(_config);
+                _currentUiObjectIndex = 0;
                 UpdateCompassSource();
                 _config.ImGuiBackgroundColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour);
                 _config.ImGuiBackgroundBorderColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour);
@@ -260,8 +263,8 @@ namespace Compass
         
         #region Debug Partials
         
-        private partial void DebugCtor();
-        private partial void DebugDtor();
+        partial void DebugCtor();
+        partial void DebugDtor();
         
         #endregion
 
