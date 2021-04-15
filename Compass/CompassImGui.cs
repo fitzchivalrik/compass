@@ -142,7 +142,7 @@ namespace Compass
                         // Cannot act anyways if the texture path is butchered
                         var textureFileName = new string((sbyte*) texFileNamePtr);
                         //var success = uint.TryParse(textureFileName.Substring(textureFileName.LastIndexOf('/')+1, 6), out var iconId);
-                        var _ = uint.TryParse(textureFileName.Substring(textureFileName.LastIndexOf('/')+1, 6),
+                        var _ = uint.TryParse(textureFileName.Substring(textureFileName.LastIndexOfAny(new []{'/', '\\'})+1, 6),
                             out var iconId);
                         //iconId = 0 (==> success == false as IconID will never be 0) Must have been NaviMap (and only that hopefully)
                         var textureIdPtr = new IntPtr(tex->D3D11ShaderResourceView);
