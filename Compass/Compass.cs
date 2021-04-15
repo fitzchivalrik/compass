@@ -51,7 +51,7 @@ namespace Compass
 
             #region Configuration Setup
 
-            config.ShouldHideOnUiObject = new[]
+            _config.ShouldHideOnUiObject = new[]
             {
                   (new [] {"_BattleTalk"}, false, "Dialogue Box During Battle")
                 , (new [] {"Talk"}, false, "Dialogue Box")
@@ -107,20 +107,20 @@ namespace Compass
             };
 
             
-            for (var i = 0; i < config.ShouldHideOnUiObjectSerializer.Length; i++)
+            for (var i = 0; i < _config.ShouldHideOnUiObjectSerializer.Length; i++)
             {
-                config.ShouldHideOnUiObject[i].disable = config.ShouldHideOnUiObjectSerializer[i];
+                _config.ShouldHideOnUiObject[i].disable = _config.ShouldHideOnUiObjectSerializer[i];
             }
 
-            if (config.ShouldHideOnUiObjectSerializer.Length < config.ShouldHideOnUiObject.Length)
+            if (_config.ShouldHideOnUiObjectSerializer.Length < _config.ShouldHideOnUiObject.Length)
             {
-                Array.Resize(ref config.ShouldHideOnUiObjectSerializer, config.ShouldHideOnUiObject.Length);
+                Array.Resize(ref _config.ShouldHideOnUiObjectSerializer, _config.ShouldHideOnUiObject.Length);
             }
             
             _uiIdentifiers = UpdateUiIdentifiers(_config);
             _config.ImGuiBackgroundColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour);
             _config.ImGuiBackgroundBorderColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour);
-        
+            _pluginInterface.SavePluginConfig(_config);
             #endregion
             
             
@@ -181,6 +181,7 @@ namespace Compass
         {
             _setCameraRotation.Original(cameraThis, degree);
             _maybeCameraStruct = cameraThis;
+            UpdateCompassSource();
             _setCameraRotation.Disable();
         }
         
@@ -198,7 +199,6 @@ namespace Compass
         {
             _setCameraRotation.Enable();
             _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
-            UpdateCompassSource();
         }
 
         
