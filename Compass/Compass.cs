@@ -79,7 +79,7 @@ namespace Compass
                 , (new [] {"ActionDetail"}, false, "Action Help (Tooltip)")
                 , (new [] {"ItemDetail"}, false, "Item Tooltip")
                 , (new [] {"ActionMenu"}, false, "Action List")
-                , (new [] {"QuestRedo", "QuestRedoHud"}, true, "New Game+")
+                , (new [] {"QuestRedo", "QuestRedoHud"}, false, "New Game+")
                 , (new [] {"Journal"}, false, "Journal")
                 , (new [] {"RecipeNote"}, false, "Crafting Log")
                 , (new [] {"AdventureNoteBook"}, false, "Sightseeing Log")
@@ -103,9 +103,10 @@ namespace Compass
                 , (new [] {"GrandCompanyExchange"}, false, "Grand Company Shop")
                 , (new [] {"MiragePrismPrismBox"}, false, "Glamour Dresser")
                 , (new [] {"Currency"}, false, "Currency")
-                , (new [] {"_MainCross"}, true, "Controller Main Menu")
+                , (new [] {"_MainCross"}, false, "Controller Main Menu")
             };
 
+            
             
             for (var i = 0; i < _config.ShouldHideOnUiObjectSerializer.Length; i++)
             {
