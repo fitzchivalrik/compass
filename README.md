@@ -8,7 +8,7 @@ Licensed under AGPLv3 or later.
 
 ![](docs/compass_showcase.gif)
 
-(Washed-out colours are due to the recording ¯\_(ツ)_/¯)
+(Washed-out colours are due to the recording ¯\\_(ツ)_/¯)
 
 ### Know Issues
 

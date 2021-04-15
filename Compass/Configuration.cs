@@ -23,7 +23,9 @@ namespace Compass
         public bool ImGuiCompassDrawBorder = true;
         public bool ImGuiCompassFillBackground = false;
         public Vector4 ImGuiBackgroundColour = new(0.2f,0.2f,0.2f,0.2f);
+        [JsonIgnore] public uint ImGuiBackgroundColourUInt32;
         public Vector4 ImGuiBackgroundBorderColour = new(0.4f,0.4f,0.4f,1f);
+        [JsonIgnore] public uint ImGuiBackgroundBorderColourUInt32;
         public float ImGuiCompassBackgroundRounding = 10f;
 
         public bool ImGuiCompassEnableCenterMarker = true;

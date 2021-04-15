@@ -39,7 +39,7 @@ namespace Compass
         private uint _a3;
         private nint _ret;
 
-        private void DebugCtor()
+        private partial void DebugCtor()
         {
             const string somethingControllerSig = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 49 63 86 ?? ?? ?? ?? ";
             somethingControllerHook = new Hook<sub_140087C90>(
@@ -62,7 +62,6 @@ namespace Compass
             {
                 OnLogin(null!, null!);
                 _pluginInterface.UiBuilder.OnBuildUi += BuildDebugUi;
-                _buildingConfigUi = true;
             }
 
             UiHelper.Setup(_pluginInterface.TargetModuleScanner);
@@ -79,14 +78,14 @@ namespace Compass
             return ret;
         }
 
-        private unsafe void BuildDebugUi()
+        private void BuildDebugUi()
         {
             
             ImGui.SetNextWindowBgAlpha(1);
             if(!ImGui.Begin($"{PluginName} Debug")) { ImGui.End(); return;}
             
             ImGui.Separator();
-
+            ImGui.Text($"Colour: {ImGui.ColorConvertFloat4ToU32(new Vector4(176f / 255f, 100f / 255f, 0f, 1)):X}");
             ImGui.Separator();
             var naviMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             var areaMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
@@ -371,7 +370,7 @@ namespace Compass
             return clone;
         }
 
-        private void DebugDtor()
+        private partial void DebugDtor()
         {
             somethingControllerHook?.Disable();
             somethingControllerHook?.Dispose();
