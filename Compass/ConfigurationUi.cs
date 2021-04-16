@@ -233,7 +233,7 @@ namespace Compass
                         changed |= ImGui.ColorEdit4("Background Colour##ImGui", ref config.ImGuiBackgroundColour);
                     if(config.ImGuiCompassDrawBorder)
                         changed |= ImGui.ColorEdit4("Background Border Colour##ImGui", ref config.ImGuiBackgroundBorderColour);
-                    changed |= ImGui.DragFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding, 1f, 0f, 15f, "%d", ImGuiSliderFlags.AlwaysClamp);
+                    changed |= ImGui.DragFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding, 1f, 0f, 15f);
                     return changed;
                 });
                 changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);
