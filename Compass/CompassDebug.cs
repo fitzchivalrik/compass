@@ -7,6 +7,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using Dalamud.Game;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Actors;
 using Dalamud.Game.Command;
@@ -31,24 +32,9 @@ namespace Compass
         private readonly AtkImageNode*[,] _clonedImageNodes = new AtkImageNode*[202, 4];
         private readonly AtkImageNode*[] _cardinalsClonedImageNodes = new AtkImageNode*[4];
 
-        private delegate nint sub_140087C90(nint a1, nint a2, uint a3);
-
-        private Hook<sub_140087C90> somethingControllerHook;
-        private nint _a1;
-        private nint _a2;
-        private uint _a3;
-        private nint _ret;
-
-        private partial void DebugCtor()
+        partial void DebugCtor()
         {
-            const string somethingControllerSig = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 49 63 86 ?? ?? ?? ?? ";
-            somethingControllerHook = new Hook<sub_140087C90>(
-                _pluginInterface.TargetModuleScanner.ScanText(somethingControllerSig),
-                (sub_140087C90) Sub_140087C90Detour
-            );
-            somethingControllerHook.Enable();
-            
-            
+
             _pluginInterface.CommandManager.AddHandler($"{Command}debug", new CommandInfo((_, _) =>
             {
                 _pluginInterface.UiBuilder.OnBuildUi -= BuildDebugUi;
@@ -61,23 +47,14 @@ namespace Compass
             if (_pluginInterface.ClientState.LocalPlayer is not null)
             {
                 OnLogin(null!, null!);
-                _pluginInterface.UiBuilder.OnBuildUi += BuildDebugUi;
             }
+            
+            _pluginInterface.UiBuilder.OnBuildUi += BuildDebugUi;
 
             UiHelper.Setup(_pluginInterface.TargetModuleScanner);
         }
-
-        private nint Sub_140087C90Detour(nint a1, nint a2, uint a3)
-        {
-            _a1 = a1;
-            _a2 = a2;
-            _a3 = a3;
-            var ret = somethingControllerHook.Original(a1, a2, a3);
-            _ret = ret;
-            return 1;
-            return ret;
-        }
-
+        
+       
         private void BuildDebugUi()
         {
             
@@ -85,15 +62,15 @@ namespace Compass
             if(!ImGui.Begin($"{PluginName} Debug")) { ImGui.End(); return;}
             
             ImGui.Separator();
-            ImGui.Text($"Colour: {ImGui.ColorConvertFloat4ToU32(new Vector4(176f / 255f, 100f / 255f, 0f, 1)):X}");
+            
             ImGui.Separator();
-            var naviMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
-            var areaMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
-            ImGui.Text($"LoadedState of _NaviMap {naviMap->ULDData.LoadedState}");
-            ImGui.Text($"LoadedState of AreaMap {areaMap->ULDData.LoadedState}");
+            //var naviMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+            //var areaMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
+            //ImGui.Text($"LoadedState of _NaviMap {naviMap->ULDData.LoadedState}");
+            //ImGui.Text($"LoadedState of AreaMap {areaMap->ULDData.LoadedState}");
 
-            ImGui.Separator();
-            ImGui.Text($"{nameof(sub_140087C90)} a1 {(long)_a1:X} a2 {(long)_a2:X} a3 {_a3} ret {(long)_ret:X}");
+           // ImGui.Separator();
+           
             
             ImGui.End();
         }
@@ -370,10 +347,8 @@ namespace Compass
             return clone;
         }
 
-        private partial void DebugDtor()
+        partial void DebugDtor()
         {
-            somethingControllerHook?.Disable();
-            somethingControllerHook?.Dispose();
             _pluginInterface.UiBuilder.OnBuildUi -= BuildDebugUi;
             _pluginInterface.CommandManager.RemoveHandler($"{Command}debug");
         }
