@@ -45,13 +45,12 @@ namespace Compass
         {
             ImGui.OpenPopup("Compass Note");
             var contentSize = ImGuiHelpers.MainViewport.Size;
-            var modalSize = new Vector2(418 * scale, 195 * scale);
+            var modalSize = new Vector2(418 * scale, 175 * scale);
             var modalPosition = new Vector2(contentSize.X / 2 - modalSize.X / 2, contentSize.Y / 2 - modalSize.Y / 2);
             ImGui.SetNextWindowSize(modalSize, ImGuiCond.Always);
             ImGuiHelpers.SetNextWindowPosRelativeMainViewport(modalPosition, ImGuiCond.Always);
             if (!ImGui.BeginPopupModal("Compass Note")) return;
             ImGui.Text("Thank you for installing the Compass plugin.");
-            ImGui.Text("The compass should be in upper left corner of the game window.");
             ImGui.Text("Please have a look at the configuration, especially at the FAQ section,");
             ImGui.Text("for a quick explanation of the current caveats and settings needed");
             ImGui.Text("for the compass to work.");
@@ -200,7 +199,17 @@ namespace Compass
             {
                 ImGui.Indent();
                 ImGui.PushItemWidth(200f * scale);
-                changed |= ImGui.DragFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.1f, 0.1f, 3f);
+                if (ImGui.Button("Center horizontally##ImGui", new Vector2(200f, 25f)))
+                {
+                    changed = true;
+                    var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size/2).X;
+                    config.ImGuiCompassPosition = new Vector2(screenSizeCenterX - config.ImGuiCompassWidth / 2,
+                        config.ImGuiCompassPosition.Y);
+                }
+                changed |= ImGui.DragFloat2("Position##ImGui", ref config.ImGuiCompassPosition, 1f, 0f, float.MaxValue, "%.f", ImGuiSliderFlags.AlwaysClamp);
+                changed |= ImGui.DragFloat("Width##ImGui", ref config.ImGuiCompassWidth, 1f, 150f, float.MaxValue, "%.f", ImGuiSliderFlags.AlwaysClamp);
+               
+                changed |= ImGui.SliderFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.1f, 3f, "%.1f");
                 changed |= DrawTreeCheckbox("Enable Centre Marker", ref config.ImGuiCompassEnableCenterMarker, () =>
                     {
                         var changed = false;
@@ -231,9 +240,15 @@ namespace Compass
                     }
                     if(config.ImGuiCompassFillBackground)
                         changed |= ImGui.ColorEdit4("Background Colour##ImGui", ref config.ImGuiBackgroundColour);
-                    if(config.ImGuiCompassDrawBorder)
-                        changed |= ImGui.ColorEdit4("Background Border Colour##ImGui", ref config.ImGuiBackgroundBorderColour);
-                    changed |= ImGui.DragFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding, 1f, 0f, 15f);
+                    if (config.ImGuiCompassDrawBorder)
+                    {
+                        changed |= ImGui.ColorEdit4("Background Border Colour##ImGui",
+                            ref config.ImGuiBackgroundBorderColour);
+                        changed |= ImGui.SliderFloat("Border Thickness##ImGui",
+                            ref config.ImGuiBackgroundBorderThickness, 1, 10, "%.f", ImGuiSliderFlags.AlwaysClamp);
+                    }
+
+                    changed |= ImGui.SliderFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding, 0f, 15f, "%.f", ImGuiSliderFlags.AlwaysClamp);
                     return changed;
                 });
                 changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);

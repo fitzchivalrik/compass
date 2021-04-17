@@ -16,17 +16,26 @@ using FFXIVAction = Lumina.Excel.GeneratedSheets.Action;
 
 namespace Compass
 {
-    public partial class Compass : IDisposable
+    public unsafe partial class Compass : IDisposable
     {
         public const string PluginName = "Compass";
         private const string Command = "/compass";
-
+        // NOTE (Chiv) This is the position of the player in the minimap coordinate system
+        // It has positive down Y grow, we do calculations in a 'default' coordinate system
+        // with positive up Y grow
+        // => All game Y needs to be flipped.
+        private const int NaviMapPlayerX = 72, NaviMapPlayerY = -72;
+        private const uint WhiteColor = 0xFFFFFFFF;
+        
         private readonly Hook<SetCameraRotationDelegate> _setCameraRotation;
         private readonly Configuration _config;
         private readonly DalamudPluginInterface _pluginInterface;
         private delegate void SetCameraRotationDelegate(nint cameraThis, float degree);
 
         private Vector2 _lastKnownPlayerPos = Vector2.Zero;
+        
+        private AtkUnitBase* _naviMap = null!;
+        private AtkComponentNode* _miniMapIconsRootComponentNode = null!;
         
         private string[] _uiIdentifiers;
         private nint _maybeCameraStruct;
@@ -200,6 +209,9 @@ namespace Compass
 
         private void OnLogin(object sender, EventArgs e)
         {
+            //TODO Yolo. Checks?
+            _naviMap = (AtkUnitBase*)_pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+            _miniMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->ULDData.NodeList[2];
             _setCameraRotation.Enable();
             _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
         }
