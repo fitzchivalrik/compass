@@ -68,7 +68,7 @@ namespace Compass
                 , (new [] {"Shop", "InclusionShop", "ShopExchangeCurrency"}, false, "Shops")
                 , (new [] {"Teleport"}, false, "Teleport")
                 , (new [] {"ContentsInfo"}, false, "Timers")
-                , (new [] {"ContentsFinder"}, false, "Duty")
+                , (new [] {"ContentsFinder"}, false, "Duty Finder")
                 , (new [] {"LookingForGroup"}, false, "Party Finder")
                 , (new [] {"AOZNotebook"}, false, "Bluemage Notebook")
                 , (new [] {"MountNoteBook"}, false, "Mount Guide")

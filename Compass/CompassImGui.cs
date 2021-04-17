@@ -61,12 +61,12 @@ namespace Compass
             const int playerX = 72, playerY = -72;
             const uint whiteColor = 0xFFFFFFFF;
             // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
-            var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
-            var miniMapIconsRootComponentNode = (AtkComponentNode*) naviMap->ULDData.NodeList[2];
+            //var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
+            var miniMapIconsRootComponentNode = (AtkComponentNode*)naviMap->ULDData.NodeList[2];
             // Minimap rotation thingy is even already flipped!
             // And apparently even accessible & updated if _NaviMap is disabled
             // => This leads to jerky behaviour though
-            //var cameraRotationInRadian = miniMapIconsRootComponentNode->Component->ULDData.NodeList[2]->Rotation;
+            var cameraRotationInRadian = *(float*)(naviMapPtr + 0x254) * Deg2Rad;
             var distanceScaleFactorForRotationIcons = scale * 0.7f;
             var cosPlayer = (float) Math.Cos(cameraRotationInRadian);
             var sinPlayer = (float) Math.Sin(cameraRotationInRadian);
@@ -109,7 +109,8 @@ namespace Compass
                 // I imagine this throws sometimes because of racing conditions -> We try to access an already freed texture e.g.
                 // So we just ignore those small exceptions, it works a few frames later anyways
                 var mapScale =
-                    miniMapIconsRootComponentNode->Component->ULDData.NodeList[1]->ScaleX; //maxZoom level == 2
+                    //miniMapIconsRootComponentNode->Component->ULDData.NodeList[1]->ScaleX; //maxZoom level == 2
+                    *(float*) (naviMapPtr + 0x24C);
                 var playerPos = new Vector2(playerX, playerY);
                 for (var i = 4; i < miniMapIconsRootComponentNode->Component->ULDData.NodeListCount; i++)
                 {

@@ -9,10 +9,9 @@ namespace Compass
     public partial class Compass
     {
         
+        private const float Deg2Rad = (float)Math.PI * 2F / 360F;
         
-        #region Math related methods
-        
-             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
             in Vector2 playerPos, Vector2 playerForward, AtkComponentNode* mapIconComponentNode,
             AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre,
@@ -81,7 +80,5 @@ namespace Compass
             var sign = (from.X * to.Y - from.Y * to.X) >= 0 ? 1 : -1;
             return (float)Math.Acos(dot) * sign;
         }
-        
-        #endregion
     }
 }
