@@ -14,9 +14,10 @@ namespace Compass
         // TODO Cut this s@>!? in smaller methods
         private unsafe void BuildImGuiCompassNavi()
         {
+            if (!_config.ImGuiCompassEnable) return;
+            if (_config.HideInCombat && _pluginInterface.ClientState.Condition[ConditionFlag.InCombat]) return;
             UpdateHideCompass();
             if (_shouldHideCompass) return;
-            if (!_config.ImGuiCompassEnable) return;
             var naviMapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             if (naviMapPtr == IntPtr.Zero) return;
             var naviMap = (AtkUnitBase*) naviMapPtr;
@@ -152,6 +153,7 @@ namespace Compass
                         var uv1 = oneVec;
                         var tintColour = whiteColor;
 
+                        // TODO (Chiv) Multi-key-single value map? stringHash as key?
                         switch (iconId)
                         {
                             case 0: //Arrows to quests and fates, glowy thingy
@@ -296,9 +298,10 @@ namespace Compass
         // TODO (Chiv) Remove the duplicated code between the two data sources
          private unsafe void BuildImGuiCompassArea()
         {
+            if (!_config.ImGuiCompassEnable) return;
+            if (_config.HideInCombat && _pluginInterface.ClientState.Condition[ConditionFlag.InCombat]) return;
             UpdateHideCompass();
             if (_shouldHideCompass) return;
-            if (!_config.ImGuiCompassEnable) return;
             var areaMapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
             if (areaMapPtr == IntPtr.Zero) return;
             var areaMap = (AtkUnitBase*) areaMapPtr;
@@ -691,7 +694,6 @@ namespace Compass
                 _currentUiObjectIndex %= _uiIdentifiers.Length;
                 if (_currentUiObjectIndex == 0)
                 {
-                    _shouldHideCompassIteration |= _config.HideInCombat && _pluginInterface.ClientState.Condition[ConditionFlag.InCombat];
                     _shouldHideCompass = _shouldHideCompassIteration;
                     _shouldHideCompassIteration = false;
                 }
