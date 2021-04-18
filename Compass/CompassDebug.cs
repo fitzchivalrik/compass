@@ -31,9 +31,14 @@ namespace Compass
         // Actually, there are 101*3 and 101*4 Component nodes but this it easier to deal with 
         private readonly AtkImageNode*[,] _clonedImageNodes = new AtkImageNode*[202, 4];
         private readonly AtkImageNode*[] _cardinalsClonedImageNodes = new AtkImageNode*[4];
+        private IntPtr _inFateAreaPtr;
+        private IntPtr _sig;
 
         partial void DebugCtor()
         {
+            _sig = _pluginInterface.TargetModuleScanner.ScanText("80 3D ?? ?? ?? ?? ?? 0F 84 ?? ?? ?? ?? 48 8B 42 20");
+            _inFateAreaPtr = _sig + Marshal.ReadInt32(_sig, 2) + 7;
+            var isInFateArea = Marshal.ReadByte(_inFateAreaPtr);
 
             _pluginInterface.CommandManager.AddHandler($"{Command}debug", new CommandInfo((_, _) =>
             {
@@ -60,9 +65,11 @@ namespace Compass
             
             ImGui.SetNextWindowBgAlpha(1);
             if(!ImGui.Begin($"{PluginName} Debug")) { ImGui.End(); return;}
-            
+            ImGui.Text($"Sig: {_sig.ToString("X")}, Sig Offset 2 Int {Marshal.ReadInt32(_sig,2):X} Sig Offset 2 Int+7 {Marshal.ReadInt32(_sig,2)+7:X}");
+            ImGui.Text($"Is in Fate {Marshal.ReadByte(_inFateAreaPtr)}, Ptr {_inFateAreaPtr.ToString("X")}");
             ImGui.Separator();
-            
+            //var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
+            //var cameraRotationInRadian = *(float*) (naviMap + 0x254) * Deg2Rad;
             ImGui.Separator();
             //var naviMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             //var areaMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);

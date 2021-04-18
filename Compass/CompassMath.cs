@@ -12,6 +12,9 @@ namespace Compass
         private const float Deg2Rad = (float)Math.PI * 2F / 360F;
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vector2 Rotate(in Vector2 v, float cosA, float sinA) => new(v.X * cosA - v.Y * sinA, v.X * sinA + v.Y * cosA);
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
             in Vector2 playerPos, Vector2 playerForward, AtkComponentNode* mapIconComponentNode,
             AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre,
@@ -52,7 +55,7 @@ namespace Compass
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static (float distanceScaleFactor, float signedAngle, float distance) CalculateDrawVariables(in Vector2 from,
-            in Vector2 to, in Vector2 forward, float distanceScaling, float maxDistance = 180f, float distanceOffset = 40f, float lowestScaleFactor = 0.2f)
+            in Vector2 to, in Vector2 forward, float distanceScaling, float maxDistance = 180f, float distanceOffset = 20f, float lowestScaleFactor = 0.2f)
         {
             // TODO (Chiv) Distance Offset adjustments
             distanceOffset *= distanceScaling; //80f @Max Zoom(==2) _NaviMap, default

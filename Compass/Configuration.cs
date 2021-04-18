@@ -23,15 +23,15 @@ namespace Compass
         public bool ImGuiCompassDrawBorder = true;
         public bool ImGuiCompassFillBackground = false;
         public Vector4 ImGuiBackgroundColour = new(0.2f,0.2f,0.2f,0.2f);
-        [JsonIgnore] public uint ImGuiBackgroundColourUInt32;
+
         public Vector4 ImGuiBackgroundBorderColour = new(0.4f,0.4f,0.4f,1f);
-        [JsonIgnore] public uint ImGuiBackgroundBorderColourUInt32;
+        
         public float ImGuiCompassBackgroundRounding = 10f;
         public float ImGuiBackgroundBorderThickness = 1f;
 
         public Vector2 ImGuiCompassPosition = new(835, 515);
-        public float ImGuiCompassWidth = 250;
-        
+        public float ImGuiCompassWidth = 250f;
+
         public bool ImGuiCompassEnableCenterMarker = true;
         public bool ImGuiCompassFlipCentreMarker;
         public int ImGuiCompassCentreMarkerOffset = 20;

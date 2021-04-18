@@ -20,12 +20,6 @@ namespace Compass
     {
         public const string PluginName = "Compass";
         private const string Command = "/compass";
-        // NOTE (Chiv) This is the position of the player in the minimap coordinate system
-        // It has positive down Y grow, we do calculations in a 'default' coordinate system
-        // with positive up Y grow
-        // => All game Y needs to be flipped.
-        private const int NaviMapPlayerX = 72, NaviMapPlayerY = -72;
-        private const uint WhiteColor = 0xFFFFFFFF;
         
         private readonly Hook<SetCameraRotationDelegate> _setCameraRotation;
         private readonly Configuration _config;
@@ -129,9 +123,7 @@ namespace Compass
                 Array.Resize(ref _config.ShouldHideOnUiObjectSerializer, _config.ShouldHideOnUiObject.Length);
             }
             
-            _uiIdentifiers = UpdateUiIdentifiers(_config);
-            _config.ImGuiBackgroundColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour);
-            _config.ImGuiBackgroundBorderColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour);
+            UpdateCompassVariables();
             #endregion
             
             
@@ -178,7 +170,7 @@ namespace Compass
 #if RELEASE
 
             if (_pluginInterface.Reason == PluginLoadReason.Installer
-               // || _pluginInterface.ClientState.LocalPlayer is not null
+                || _pluginInterface.ClientState.LocalPlayer is not null
             )
             {
                  OnLogin(null!, null!);
@@ -240,27 +232,16 @@ namespace Compass
             if (changedConfig)
             {
                 _pluginInterface.SavePluginConfig(_config);
-                _uiIdentifiers = UpdateUiIdentifiers(_config);
-                _currentUiObjectIndex = 0;
+                UpdateCompassVariables();
                 UpdateCompassSource();
-                _config.ImGuiBackgroundColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour);
-                _config.ImGuiBackgroundBorderColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour);
+                
             }
 
             if (shouldBuildConfigUi) return;
             _pluginInterface.UiBuilder.OnBuildUi -= BuildConfigUi;
             _buildingConfigUi = false;
         }
-
-        private static string[] UpdateUiIdentifiers(Configuration config)
-        {
-            return config.ShouldHideOnUiObject
-                .Where(it => it.disable)
-                .SelectMany(it => it.getUiObjectIdentifier)
-                .ToArray();
-        }
-
-
+        
         private void OnOpenConfigUi(object sender, EventArgs e)
         {
             _buildingConfigUi = !_buildingConfigUi;

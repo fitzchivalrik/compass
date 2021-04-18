@@ -170,7 +170,8 @@ namespace Compass
             var changed = false;
             if (!config.ImGuiCompassEnable) return changed;
             if (!ImGui.BeginTabItem("Hiding Options")) return changed;
-
+            
+            //ImGui.SetWindowFontScale();
             ImGui.Text("Hide Compass when ... window is open.");
             for (var i = 1; i <= config.ShouldHideOnUiObject.Length; i++)
             {
@@ -202,8 +203,8 @@ namespace Compass
                 if (ImGui.Button("Center horizontally##ImGui", new Vector2(200f, 25f)))
                 {
                     changed = true;
-                    var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size/2).X;
-                    config.ImGuiCompassPosition = new Vector2(screenSizeCenterX - config.ImGuiCompassWidth / 2,
+                    var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size * 0.5f).X;
+                    config.ImGuiCompassPosition = new Vector2(screenSizeCenterX - config.ImGuiCompassWidth * 0.5f,
                         config.ImGuiCompassPosition.Y);
                 }
                 changed |= ImGui.DragFloat2("Position##ImGui", ref config.ImGuiCompassPosition, 1f, 0f, float.MaxValue, "%.f", ImGuiSliderFlags.AlwaysClamp);
