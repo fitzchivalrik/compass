@@ -26,6 +26,8 @@ namespace Compass
         private Vector2 _imGuiCompassCentre = new(835 + 125f, 515 + 25f);
         private Vector2 _imGuiCompassBackgroundPMin;
         private Vector2 _imGuiCompassBackgroundPMax;
+        private Vector2 _imGuiCompassBackgroundLinePMin;
+        private Vector2 _imGuiCompassBackgroundLinePMax;
         private float _imGuiCompassHalfWidth = 125f;
         private float _imGuiCompassHalfHeight = 125f;
         private float _imGuicompassScale = 1f;
@@ -37,6 +39,7 @@ namespace Compass
         private float _rotationIconHalfWidth;
         private uint _imGuiBackgroundColourUInt32;
         private uint _imGuiBackgroundBorderColourUInt32;
+        private uint _imGuiBackgroundLineColourUInt32;
 
 
         private void UpdateCompassVariables()
@@ -59,12 +62,15 @@ namespace Compass
                 _imGuiCompassCentre.Y - _imGuiCompassHalfHeight * 0.5f - 2);
             _imGuiCompassBackgroundPMax = new Vector2(_imGuiCompassCentre.X + 5 + _imGuiCompassHalfWidth,
                 _imGuiCompassCentre.Y + _imGuiCompassHalfHeight * 0.5f + 2);
+            _imGuiCompassBackgroundLinePMin = new Vector2(_imGuiCompassBackgroundPMin.X, _config.ImGuiCompassBackgroundLineOffset + _imGuiCompassBackgroundPMin.Y + _imGuiCompassHalfHeight);
+            _imGuiCompassBackgroundLinePMax = new Vector2(_imGuiCompassBackgroundPMax.X, _config.ImGuiCompassBackgroundLineOffset + _imGuiCompassBackgroundPMin.Y + _imGuiCompassHalfHeight);
             
             _halfWidth40 = 20 * _imGuicompassScale;
             _halfWidth28 = 14 * _imGuicompassScale;
             
             _imGuiBackgroundColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour);
             _imGuiBackgroundBorderColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour);
+            _imGuiBackgroundLineColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundLineColour);
             
             _uiIdentifiers = _config.ShouldHideOnUiObject
                 .Where(it => it.disable)
@@ -712,34 +718,36 @@ namespace Compass
             var west = -Vector2.UnitX;
             var north = Vector2.UnitY;
             var eastOffset = _imGuiCompassUnit * SignedAngle(east, playerForward);
+            var pMinY = _imGuiCompassCentre.Y - _halfWidth40 + _config.ImGuiCompassCardinalsOffset;
+            var pMaxY = _imGuiCompassCentre.Y + _halfWidth40 + _config.ImGuiCompassCardinalsOffset;
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
-                , new Vector2(_imGuiCompassCentre.X - _halfWidth28 + eastOffset, _imGuiCompassCentre.Y - _halfWidth40) // Width = 20
-                , new Vector2(_imGuiCompassCentre.X + eastOffset + _halfWidth28, _imGuiCompassCentre.Y + _halfWidth40)
+                , new Vector2(_imGuiCompassCentre.X - _halfWidth28 + eastOffset, pMinY) // Width = 20
+                , new Vector2(_imGuiCompassCentre.X + eastOffset + _halfWidth28, pMaxY)
                 , new Vector2(0.5446429f, 0.8301887f)
                 , new Vector2(0.5892857f, 0.9811321f)
             );
             var southOffset = _imGuiCompassUnit * SignedAngle(south, playerForward);
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
-                , new Vector2(_imGuiCompassCentre.X - _halfWidth28 + southOffset, _imGuiCompassCentre.Y - _halfWidth40)
-                , new Vector2(_imGuiCompassCentre.X + southOffset + _halfWidth28, _imGuiCompassCentre.Y + _halfWidth40)
+                , new Vector2(_imGuiCompassCentre.X - _halfWidth28 + southOffset, pMinY)
+                , new Vector2(_imGuiCompassCentre.X + southOffset + _halfWidth28, pMaxY)
                 , new Vector2(0.5892857f, 0.8301887f)
                 , new Vector2(0.6339286f, 0.9811321f)
             );
             var westOffset = _imGuiCompassUnit * SignedAngle(west, playerForward);
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
-                , new Vector2(_imGuiCompassCentre.X - _halfWidth40 + westOffset, _imGuiCompassCentre.Y - _halfWidth40)
-                , new Vector2(_imGuiCompassCentre.X + westOffset + _halfWidth40, _imGuiCompassCentre.Y + _halfWidth40)
+                , new Vector2(_imGuiCompassCentre.X - _halfWidth40 + westOffset, pMinY)
+                , new Vector2(_imGuiCompassCentre.X + westOffset + _halfWidth40, pMaxY)
                 , new Vector2(0.4732143f, 0.8301887f)
                 , new Vector2(0.5446429f, 0.9811321f)
             );
             var northOffset = _imGuiCompassUnit * SignedAngle(north, playerForward);
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
-                , new Vector2(_imGuiCompassCentre.X - _halfWidth40 + northOffset, _imGuiCompassCentre.Y - _halfWidth40)
-                , new Vector2(_imGuiCompassCentre.X + northOffset + _halfWidth40, _imGuiCompassCentre.Y + _halfWidth40)
+                , new Vector2(_imGuiCompassCentre.X - _halfWidth40 + northOffset, pMinY)
+                , new Vector2(_imGuiCompassCentre.X + northOffset + _halfWidth40, pMaxY)
                 , new Vector2(0.4017857f, 0.8301887f)
                 , new Vector2(0.4732143f, 0.9811321f)
                 , 0xFF0064B0 //ABGR ImGui.ColorConvertFloat4ToU32(new Vector4(176f / 255f, 100f / 255f, 0f, 1)) // TODO Static const
@@ -750,14 +758,14 @@ namespace Compass
         {
             if (!_config.ImGuiCompassEnableBackground) return;
             var backgroundDrawList = ImGui.GetBackgroundDrawList();
-            if (_config.ImGuiCompassFillBackground)
+            if (_config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Filled or ImGuiCompassBackgroundStyle.FilledAndBorder)
                 backgroundDrawList.AddRectFilled(
                     _imGuiCompassBackgroundPMin
                     , _imGuiCompassBackgroundPMax
                     , _imGuiBackgroundColourUInt32
                     , _config.ImGuiCompassBackgroundRounding
                 );
-            if (_config.ImGuiCompassDrawBorder)
+            if (_config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Border or ImGuiCompassBackgroundStyle.FilledAndBorder)
                 backgroundDrawList.AddRect(
                     _imGuiCompassBackgroundPMin - Vector2.One
                     , _imGuiCompassBackgroundPMax + Vector2.One
@@ -766,6 +774,13 @@ namespace Compass
                     , ImDrawFlags.RoundCornersAll
                     , _config.ImGuiBackgroundBorderThickness
                 );
+            if (_config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Line)
+                backgroundDrawList.AddLine(
+                    _imGuiCompassBackgroundLinePMin
+                    , _imGuiCompassBackgroundLinePMax
+                    , _imGuiBackgroundLineColourUInt32
+                    , _config.ImGuiBackgroundLineThickness
+                    );
         }
         
         private unsafe void UpdateHideCompass()

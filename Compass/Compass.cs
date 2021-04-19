@@ -109,9 +109,8 @@ namespace Compass
                 , (new [] {"MiragePrismPrismBox"}, false, "Glamour Dresser")
                 , (new [] {"Currency"}, false, "Currency")
                 , (new [] {"_MainCross"}, false, "Controller Main Menu")
+                , (new [] {"JournalResult"}, false, "Quest Complete")
             };
-
-            
             
             for (var i = 0; i < _config.ShouldHideOnUiObjectSerializer.Length; i++)
             {
@@ -233,6 +232,7 @@ namespace Compass
             {
                 _pluginInterface.SavePluginConfig(_config);
                 UpdateCompassVariables();
+                // TODO (Chiv) Integrate AreaMap and NaviMap method, check draw times, integrate UpdateSource with UpdateVariables
                 UpdateCompassSource();
                 
             }

@@ -210,7 +210,8 @@ namespace Compass
                 changed |= ImGui.DragFloat2("Position##ImGui", ref config.ImGuiCompassPosition, 1f, 0f, float.MaxValue, "%.f", ImGuiSliderFlags.AlwaysClamp);
                 changed |= ImGui.DragFloat("Width##ImGui", ref config.ImGuiCompassWidth, 1f, 150f, float.MaxValue, "%.f", ImGuiSliderFlags.AlwaysClamp);
                
-                changed |= ImGui.SliderFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.1f, 3f, "%.1f");
+                changed |= ImGui.SliderFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.01f, 3f, "%.2f");
+                changed |= ImGui.DragInt("Cardinals Offset##ImGui", ref config.ImGuiCompassCardinalsOffset);
                 changed |= DrawTreeCheckbox("Enable Centre Marker", ref config.ImGuiCompassEnableCenterMarker, () =>
                     {
                         var changed = false;
@@ -223,33 +224,40 @@ namespace Compass
                 changed |= DrawTreeCheckbox("Enable Background", ref config.ImGuiCompassEnableBackground, () =>
                 {
                     var changed = false;
-                    var backgroundStyle = config.ImGuiCompassDrawBorder 
-                        ? config.ImGuiCompassFillBackground
-                            ? 2
-                            : 0
-                        : 1;
+
+                    var backgroundStyle = (int) config.ImGuiCompassBackground;
                     ImGui.Text($"Background");
                     changed |= ImGui.RadioButton("Border##ImGui", ref backgroundStyle, 0);
                     ImGui.SameLine();
                     changed |= ImGui.RadioButton("Filled##ImGui", ref backgroundStyle, 1);
                     ImGui.SameLine();
-                    changed |= ImGui.RadioButton("Both##ImGui", ref backgroundStyle, 2);
-                    if (changed)
+                    changed |= ImGui.RadioButton("Border Filled##ImGui", ref backgroundStyle, 2);
+                    ImGui.SameLine();
+                    changed |= ImGui.RadioButton("Line##ImGui", ref backgroundStyle, 3);
+                    if (changed) config.ImGuiCompassBackground = (ImGuiCompassBackgroundStyle) backgroundStyle;
+                    
+                    if(config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Filled or ImGuiCompassBackgroundStyle.FilledAndBorder)
+                        changed |= ImGui.ColorEdit4("Fill Colour##ImGui", ref config.ImGuiBackgroundColour);
+                    if(config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Border or ImGuiCompassBackgroundStyle.FilledAndBorder)
                     {
-                        config.ImGuiCompassDrawBorder = backgroundStyle == 0 || backgroundStyle == 2;
-                        config.ImGuiCompassFillBackground = backgroundStyle == 1 || backgroundStyle == 2;
-                    }
-                    if(config.ImGuiCompassFillBackground)
-                        changed |= ImGui.ColorEdit4("Background Colour##ImGui", ref config.ImGuiBackgroundColour);
-                    if (config.ImGuiCompassDrawBorder)
-                    {
-                        changed |= ImGui.ColorEdit4("Background Border Colour##ImGui",
+                        changed |= ImGui.ColorEdit4("Border Colour##ImGui",
                             ref config.ImGuiBackgroundBorderColour);
                         changed |= ImGui.SliderFloat("Border Thickness##ImGui",
                             ref config.ImGuiBackgroundBorderThickness, 1, 10, "%.f", ImGuiSliderFlags.AlwaysClamp);
                     }
 
-                    changed |= ImGui.SliderFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding, 0f, 15f, "%.f", ImGuiSliderFlags.AlwaysClamp);
+                    if (config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Line)
+                    {
+                        changed |= ImGui.ColorEdit4("Line Colour##ImGui",
+                            ref config.ImGuiBackgroundLineColour);
+                        changed |= ImGui.SliderFloat("Line Thickness##ImGui",
+                            ref config.ImGuiBackgroundLineThickness, 1, 20, "%.f", ImGuiSliderFlags.AlwaysClamp);
+                        changed |= ImGui.DragInt("Line Offset##ImGui",
+                            ref config.ImGuiCompassBackgroundLineOffset);
+                    }
+
+                    if(config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Border or ImGuiCompassBackgroundStyle.FilledAndBorder or ImGuiCompassBackgroundStyle.Filled)
+                        changed |= ImGui.SliderFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding, 0f, 15f, "%.f", ImGuiSliderFlags.AlwaysClamp);
                     return changed;
                 });
                 changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);

@@ -19,15 +19,16 @@ namespace Compass
         public bool UseAreaMapAsSource;
         
         public float ImGuiCompassScale = 1f;
+        public ImGuiCompassBackgroundStyle ImGuiCompassBackground = ImGuiCompassBackgroundStyle.FilledAndBorder;
         public bool ImGuiCompassEnableBackground = true;
-        public bool ImGuiCompassDrawBorder = true;
-        public bool ImGuiCompassFillBackground = false;
         public Vector4 ImGuiBackgroundColour = new(0.2f,0.2f,0.2f,0.2f);
-
         public Vector4 ImGuiBackgroundBorderColour = new(0.4f,0.4f,0.4f,1f);
+        public Vector4 ImGuiBackgroundLineColour = new(0.4f,0.4f,0.4f,1f);
         
         public float ImGuiCompassBackgroundRounding = 10f;
         public float ImGuiBackgroundBorderThickness = 1f;
+        public float ImGuiBackgroundLineThickness = 1f;
+        public int ImGuiCompassBackgroundLineOffset;
 
         public Vector2 ImGuiCompassPosition = new(835, 515);
         public float ImGuiCompassWidth = 250f;
@@ -35,6 +36,7 @@ namespace Compass
         public bool ImGuiCompassEnableCenterMarker = true;
         public bool ImGuiCompassFlipCentreMarker;
         public int ImGuiCompassCentreMarkerOffset = 20;
+        public int ImGuiCompassCardinalsOffset;
         public bool ImGuiCompassEnable = true;
         
         public bool[] ShouldHideOnUiObjectSerializer = new bool[0];
@@ -45,6 +47,14 @@ namespace Compass
         public bool HideInInstances;
 
         public int Version { get; set; } = 0;
+    }
+
+    public enum ImGuiCompassBackgroundStyle
+    {
+        Filled,
+        Border,
+        FilledAndBorder,
+        Line
     }
 
 }
