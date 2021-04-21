@@ -293,7 +293,10 @@ namespace Compass
                             case 060954: // Arrow up for quests
                             case 060955: // Arrow down for quests
                             case 060561: // Red Flag (Custom marker)
-                            case 060438: // Mining Crop Icon
+                            case 060437: // Mining Crop Icon  
+                            case 060438: // Mining Crop Icon 2
+                            case 060432: // Botanic Crop Icon 
+                            case 060433: // Botanic Crop Icon 2 
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                     // => The current quest marker is inside the mask and should be
                                     // treated as a map point

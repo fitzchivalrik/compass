@@ -7,9 +7,10 @@
 - feat: Line as background
 - feat: Offset for cardinals
 - feat: Scale in .01 units instead of .1
-- fix: Miner gathering nodes should now be correctly handled
-- fix: Glowing thingy under icons should now be correctly handled an spinning
-- fix: Camera rotation is discarded in favour of reading the rotation from _NaviMap
+- fix: Miner gathering nodes should now be correctly handled 
+- fix: Botanic gathering nodes should now be correctly handled
+- fix: Glowing thingy under icons should now be correctly handled and spinning
+- fix: Camera rotation is discarded in favour of reading the rotation from NaviMap
     This should fix the 'static' compass errors
 - fix: 'Hide Compass in Combat' now properly checks even if no other hiding options are set
 
