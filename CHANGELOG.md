@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.8.1-testing
+
 - feat: Position compass with X/Y values and center horizontally via a button
 - feat: More hiding options
 - feat: Line as background
