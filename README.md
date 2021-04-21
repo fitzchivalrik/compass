@@ -7,6 +7,7 @@ Licensed under AGPLv3 or later.
 **CURRENTLY IN ALPHA TESTING.**
 
 ![](docs/compass_showcase.gif)
+![](docs/compass_line.jpg)
 
 (Washed-out colours are due to the recording ¯\\_(ツ)_/¯)
 
