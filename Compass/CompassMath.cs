@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using FFXIVClientStructs.Component.GUI;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 
 namespace Compass
 {
     public partial class Compass
     {
-        
         private const float Deg2Rad = (float)Math.PI * 2F / 360F;
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

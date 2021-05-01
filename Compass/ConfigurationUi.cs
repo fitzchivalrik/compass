@@ -24,10 +24,7 @@ namespace Compass
                 return (shouldBuildConfigUi, changed);
             }
             
-            if (config.FreshInstall)
-            {
-                DrawFreshInstallNotice(config, scale);
-            }
+            if (config.FreshInstall) DrawFreshInstallNotice(config, scale);
 
             if(ImGui.BeginTabBar("ConfigTabBar", ImGuiTabBarFlags.NoTooltip))
             {
@@ -67,7 +64,9 @@ namespace Compass
 
         private static void DrawHelpTab()
         {
+            // TODO TextUnformatted with ImGui.PushTextWrapPos();
             if (!ImGui.BeginTabItem("FAQ")) return;
+            
             if (ImGui.TreeNode("How does this work?"))
             {
                 ImGui.TextWrapped($"The current implementation reads the minimap data and");
@@ -192,9 +191,6 @@ namespace Compass
         {
             if (!ImGui.BeginTabItem("Settings")) return false;
             var changed = false;
-            //changed |= DrawNativeUITree(config, scale, changed);
-            //ImGui.Separator();
-            //changed = DrawImGuiTree(config, scale, changed);
             changed |= ImGui.Checkbox($"Enable Compass", ref config.ImGuiCompassEnable);
             if (config.ImGuiCompassEnable)
             {
@@ -210,7 +206,7 @@ namespace Compass
                 changed |= ImGui.DragFloat2("Position##ImGui", ref config.ImGuiCompassPosition, 1f, 0f, float.MaxValue, "%.f", ImGuiSliderFlags.AlwaysClamp);
                 changed |= ImGui.DragFloat("Width##ImGui", ref config.ImGuiCompassWidth, 1f, 150f, float.MaxValue, "%.f", ImGuiSliderFlags.AlwaysClamp);
                
-                changed |= ImGui.SliderFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.01f, 3f, "%.2f");
+                changed |= ImGui.SliderFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.02f, 3f, "%.2f");
                 changed |= ImGui.DragInt("Cardinals Offset##ImGui", ref config.ImGuiCompassCardinalsOffset);
                 changed |= DrawTreeCheckbox("Enable Centre Marker", ref config.ImGuiCompassEnableCenterMarker, () =>
                     {
@@ -221,45 +217,7 @@ namespace Compass
                         changed |= ImGui.Checkbox("Flip Centre Marker##ImGui", ref config.ImGuiCompassFlipCentreMarker);
                         return changed;
                     });
-                changed |= DrawTreeCheckbox("Enable Background", ref config.ImGuiCompassEnableBackground, () =>
-                {
-                    var changed = false;
-
-                    var backgroundStyle = (int) config.ImGuiCompassBackground;
-                    ImGui.Text($"Background");
-                    changed |= ImGui.RadioButton("Border##ImGui", ref backgroundStyle, 0);
-                    ImGui.SameLine();
-                    changed |= ImGui.RadioButton("Filled##ImGui", ref backgroundStyle, 1);
-                    ImGui.SameLine();
-                    changed |= ImGui.RadioButton("Border Filled##ImGui", ref backgroundStyle, 2);
-                    ImGui.SameLine();
-                    changed |= ImGui.RadioButton("Line##ImGui", ref backgroundStyle, 3);
-                    if (changed) config.ImGuiCompassBackground = (ImGuiCompassBackgroundStyle) backgroundStyle;
-                    
-                    if(config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Filled or ImGuiCompassBackgroundStyle.FilledAndBorder)
-                        changed |= ImGui.ColorEdit4("Fill Colour##ImGui", ref config.ImGuiBackgroundColour);
-                    if(config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Border or ImGuiCompassBackgroundStyle.FilledAndBorder)
-                    {
-                        changed |= ImGui.ColorEdit4("Border Colour##ImGui",
-                            ref config.ImGuiBackgroundBorderColour);
-                        changed |= ImGui.SliderFloat("Border Thickness##ImGui",
-                            ref config.ImGuiBackgroundBorderThickness, 1, 10, "%.f", ImGuiSliderFlags.AlwaysClamp);
-                    }
-
-                    if (config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Line)
-                    {
-                        changed |= ImGui.ColorEdit4("Line Colour##ImGui",
-                            ref config.ImGuiBackgroundLineColour);
-                        changed |= ImGui.SliderFloat("Line Thickness##ImGui",
-                            ref config.ImGuiBackgroundLineThickness, 1, 20, "%.f", ImGuiSliderFlags.AlwaysClamp);
-                        changed |= ImGui.DragInt("Line Offset##ImGui",
-                            ref config.ImGuiCompassBackgroundLineOffset);
-                    }
-
-                    if(config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Border or ImGuiCompassBackgroundStyle.FilledAndBorder or ImGuiCompassBackgroundStyle.Filled)
-                        changed |= ImGui.SliderFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding, 0f, 15f, "%.f", ImGuiSliderFlags.AlwaysClamp);
-                    return changed;
-                });
+                changed |= DrawTreeCheckbox("Enable Background", ref config.ImGuiCompassEnableBackground, DrawBackgroundConfig(config));
                 changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);
                 changed |= ImGui.Checkbox("Use Map instead of minimap as source##ImGui", ref config.UseAreaMapAsSource);
                 ImGui.SameLine();
@@ -283,6 +241,49 @@ namespace Compass
             ImGui.EndTabItem();
             return changed;
 
+        }
+
+        private static Func<bool> DrawBackgroundConfig(Configuration config)
+        {
+            return () =>
+            {
+                var changed = false;
+
+                var backgroundStyle = (int) config.ImGuiCompassBackground;
+                ImGui.Text($"Background");
+                changed |= ImGui.RadioButton("Border##ImGui", ref backgroundStyle, 0);
+                ImGui.SameLine();
+                changed |= ImGui.RadioButton("Filled##ImGui", ref backgroundStyle, 1);
+                ImGui.SameLine();
+                changed |= ImGui.RadioButton("Border Filled##ImGui", ref backgroundStyle, 2);
+                ImGui.SameLine();
+                changed |= ImGui.RadioButton("Line##ImGui", ref backgroundStyle, 3);
+                if (changed) config.ImGuiCompassBackground = (ImGuiCompassBackgroundStyle) backgroundStyle;
+                    
+                if(config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Filled or ImGuiCompassBackgroundStyle.FilledAndBorder)
+                    changed |= ImGui.ColorEdit4("Fill Colour##ImGui", ref config.ImGuiBackgroundColour);
+                if(config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Border or ImGuiCompassBackgroundStyle.FilledAndBorder)
+                {
+                    changed |= ImGui.ColorEdit4("Border Colour##ImGui",
+                        ref config.ImGuiBackgroundBorderColour);
+                    changed |= ImGui.SliderFloat("Border Thickness##ImGui",
+                        ref config.ImGuiBackgroundBorderThickness, 1, 10, "%.f", ImGuiSliderFlags.AlwaysClamp);
+                }
+
+                if (config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Line)
+                {
+                    changed |= ImGui.ColorEdit4("Line Colour##ImGui",
+                        ref config.ImGuiBackgroundLineColour);
+                    changed |= ImGui.SliderFloat("Line Thickness##ImGui",
+                        ref config.ImGuiBackgroundLineThickness, 1, 20, "%.f", ImGuiSliderFlags.AlwaysClamp);
+                    changed |= ImGui.DragInt("Line Offset##ImGui",
+                        ref config.ImGuiCompassBackgroundLineOffset);
+                }
+
+                if(config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Border or ImGuiCompassBackgroundStyle.FilledAndBorder or ImGuiCompassBackgroundStyle.Filled)
+                    changed |= ImGui.SliderFloat("Rounding##ImGui", ref config.ImGuiCompassBackgroundRounding, 0f, 15f, "%.f", ImGuiSliderFlags.AlwaysClamp);
+                return changed;
+            };
         }
 
         private static bool DrawImGuiTree(Configuration config, float scale, bool changed)

@@ -13,8 +13,8 @@ using Dalamud.Game.ClientState.Actors;
 using Dalamud.Game.Command;
 using Dalamud.Game.Internal;
 using Dalamud.Hooking;
-using FFXIVClientStructs.Component.GUI;
-using FFXIVClientStructs.Component.GUI.ULD;
+using FFXIVClientStructs.FFXIV.Component.GUI;
+using FFXIVClientStructs.FFXIV.Component.GUI.ULD;
 using ImGuiNET;
 using SimpleTweaksPlugin;
 using SimpleTweaksPlugin.Helper;
@@ -195,7 +195,7 @@ namespace Compass
                         clone->AtkResNode.ScaleX = clone->AtkResNode.ScaleY = scale;
                         UiHelper.Show(clone);
                         var part = imgNode->PartsList->Parts[imgNode->PartId];
-                        var type = part.ULDTexture->AtkTexture.TextureType;
+                        var type = part.UldAsset->AtkTexture.TextureType;
                         // OR?? //NOTE (CHIV) It should always be a resource
                         if (type != TextureType.Resource)
                         {
@@ -205,7 +205,7 @@ namespace Compass
 
                         ;
                         var texFileNamePtr =
-                            part.ULDTexture->AtkTexture.Resource->TexFileResourceHandle->ResourceHandle
+                            part.UldAsset->AtkTexture.Resource->TexFileResourceHandle->ResourceHandle
                                 .FileName;
                         var texString = Marshal.PtrToStringAnsi(new IntPtr(texFileNamePtr));
                         switch (texString)

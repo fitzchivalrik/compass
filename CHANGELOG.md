@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.8.4-testing
+
+- fix: Compatibility update to work with newest dalamud
+
 ## 0.8.1-testing
 
 - feat: Position compass with X/Y values and center horizontally via a button

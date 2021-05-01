@@ -1,7 +1,5 @@
-﻿
-using FFXIVClientStructs.Component.GUI;
-
-#if DEBUG
+﻿#if DEBUG
+using FFXIVClientStructs.FFXIV.Component.GUI;
 namespace SimpleTweaksPlugin.Helper {
     public static unsafe partial class UiHelper {
         public static void Hide(AtkTextNode* node) => Hide((AtkResNode*)node);

@@ -8,7 +8,7 @@ using Dalamud.Game.Command;
 using Dalamud.Hooking;
 using Dalamud.Interface;
 using Dalamud.Plugin;
-using FFXIVClientStructs.Component.GUI;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using SimpleTweaksPlugin;
 using FFXIVAction = Lumina.Excel.GeneratedSheets.Action;

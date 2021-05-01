@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
-using FFXIVClientStructs.Component.GUI;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace SimpleTweaksPlugin.Helper
 {
