@@ -267,6 +267,8 @@ namespace Compass
                                     = CalculateAreaCirlceVariables(_imGuiCompassData.PlayerPosition, playerForward, mapIconComponentNode,
                                         imgNode, mapScale, _imGuiCompassData.ImGuiCompassUnit, _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre);
                                 break;
+                            case 071003: // MSQ Ongoing Marker
+                            case 071005: // MSQ Complete Marker
                             case 071023: // Quest Ongoing Marker
                             case 071025: // Quest Complete Marker
                             case 071063: // BookQuest Ongoing Marker
