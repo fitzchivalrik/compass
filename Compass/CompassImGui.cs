@@ -85,7 +85,7 @@ namespace Compass
             //var _naviMap = (AtkUnitBase*)_pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             //  TODO YOLO, lets just assume naviMap never invalidates
             //NOTE (chiv) 3 means fully loaded
-            if (_naviMap->ULDData.LoadedState != 3) return;
+            if (_naviMap->UldManager.LoadedState != 3) return;
             if (!_naviMap->IsVisible) return;
             const ImGuiWindowFlags flags = ImGuiWindowFlags.NoDecoration
                                            | ImGuiWindowFlags.NoMove
@@ -94,7 +94,8 @@ namespace Compass
                                            | ImGuiWindowFlags.NoBackground
                                            | ImGuiWindowFlags.NoNav
                                            | ImGuiWindowFlags.NoInputs
-                                           | ImGuiWindowFlags.NoCollapse;
+                                           | ImGuiWindowFlags.NoCollapse
+                                           | ImGuiWindowFlags.NoSavedSettings;
             //TODO ForceWindow code back again + test
             ImGuiHelpers.ForceNextWindowMainViewport();
             ImGuiHelpers.SetNextWindowPosRelativeMainViewport(Vector2.Zero, ImGuiCond.Always);
@@ -124,7 +125,7 @@ namespace Compass
             //First, the background
             DrawImGuiCompassBackground();
             // Second, we position our Cardinals
-            var westCardinalAtkImageNode = (AtkImageNode*) _naviMap->ULDData.NodeList[11];
+            var westCardinalAtkImageNode = (AtkImageNode*) _naviMap->UldManager.NodeList[11];
             // TODO (Chiv) Cache on TerritoryChange/Initialisation?
             var naviMapTextureD3D11ShaderResourceView = new IntPtr(
                 westCardinalAtkImageNode->PartsList->Parts[0]
@@ -147,15 +148,15 @@ namespace Compass
                 var mapScale =
                     //miniMapIconsRootComponentNode->Component->ULDData.NodeList[1]->ScaleX; //maxZoom level == 2
                     *(float*) ((long) _naviMap + 0x24C);
-                for (var i = 4; i < _miniMapIconsRootComponentNode->Component->ULDData.NodeListCount; i++)
+                for (var i = 4; i < _miniMapIconsRootComponentNode->Component->UldManager.NodeListCount; i++)
                 {
                     var mapIconComponentNode =
-                        (AtkComponentNode*) _miniMapIconsRootComponentNode->Component->ULDData.NodeList[i];
+                        (AtkComponentNode*) _miniMapIconsRootComponentNode->Component->UldManager.NodeList[i];
                     if (!mapIconComponentNode->AtkResNode.IsVisible) continue;
-                    for (var j = 2; j < mapIconComponentNode->Component->ULDData.NodeListCount; j++)
+                    for (var j = 2; j < mapIconComponentNode->Component->UldManager.NodeListCount; j++)
                     {
                         // NOTE (Chiv) Invariant: From 2 onward, only ImageNodes
-                        var imgNode = (AtkImageNode*) mapIconComponentNode->Component->ULDData.NodeList[j];
+                        var imgNode = (AtkImageNode*) mapIconComponentNode->Component->UldManager.NodeList[j];
                         // TODO
                         if (imgNode->AtkResNode.Type != NodeType.Image) continue;
                         if (!imgNode->AtkResNode.IsVisible || !imgNode->AtkResNode.ParentNode->IsVisible) continue;
@@ -380,7 +381,7 @@ namespace Compass
             if (areaMapPtr == IntPtr.Zero) return;
             var areaMap = (AtkUnitBase*) areaMapPtr;
             //NOTE (chiv) 3 means fully loaded
-            if (areaMap->ULDData.LoadedState != 3) return;
+            if (areaMap->UldManager.LoadedState != 3) return;
             if (!areaMap->IsVisible) return;
             var scale = _config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
             var heightScale = ImGui.GetIO().FontGlobalScale;
@@ -415,8 +416,8 @@ namespace Compass
             // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
             var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
             //var cameraRotationInRadian = *(float*)(naviMapPtr + 0x254) * Deg2Rad;
-            var areaMapIconsRootComponentNode = (AtkComponentNode*) areaMap->ULDData.NodeList[3];
-            if (areaMapIconsRootComponentNode->Component->ULDData.NodeListCount != 265)
+            var areaMapIconsRootComponentNode = (AtkComponentNode*) areaMap->UldManager.NodeList[3];
+            if (areaMapIconsRootComponentNode->Component->UldManager.NodeListCount != 265)
             {
                 ImGui.End();
                 return;
@@ -448,7 +449,7 @@ namespace Compass
             //First, the background
             DrawImGuiCompassBackground();
             // Second, we position our Cardinals
-            var rotationTriangleImageNode = (AtkImageNode*) areaMapIconsRootComponentNode->Component->ULDData.NodeList[5];
+            var rotationTriangleImageNode = (AtkImageNode*) areaMapIconsRootComponentNode->Component->UldManager.NodeList[5];
             // TODO (Chiv) Cache on TerritoryChange/Initialisation?
             var naviMapTextureD3D11ShaderResourceView = new IntPtr(
                 rotationTriangleImageNode->PartsList->Parts[0]
@@ -461,7 +462,7 @@ namespace Compass
                 // I imagine this throws sometimes because of racing conditions -> We try to access an already freed texture e.g.
                 // So we just ignore those small exceptions, it works a few frames later anyways
                 var mapSlider =
-                    (AtkComponentNode*)areaMap->ULDData.NodeList[32]; //maxZoom level == 2
+                    (AtkComponentNode*)areaMap->UldManager.NodeList[32]; //maxZoom level == 2
                 // NOTE (Chiv) Slider position value is at this address
                 var mapScale = *(byte*) ((nint)(mapSlider->Component)+0xF0) + 1;
                 //SimpleLog.Log($"MapScale {mapScale}");
@@ -472,12 +473,12 @@ namespace Compass
                 for (var i = 231; i > 6; i--)
                 {
                     var mapIconComponentNode =
-                        (AtkComponentNode*) areaMapIconsRootComponentNode->Component->ULDData.NodeList[i];
+                        (AtkComponentNode*) areaMapIconsRootComponentNode->Component->UldManager.NodeList[i];
                     if (!mapIconComponentNode->AtkResNode.IsVisible) continue;
                     //SimpleLog.Log($"Player pos {playerPos}");
                     for (var j = 3; j < 6; j++)
                     {
-                        var imgNode = (AtkImageNode*) mapIconComponentNode->Component->ULDData.NodeList[j];
+                        var imgNode = (AtkImageNode*) mapIconComponentNode->Component->UldManager.NodeList[j];
                         if (imgNode->AtkResNode.Type != NodeType.Image)
                         {
                             continue;

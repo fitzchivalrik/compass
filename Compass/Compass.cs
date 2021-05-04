@@ -31,7 +31,7 @@ namespace Compass
         private AtkUnitBase* _naviMap = null!;
         private AtkComponentNode* _miniMapIconsRootComponentNode = null!;
         
-        private string[] _uiIdentifiers;
+        private string[] _uiIdentifiers = null!; //Constructor calls method which initializes
         private nint _maybeCameraStruct;
         private int _currentUiObjectIndex;
         private bool _buildingConfigUi;
@@ -202,7 +202,7 @@ namespace Compass
         {
             //TODO Yolo. Checks?
             _naviMap = (AtkUnitBase*)_pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
-            _miniMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->ULDData.NodeList[2];
+            _miniMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->UldManager.NodeList[2];
             _setCameraRotation.Enable();
             _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
         }
