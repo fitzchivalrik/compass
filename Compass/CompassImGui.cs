@@ -107,13 +107,15 @@ namespace Compass
             }
             var drawlist = ImGui.GetWindowDrawList();
             drawlist.PushClipRectFullScreen();
+
+            const uint playerViewTriangleRotationOffset = 0x254;
             // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
             //var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
             //var _miniMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->ULDData.NodeList[2];
             // Minimap rotation thingy is even already flipped!
             // And apparently even accessible & updated if _NaviMap is disabled
             // => This leads to jerky behaviour though
-            var cameraRotationInRadian = *(float*)((long)_naviMap + 0x254) * Deg2Rad;
+            var cameraRotationInRadian = *(float*)((nint)_naviMap + playerViewTriangleRotationOffset) * Deg2Rad;
             
             var cosPlayer = (float) Math.Cos(cameraRotationInRadian);
             var sinPlayer = (float) Math.Sin(cameraRotationInRadian);
@@ -413,8 +415,9 @@ namespace Compass
                 return;
             }
             const uint whiteColor = 0xFFFFFFFF;
+            const uint playerViewTriangleRotationOffset = 0x254;
             // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
-            var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
+            var cameraRotationInRadian = *(float*)((long)_naviMap + playerViewTriangleRotationOffset) * Deg2Rad;
             //var cameraRotationInRadian = *(float*)(naviMapPtr + 0x254) * Deg2Rad;
             var areaMapIconsRootComponentNode = (AtkComponentNode*) areaMap->UldManager.NodeList[3];
             if (areaMapIconsRootComponentNode->Component->UldManager.NodeListCount != 265)
@@ -464,7 +467,8 @@ namespace Compass
                 var mapSlider =
                     (AtkComponentNode*)areaMap->UldManager.NodeList[32]; //maxZoom level == 2
                 // NOTE (Chiv) Slider position value is at this address
-                var mapScale = *(byte*) ((nint)(mapSlider->Component)+0xF0) + 1;
+                const uint sliderPositionOffset = 0xF0;
+                var mapScale = *(byte*) ((nint)(mapSlider->Component)+sliderPositionOffset) + 1;
                 //SimpleLog.Log($"MapScale {mapScale}");
                 // NOTE (Chiv) We go down because we assume
                 // (a) The first visible node will always be the player marker and give us the player positoin

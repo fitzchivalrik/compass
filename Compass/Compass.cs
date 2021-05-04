@@ -1,18 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
-using Dalamud.Hooking;
-using Dalamud.Interface;
 using Dalamud.Plugin;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
-using SimpleTweaksPlugin;
-using FFXIVAction = Lumina.Excel.GeneratedSheets.Action;
-
 
 namespace Compass
 {
@@ -21,10 +11,8 @@ namespace Compass
         public const string PluginName = "Compass";
         private const string Command = "/compass";
         
-        private readonly Hook<SetCameraRotationDelegate> _setCameraRotation;
         private readonly Configuration _config;
         private readonly DalamudPluginInterface _pluginInterface;
-        private delegate void SetCameraRotationDelegate(nint cameraThis, float degree);
 
         private Vector2 _lastKnownPlayerPos = Vector2.Zero;
         
@@ -32,7 +20,6 @@ namespace Compass
         private AtkComponentNode* _miniMapIconsRootComponentNode = null!;
         
         private string[] _uiIdentifiers = null!; //Constructor calls method which initializes
-        private nint _maybeCameraStruct;
         private int _currentUiObjectIndex;
         private bool _buildingConfigUi;
         private bool _isDisposed;
@@ -43,10 +30,6 @@ namespace Compass
         public Compass(DalamudPluginInterface pi, Configuration config)
         {
             #region Signatures
-
-            // 40 53 48 83 EC 20 0F 2F 0D ? ? ? ? 
-            const string setCameraRotationSignature = "40 ?? 48 83 EC ?? 0F 2F ?? ?? ?? ?? ?? 48 8B";
-            //const string setCameraRotationSignature = "40 53 48 83 EC 20 0F 2F 0D ?? ?? ?? ??";
 
             #endregion
 
@@ -130,10 +113,6 @@ namespace Compass
             _pluginInterface.ClientState.OnLogout += OnLogout;
 
             #region Hooks, Functions and Addresses
-            
-            _setCameraRotation = new Hook<SetCameraRotationDelegate>(
-                _pluginInterface.TargetModuleScanner.ScanText(setCameraRotationSignature),
-                (SetCameraRotationDelegate) SetCameraRotationDetour);
 
             #endregion
 
@@ -179,16 +158,7 @@ namespace Compass
             }
 #endif
         }
-
-        private void SetCameraRotationDetour(nint cameraThis, float degree)
-        {
-            _setCameraRotation.Original(cameraThis, degree);
-            _maybeCameraStruct = cameraThis;
-            UpdateCompassSource();
-            _setCameraRotation.Disable();
-        }
         
-
         private void OnLogout(object sender, EventArgs e)
         {
             _pluginInterface.UiBuilder.OnOpenConfigUi -= OnOpenConfigUi;
@@ -200,14 +170,15 @@ namespace Compass
 
         private void OnLogin(object sender, EventArgs e)
         {
-            //TODO Yolo. Checks?
+            //TODO Yolo. Checks? -> Seems to be stable all the time, even if hidden by HUD Layouy
             _naviMap = (AtkUnitBase*)_pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             _miniMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->UldManager.NodeList[2];
-            _setCameraRotation.Enable();
             _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
+            UpdateCompassSource();
         }
 
         
+        // TODO (Chiv) Integrate with UpdateCompassValues
          private void UpdateCompassSource()
         {
             _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompassNavi;
@@ -280,10 +251,6 @@ namespace Compass
                 _pluginInterface.ClientState.OnLogin -= OnLogin;
                 _pluginInterface.ClientState.OnLogout -= OnLogout;
                 _pluginInterface.CommandManager.RemoveHandler(Command);
-
-                _setCameraRotation?.Disable();
-                _setCameraRotation?.Dispose();
-                
                 DebugDtor();
             }
 
