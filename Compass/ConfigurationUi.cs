@@ -251,9 +251,9 @@ namespace Compass
 
                 var backgroundStyle = (int) config.ImGuiCompassBackground;
                 ImGui.Text($"Background");
-                changed |= ImGui.RadioButton("Border##ImGui", ref backgroundStyle, 0);
+                changed |= ImGui.RadioButton("Filled##ImGui", ref backgroundStyle, 0);
                 ImGui.SameLine();
-                changed |= ImGui.RadioButton("Filled##ImGui", ref backgroundStyle, 1);
+                changed |= ImGui.RadioButton("Border##ImGui", ref backgroundStyle, 1);
                 ImGui.SameLine();
                 changed |= ImGui.RadioButton("Border Filled##ImGui", ref backgroundStyle, 2);
                 ImGui.SameLine();
