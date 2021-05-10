@@ -10,6 +10,8 @@ namespace Compass
         // => All game Y needs to be flipped.
         public const int NaviMapPlayerX = 72;
         public const int NaviMapPlayerY = -72;
+        public const int NaviMapScaleOffset = 0x24C;
+        public const int AreaMapScaleOffset = 0x374;
         public const uint WhiteColor = 0xFFFFFFFF;
         public const float ImGuiCompassHeight = 50f;
         public Vector2 PlayerPosition;
@@ -20,16 +22,18 @@ namespace Compass
         public Vector2 ImGuiCompassBackgroundLinePMax;
         public float ImGuiCompassHalfWidth;
         public float ImGuiCompassHalfHeight;
-        public float ImGuicompassScale;
+        public float ImGuiCompassScale;
         public float CompassHeightScale;
         public float DistanceScaleFactorForRotationIcons;
         public float HalfWidth40;
         public float HalfWidth28;
         public float ImGuiCompassUnit;
         public float RotationIconHalfWidth;
+        public float MinScaleFactor;
+        public float MaxDistance;
         public uint ImGuiBackgroundColourUInt32;
         public uint ImGuiBackgroundBorderColourUInt32;
         public uint ImGuiBackgroundLineColourUInt32;
-        
+        public int CurrentScaleOffset;
     }
 }

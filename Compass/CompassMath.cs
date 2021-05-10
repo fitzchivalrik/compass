@@ -17,7 +17,7 @@ namespace Compass
         private static unsafe (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
             in Vector2 playerPos, Vector2 playerForward, AtkComponentNode* mapIconComponentNode,
             AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre,
-            float maxDistance = 180f, float distanceOffset = 40f, float lowestScaleFactor = 0.2f)
+            float maxDistance, float minScaleFactor)
         {
             // TODO Distinguish between Circles for quests and circles for Fates (colour?) for filtering
             // NOTE (Chiv) Remember, Y needs to be flipped to transform to default coordinate system
@@ -30,8 +30,7 @@ namespace Compass
                 playerForward,
                 mapScale,
                 maxDistance,
-                distanceOffset,
-                lowestScaleFactor);
+                minScaleFactor);
             var radius = mapIconComponentNode->AtkResNode.ScaleX *
                          (mapIconComponentNode->AtkResNode.Width - mapIconComponentNode->AtkResNode.OriginX);
             // NOTE (Chiv) We assume part.Width == part.Height == 32
@@ -54,14 +53,13 @@ namespace Compass
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static (float distanceScaleFactor, float signedAngle, float distance) CalculateDrawVariables(in Vector2 from,
-            in Vector2 to, in Vector2 forward, float distanceScaling, float maxDistance = 180f, float distanceOffset = 20f, float lowestScaleFactor = 0.2f)
+            in Vector2 to, in Vector2 forward, float distanceScaling, float maxDistance, float minScaleFactor)
         {
-            // TODO (Chiv) Distance Offset adjustments
-            distanceOffset *= distanceScaling; //80f @Max Zoom(==2) _NaviMap, default
-            maxDistance *= distanceScaling; //360f @Max Zoom(==2) _NaviMap, default
+            var distanceOffset = 20f * distanceScaling; //80f @Max Zoom(==2) 
+            maxDistance *= distanceScaling; //360f @Max Zoom(==2)
             var distance = Vector2.Distance(to, from);
-            var scaleFactor = Math.Max(1f - (distance - distanceOffset) / maxDistance, lowestScaleFactor);
-            return (scaleFactor,SignedAngle(to  - from, forward), distance);
+            var scaleFactor = Math.Max(1f - (distance - distanceOffset) / maxDistance, minScaleFactor);
+            return (distance > maxDistance ? 0 : scaleFactor,SignedAngle(to  - from, forward), distance);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -13,18 +13,13 @@ namespace Compass
         
         private readonly Configuration _config;
         private readonly DalamudPluginInterface _pluginInterface;
-
-        private Vector2 _lastKnownPlayerPos = Vector2.Zero;
-        
-        private AtkUnitBase* _naviMap = null!;
-        private AtkComponentNode* _miniMapIconsRootComponentNode = null!;
         
         private string[] _uiIdentifiers = null!; //Constructor calls method which initializes
         private int _currentUiObjectIndex;
-        private bool _buildingConfigUi;
-        private bool _isDisposed;
         private bool _shouldHideCompass;
         private bool _shouldHideCompassIteration;
+        private bool _isDisposed;
+        private bool _buildingConfigUi;
         
 
         public Compass(DalamudPluginInterface pi, Configuration config)
@@ -105,7 +100,6 @@ namespace Compass
                 Array.Resize(ref _config.ShouldHideOnUiObjectSerializer, _config.ShouldHideOnUiObject.Length);
             }
             
-            UpdateCompassVariables();
             #endregion
             
             
@@ -164,35 +158,27 @@ namespace Compass
             _pluginInterface.UiBuilder.OnOpenConfigUi -= OnOpenConfigUi;
             _pluginInterface.UiBuilder.OnBuildUi -= BuildConfigUi;
 
-            _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompassArea;
             _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompassNavi;
         }
 
         private void OnLogin(object sender, EventArgs e)
         {
+            _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
             //TODO Yolo. Checks? -> Seems to be stable all the time, even if hidden by HUD Layouy
             _naviMap = (AtkUnitBase*)_pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
-            _miniMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->UldManager.NodeList[2];
-            _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
-            UpdateCompassSource();
+            _naviMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->UldManager.NodeList[2];
+            _areaMap = (AtkUnitBase*)_pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
+            _areaMapIconsRootComponentNode = (AtkComponentNode*)_areaMap->UldManager.NodeList[3];
+            var westCardinalAtkImageNode = (AtkImageNode*) _naviMap->UldManager.NodeList[11];
+            
+            _naviMapTextureD3D11ShaderResourceView = new IntPtr(
+                westCardinalAtkImageNode->PartsList->Parts[0]
+                    .UldAsset->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
+            );
+            UpdateCompassVariables();
+            _pluginInterface.UiBuilder.OnBuildUi += BuildImGuiCompassNavi;
         }
-
         
-        // TODO (Chiv) Integrate with UpdateCompassValues
-         private void UpdateCompassSource()
-        {
-            _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompassNavi;
-            _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompassArea;
-            if (_config.UseAreaMapAsSource)
-            {
-                _pluginInterface.UiBuilder.OnBuildUi += BuildImGuiCompassArea;
-            }
-            else
-            {
-                _pluginInterface.UiBuilder.OnBuildUi += BuildImGuiCompassNavi;
-            }
-
-        }
 
         #region UI
 
@@ -203,9 +189,6 @@ namespace Compass
             {
                 _pluginInterface.SavePluginConfig(_config);
                 UpdateCompassVariables();
-                // TODO (Chiv) Integrate AreaMap and NaviMap method, check draw times, integrate UpdateSource with UpdateVariables
-                UpdateCompassSource();
-                
             }
 
             if (shouldBuildConfigUi) return;

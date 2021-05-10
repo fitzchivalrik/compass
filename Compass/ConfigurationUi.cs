@@ -219,7 +219,14 @@ namespace Compass
                     });
                 changed |= DrawTreeCheckbox("Enable Background", ref config.ImGuiCompassEnableBackground, DrawBackgroundConfig(config));
                 changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);
-                changed |= ImGui.Checkbox("Use Map instead of minimap as source##ImGui", ref config.UseAreaMapAsSource);
+                changed |= DrawTreeCheckbox("Use Map instead of minimap as source##ImGui",
+                    ref config.UseAreaMapAsSource,
+                    () =>
+                    {
+                        var changed = false;
+                        changed |= ImGui.DragFloat("Max Distance##ImGui", ref config.AreaMapMaxDistance, 10f, 80f, 2000f, "%.f", ImGuiSliderFlags.AlwaysClamp);
+                        return changed;
+                    });
                 ImGui.SameLine();
                 ImGui.PushFont(UiBuilder.IconFont);
                 ImGui.TextDisabled(FontAwesomeIcon.QuestionCircle.ToIconString());
