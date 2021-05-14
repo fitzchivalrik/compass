@@ -42,6 +42,7 @@ namespace Compass
         
         public bool[] ShouldHideOnUiObjectSerializer = new bool[0];
         [JsonIgnore] public (string[] getUiObjectIdentifier,bool disable, string userFacingIdentifier)[] ShouldHideOnUiObject = null!;
+        public HashSet<uint> FilteredIconIds = new();
         public bool HideInCombat;
         [JsonIgnore] public bool FreshInstall;
         public bool HideInPvPMaps;

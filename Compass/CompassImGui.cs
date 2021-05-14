@@ -203,6 +203,8 @@ namespace Compass
                             textureFileName.Substring(textureFileName.LastIndexOfAny(new[] {'/', '\\'}) + 1, 6),
                             out var iconId);
                         //iconId = 0 (==> success == false as IconID will never be 0) Must have been 'NaviMap(_hr1)?\.tex' (and only that hopefully)
+                        if (_config.FilteredIconIds.Contains(iconId)) continue;
+                        
                         var textureIdPtr = new IntPtr(tex->D3D11ShaderResourceView);
                         Vector2 pMin;
                         Vector2 pMax;

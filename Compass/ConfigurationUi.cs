@@ -29,6 +29,7 @@ namespace Compass
             if(ImGui.BeginTabBar("ConfigTabBar", ImGuiTabBarFlags.NoTooltip))
             {
                 changed |= DrawGeneralConfigurationTab(config, scale);
+                changed |= DrawFilterTab(config, scale);
                 changed |= DrawOnAddonHideTab(config, scale);
                 DrawHelpTab();
                 ImGui.EndTabBar();
@@ -36,6 +37,58 @@ namespace Compass
             
             ImGui.End();
             return (shouldBuildConfigUi, changed);
+        }
+
+        private static bool DrawFilterTab(Configuration config, float scale)
+        {
+            var changed = false;
+            if (!ImGui.BeginTabItem("Filtering")) return changed;
+            ImGui.Text("Filter ... on compass.");
+            changed |= DrawFilterCheckBox(config, "MSQ Quests",071001, 71002);
+            ImGui.SameLine(225);
+            changed |= DrawFilterCheckBox(config, "Locked MSQ Quests",071011, 71012);
+            changed |= DrawFilterCheckBox(config, "Blue Quests",071141, 71142);
+            ImGui.SameLine(225);
+            changed |= DrawFilterCheckBox(config, "Locked Blue Quests",071151, 71152);
+            changed |= DrawFilterCheckBox(config, "Side Quests",071021, 71022, 71111);
+            ImGui.SameLine(225);
+            changed |= DrawFilterCheckBox(config, "Locked Side Quests",071031, 71032);
+            changed |= DrawFilterCheckBox(config, "Lore (Book) Quests",071061, 71062);
+            ImGui.SameLine(225);
+            changed |= DrawFilterCheckBox(config, "Locked Lore (Book) Quests",071071, 71072);
+            changed |= DrawFilterCheckBox(config, "Levequests",071081, 71082);
+            changed |= DrawFilterCheckBox(config, "Triple Triad Regular",071101);
+            ImGui.SameLine(225);
+            changed |= DrawFilterCheckBox(config, "Triple Triad New Cards",071102);
+            changed |= DrawFilterCheckBox(config, "Fate Markers",060501, 60502, 60503, 60504, 60505, 60506, 60507, 60508);
+            changed |= DrawFilterCheckBox(config, "Area Transition Markers",060457);
+            ImGui.SameLine(225);
+            changed |= DrawFilterCheckBox(config, "Stairs & Doors",060446, 60447, 60467, 60971);
+            changed |= DrawFilterCheckBox(config, "Big Aetheryte",060453);
+            ImGui.SameLine(225);
+            changed |= DrawFilterCheckBox(config, "Small Aetheryte",060430);
+            changed |= DrawFilterCheckBox(config, "Map Pins",060442);
+            changed |= DrawFilterCheckBox(config, "Materia Melder",060910);
+            changed |= DrawFilterCheckBox(config, "Shops",060412, 60935);
+            ImGui.SameLine(225);
+            changed |= DrawFilterCheckBox(config, "Mender",060434);
+            changed |= DrawFilterCheckBox(config, "Retainer Bell",060560);
+            ImGui.SameLine(225);
+            changed |= DrawFilterCheckBox(config, "Market Board",060570);
+            changed |= DrawFilterCheckBox(config, "DoW/DoM Guild Symbols",060319,060320,060322,60330, 60331, 60342, 60344, 60347, 60362, 60363, 60364);
+            changed |= DrawFilterCheckBox(config, "DoH/DoL Guild Symbols",060318,060321,060326,60333,60334, 60335, 60337, 60345, 60346, 60348,60351);
+            ImGui.EndTabItem();
+            return changed;
+        }
+
+        private static bool DrawFilterCheckBox(Configuration config, string description, params uint[] iconId)
+        {
+            var iconContained = config.FilteredIconIds.Contains(iconId[0]);
+            if (!ImGui.Checkbox(description, ref iconContained)) return false;
+            foreach (var id in iconId) config.FilteredIconIds.Remove(id);
+            if (!iconContained) return true;
+            foreach (var id in iconId) config.FilteredIconIds.Add(id);
+            return true;
         }
 
         private static void DrawFreshInstallNotice(Configuration config, float scale)
