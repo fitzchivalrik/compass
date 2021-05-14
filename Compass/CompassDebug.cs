@@ -25,20 +25,34 @@ namespace Compass
     public unsafe partial class Compass
     {
         const float TOLERANCE = 0.00001f;
+
+        private delegate void AddonNaviMap_OnUpdate(nint thisNaviMap, nint a2, nint a3);
+
+        private Hook<AddonNaviMap_OnUpdate> _naviOnUpdateHook;
         
         private AtkImageNode* _background;
         //NOTE (Chiv) 202 Component Nodes for the Icons on the minimap + 1*4 pointers for the Cardinals
         // Actually, there are 101*3 and 101*4 Component nodes but this it easier to deal with 
         private readonly AtkImageNode*[,] _clonedImageNodes = new AtkImageNode*[202, 4];
         private readonly AtkImageNode*[] _cardinalsClonedImageNodes = new AtkImageNode*[4];
+        private bool _setupComplete = false;
         private IntPtr _inFateAreaPtr;
-        private IntPtr _sig;
+        private IntPtr _fateSig;
+        private nint _thisNaviMap;
+        private nint _a2NaviOnUpdate;
+        private nint _a3NaviOnUpdate;
 
         partial void DebugCtor()
         {
-            _sig = _pluginInterface.TargetModuleScanner.ScanText("80 3D ?? ?? ?? ?? ?? 0F 84 ?? ?? ?? ?? 48 8B 42 20");
-            _inFateAreaPtr = _sig + Marshal.ReadInt32(_sig, 2) + 7;
-            var isInFateArea = Marshal.ReadByte(_inFateAreaPtr);
+            _fateSig = _pluginInterface.TargetModuleScanner.ScanText("80 3D ?? ?? ?? ?? ?? 0F 84 ?? ?? ?? ?? 48 8B 42 20");
+            _inFateAreaPtr = _fateSig + Marshal.ReadInt32(_fateSig, 2) + 7;
+
+
+            var naviOnUpdate =
+                _pluginInterface.TargetModuleScanner.ScanText("48 8B C4 55 48 81 EC ?? ?? ?? ?? F6 81 ?? ?? ?? ?? ??");
+            _naviOnUpdateHook =
+                new Hook<AddonNaviMap_OnUpdate>(naviOnUpdate, (AddonNaviMap_OnUpdate) NaviMapOnUpdateDetour);
+            _naviOnUpdateHook.Enable();
 
             _pluginInterface.CommandManager.AddHandler($"{Command}debug", new CommandInfo((_, _) =>
             {
@@ -58,18 +72,32 @@ namespace Compass
 
             UiHelper.Setup(_pluginInterface.TargetModuleScanner);
         }
-        
+
+        private void NaviMapOnUpdateDetour(nint thisNaviMap, nint a2, nint a3)
+        {
+            _thisNaviMap = thisNaviMap;
+            _a2NaviOnUpdate = a2;
+            _a3NaviOnUpdate = a3;
+            _naviOnUpdateHook.Original(thisNaviMap, a2, a3);
+            if (_setupComplete)
+            {
+                //OnFrameworkUpdateUpdateAddonCompass();
+            }
+            else
+            {
+                //OnFrameworkUpdateSetupAddonNodes();
+            }
+        }
        
         private void BuildDebugUi()
         {
             
             ImGui.SetNextWindowBgAlpha(1);
             if(!ImGui.Begin($"{PluginName} Debug")) { ImGui.End(); return;}
-            ImGui.Text($"Sig: {_sig.ToString("X")}, Sig Offset 2 Int {Marshal.ReadInt32(_sig,2):X} Sig Offset 2 Int+7 {Marshal.ReadInt32(_sig,2)+7:X}");
+            ImGui.Text($"Sig: {_fateSig.ToString("X")}, Sig Offset 2 Int {Marshal.ReadInt32(_fateSig,2):X} Sig Offset 2 Int+7 {Marshal.ReadInt32(_fateSig,2)+7:X}");
             ImGui.Text($"Is in Fate {Marshal.ReadByte(_inFateAreaPtr)}, Ptr {_inFateAreaPtr.ToString("X")}");
             ImGui.Separator();
-            //var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
-            //var cameraRotationInRadian = *(float*) (naviMap + 0x254) * Deg2Rad;
+            ImGui.Text($"thisNaviMap {(long)_thisNaviMap:X} a2 {(long)_a2NaviOnUpdate:X} a3 {(long)_a3NaviOnUpdate:X}");
             ImGui.Separator();
             //var naviMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             //var areaMap =  (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
@@ -83,18 +111,19 @@ namespace Compass
         }
         
          //TODO (Chiv) While this is nice and somehow works, it still explodes 1-30 seconds later, so I give up on that for now
-        private void OnFrameworkUpdateUpdateAddonCompass(Framework framework)
+        private void OnFrameworkUpdateUpdateAddonCompass()
         {
             // Minimap rotation thingy is even already flipped!
             // And apparently even accessible & updated if _NaviMap is disabled
-            var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
 
             var navimapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+            const uint playerViewTriangleRotationOffset = 0x254;
             if (navimapPtr == IntPtr.Zero) return;
             var naviMap = (AtkUnitBase*) navimapPtr;
             //NOTE (chiv) 3 means fully loaded
             if (naviMap->ULDData.LoadedState != 3) return;
             if (!naviMap->IsVisible) return;
+            var cameraRotationInRadian = *(float*)((nint)naviMap + playerViewTriangleRotationOffset) * Deg2Rad;
 
             try
             {
@@ -275,7 +304,7 @@ namespace Compass
         }
         
          //TODO (Chiv) See comment on OnFrameworkUpdateUpdateAddonCompass
-        private void OnFrameworkUpdateSetupAddonNodes(Framework framework)
+        private void OnFrameworkUpdateSetupAddonNodes()
         {
             try
             {
@@ -328,9 +357,9 @@ namespace Compass
                 }
 
                 //TODO (Chiv) Search for PlayerIcon and set it up too?
-
-                _pluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdateSetupAddonNodes;
-                _pluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdateUpdateAddonCompass;
+                _setupComplete = true;
+                //_pluginInterface.Framework.OnUpdateEvent -= OnFrameworkUpdateSetupAddonNodes;
+                // _pluginInterface.Framework.OnUpdateEvent += OnFrameworkUpdateUpdateAddonCompass;
             }
             catch (Exception e)
             {
@@ -358,6 +387,9 @@ namespace Compass
         {
             _pluginInterface.UiBuilder.OnBuildUi -= BuildDebugUi;
             _pluginInterface.CommandManager.RemoveHandler($"{Command}debug");
+            
+            _naviOnUpdateHook?.Disable();
+            _naviOnUpdateHook?.Dispose();
         }
     }
 }
