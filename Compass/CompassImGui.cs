@@ -168,7 +168,9 @@ namespace Compass
                 // I imagine this throws sometimes because of racing conditions -> We try to access an already freed texture e.g.
                 // So we just ignore those small exceptions, it works a few frames later anyways
                 var mapScale = *(float*) ((long) _currentSourceBase + _imGuiCompassData.CurrentScaleOffset);
-                for (var i = _currentMapIconsRootComponentNode->Component->UldManager.NodeListCount-1; i >= _componentIconLoopStart ; i--)
+                var distanceOffset = 20f * mapScale;  
+                var maxDistance = _imGuiCompassData.MaxDistance * mapScale;
+                for (var i = _componentIconLoopStart; i < _currentMapIconsRootComponentNode->Component->UldManager.NodeListCount ; i++)
                 {
                     var mapIconComponentNode =
                         (AtkComponentNode*) _currentMapIconsRootComponentNode->Component->UldManager.NodeList[i];
@@ -268,8 +270,8 @@ namespace Compass
                                 bool inArea;
                                 (pMin, pMax, tintColour, inArea)
                                     = CalculateAreaCirlceVariables(_imGuiCompassData.PlayerPosition, playerForward, mapIconComponentNode,
-                                        imgNode, mapScale, _imGuiCompassData.ImGuiCompassUnit, _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre,
-                                        _imGuiCompassData.MaxDistance, _imGuiCompassData.MinScaleFactor);
+                                        imgNode, distanceOffset, _imGuiCompassData.ImGuiCompassUnit, _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre,
+                                        maxDistance, _imGuiCompassData.MinScaleFactor);
                                 if (inArea)
                                     //*((byte*) &tintColour + 3) = 0x33  == (0x33FFFFFF) & (tintColour)
                                     ImGui.GetBackgroundDrawList().AddRectFilled(_imGuiCompassData.ImGuiCompassBackgroundPMin
@@ -286,8 +288,8 @@ namespace Compass
                             case 060547: // Arrow DOWN on Circle
                                 (pMin, pMax, tintColour, _)
                                     = CalculateAreaCirlceVariables(_imGuiCompassData.PlayerPosition, playerForward, mapIconComponentNode,
-                                        imgNode, mapScale, _imGuiCompassData.ImGuiCompassUnit, _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre,
-                                        _imGuiCompassData.MaxDistance, _imGuiCompassData.MinScaleFactor);
+                                        imgNode, distanceOffset, _imGuiCompassData.ImGuiCompassUnit, _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre,
+                                        maxDistance, _imGuiCompassData.MinScaleFactor);
                                 break;
                             case 071003: // MSQ Ongoing Marker
                             case 071005: // MSQ Complete Marker
@@ -314,7 +316,6 @@ namespace Compass
                                 // => The current quest marker is outside the mask and should be
                                 // treated as a rotation
                                 goto case 1; //No UV setup needed for quest markers
-                            case 060457: // Area Transition Bullet Thingy
                             default:
                                 // NOTE (Chiv) Remember, Y needs to be flipped to transform to default coordinate system
                                 var (distanceScaleFactor, iconAngle, _) = CalculateDrawVariables(_imGuiCompassData.PlayerPosition,
@@ -323,8 +324,8 @@ namespace Compass
                                         -mapIconComponentNode->AtkResNode.Y
                                     ),
                                     playerForward,
-                                    mapScale,
-                                    _imGuiCompassData.MaxDistance,
+                                    distanceOffset,
+                                    maxDistance,
                                     _imGuiCompassData.MinScaleFactor
                                 );
                                 var iconOffset = _imGuiCompassData.ImGuiCompassUnit * iconAngle;

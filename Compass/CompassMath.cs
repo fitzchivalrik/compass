@@ -16,7 +16,7 @@ namespace Compass
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe (Vector2 pMin, Vector2 pMax, uint tintColour, bool inArea) CalculateAreaCirlceVariables(
             in Vector2 playerPos, Vector2 playerForward, AtkComponentNode* mapIconComponentNode,
-            AtkImageNode* imgNode, float mapScale, float compassUnit, float halfWidth32, Vector2 compassCentre,
+            AtkImageNode* imgNode, float distanceOffset, float compassUnit, float halfWidth32, Vector2 compassCentre,
             float maxDistance, float minScaleFactor)
         {
             // TODO Distinguish between Circles for quests and circles for Fates (colour?) for filtering
@@ -28,7 +28,7 @@ namespace Compass
                     -mapIconComponentNode->AtkResNode.Y
                 ),
                 playerForward,
-                mapScale,
+                distanceOffset,
                 maxDistance,
                 minScaleFactor);
             var radius = mapIconComponentNode->AtkResNode.ScaleX *
@@ -53,10 +53,8 @@ namespace Compass
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static (float distanceScaleFactor, float signedAngle, float distance) CalculateDrawVariables(in Vector2 from,
-            in Vector2 to, in Vector2 forward, float distanceScaling, float maxDistance, float minScaleFactor)
+            in Vector2 to, in Vector2 forward, float distanceOffset, float maxDistance, float minScaleFactor)
         {
-            var distanceOffset = 20f * distanceScaling; //80f @Max Zoom(==2) 
-            maxDistance *= distanceScaling; //360f @Max Zoom(==2)
             var distance = Vector2.Distance(to, from);
             var scaleFactor = Math.Max(1f - (distance - distanceOffset) / maxDistance, minScaleFactor);
             return (distance > maxDistance ? 0 : scaleFactor,SignedAngle(to  - from, forward), distance);
