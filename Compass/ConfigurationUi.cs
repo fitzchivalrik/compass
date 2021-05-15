@@ -39,44 +39,48 @@ namespace Compass
             return (shouldBuildConfigUi, changed);
         }
 
+
+        private static readonly (string description, uint[] ids)[] FilterIconIds =
+        {
+            ("MSQ Quests", new uint[] {71001, 71002}),
+            ("Locked MSQ Quests", new uint[] {071011, 71012}),
+            ("Blue Quests", new uint[] {071141, 71142}),
+            ("Locked Blue Quests", new uint[] {071151, 71152}),
+            ("Side Quests", new uint[] {071021, 71022, 71111}),
+            ("Locked Side Quests", new uint[] {071031, 71032}),
+            ("Lore (Book) Quests", new uint[] {071061, 71062}),
+            ("Locked Lore (Book) Quests", new uint[] {071071, 71072}),
+            ("Levequests", new uint[] {071081, 71082, 071041}),
+            ("Triple Triad Regular", new uint[] {071101}),
+            ("Triple Triad New Cards", new uint[] {071102}),
+            ("Fate Markers", new uint[] {060501, 60502, 60503, 60504, 60505, 60506, 60507, 60508}),
+            ("Dungeon Symbols", new uint[] {060414}),
+            ("Porter", new uint[] {060311}),
+            ("Area Transition Markers", new uint[] {060457}),
+            ("Stairs & Doors", new uint[] {060446, 60447, 60467, 60971}),
+            ("Big Aetheryte", new uint[] {060453}),
+            ("Small Aetheryte", new uint[] {060430}),
+            ("Map Pins", new uint[] {060442}),
+            ("Materia Melder", new uint[] {060910}),
+            ("Skywatcher", new uint[] {60581}),
+            ("Shops", new uint[] {060412, 60935}),
+            ("Mender", new uint[] {060434}),
+            ("Retainer Bell", new uint[] {060560,60425}),
+            ("Market Board", new uint[] {060570}),
+            ("DoW/DoM Guild Symbols",  new uint[] {060319, 060320, 060322, 60330, 60331, 60342, 60344, 60347, 60362, 60363, 60364}),
+            ("DoH/DoL Guild Symbols",  new uint[] {060318, 060321, 060326, 60333, 60334, 60335, 60337, 60345, 60346, 60348, 60351}),
+        };
+        
         private static bool DrawFilterTab(Configuration config, float scale)
         {
             var changed = false;
             if (!ImGui.BeginTabItem("Filtering")) return changed;
             ImGui.Text("Filter ... on compass.");
-            changed |= DrawFilterCheckBox(config, "MSQ Quests",071001, 71002);
-            ImGui.SameLine(225);
-            changed |= DrawFilterCheckBox(config, "Locked MSQ Quests",071011, 71012);
-            changed |= DrawFilterCheckBox(config, "Blue Quests",071141, 71142);
-            ImGui.SameLine(225);
-            changed |= DrawFilterCheckBox(config, "Locked Blue Quests",071151, 71152);
-            changed |= DrawFilterCheckBox(config, "Side Quests",071021, 71022, 71111);
-            ImGui.SameLine(225);
-            changed |= DrawFilterCheckBox(config, "Locked Side Quests",071031, 71032);
-            changed |= DrawFilterCheckBox(config, "Lore (Book) Quests",071061, 71062);
-            ImGui.SameLine(225);
-            changed |= DrawFilterCheckBox(config, "Locked Lore (Book) Quests",071071, 71072);
-            changed |= DrawFilterCheckBox(config, "Levequests",071081, 71082);
-            changed |= DrawFilterCheckBox(config, "Triple Triad Regular",071101);
-            ImGui.SameLine(225);
-            changed |= DrawFilterCheckBox(config, "Triple Triad New Cards",071102);
-            changed |= DrawFilterCheckBox(config, "Fate Markers",060501, 60502, 60503, 60504, 60505, 60506, 60507, 60508);
-            changed |= DrawFilterCheckBox(config, "Area Transition Markers",060457);
-            ImGui.SameLine(225);
-            changed |= DrawFilterCheckBox(config, "Stairs & Doors",060446, 60447, 60467, 60971);
-            changed |= DrawFilterCheckBox(config, "Big Aetheryte",060453);
-            ImGui.SameLine(225);
-            changed |= DrawFilterCheckBox(config, "Small Aetheryte",060430);
-            changed |= DrawFilterCheckBox(config, "Map Pins",060442);
-            changed |= DrawFilterCheckBox(config, "Materia Melder",060910);
-            changed |= DrawFilterCheckBox(config, "Shops",060412, 60935);
-            ImGui.SameLine(225);
-            changed |= DrawFilterCheckBox(config, "Mender",060434);
-            changed |= DrawFilterCheckBox(config, "Retainer Bell",060560);
-            ImGui.SameLine(225);
-            changed |= DrawFilterCheckBox(config, "Market Board",060570);
-            changed |= DrawFilterCheckBox(config, "DoW/DoM Guild Symbols",060319,060320,060322,60330, 60331, 60342, 60344, 60347, 60362, 60363, 60364);
-            changed |= DrawFilterCheckBox(config, "DoH/DoL Guild Symbols",060318,060321,060326,60333,60334, 60335, 60337, 60345, 60346, 60348,60351);
+            for (var i = 1; i <= FilterIconIds.Length; i++)
+            {
+                if (i % 2 == 0) ImGui.SameLine(225);
+                changed |= DrawFilterCheckBox(config, FilterIconIds[i-1].description, FilterIconIds[i-1].ids);
+            }
             ImGui.EndTabItem();
             return changed;
         }
@@ -119,6 +123,7 @@ namespace Compass
         {
             // TODO TextUnformatted with ImGui.PushTextWrapPos();
             if (!ImGui.BeginTabItem("FAQ")) return;
+            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
             
             if (ImGui.TreeNode("How does this work?"))
             {
@@ -196,6 +201,8 @@ namespace Compass
                 ImGui.Text($"the compass will be hiding itself when the map is open.");
                 ImGui.TreePop();
             }
+            
+            ImGui.PopTextWrapPos();
             ImGui.EndTabItem();
             
         }
