@@ -303,7 +303,9 @@ namespace Compass
                             case 071085: // LeveQuest Complete Marker
                             case 071143: // BlueQuest Ongoing Marker
                             case 071145: // BlueQuest Complete Marker
-                            case 071146: // Weird Blueish Round Exclamation Mark TODO (Chiv): there are a lot more of those
+                            case 071146: // Weird Blueish Round Exclamation Mark //TODO More of those?
+                            case 071111: // Weird Round Quest Mark  
+                            case 071112: // Weird Round Quest Complete Mark
                             case 060954: // Arrow up for quests
                             case 060955: // Arrow down for quests
                             case 060561: // Red Flag (Custom marker)
