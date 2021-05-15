@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <LangVersion>9</LangVersion>
-    <CurrentVersion>0.8.4.$([System.DateTime]::UtcNow.ToString(mmff))</CurrentVersion>
+    <CurrentVersion>0.10.1.$([System.DateTime]::UtcNow.ToString(mmff))</CurrentVersion>
     <AssemblyVersion Condition=" '$(CurrentVersion)' == '' ">0.0.0.1</AssemblyVersion>
     <AssemblyVersion Condition=" '$(CurrentVersion)' != '' ">$(CurrentVersion)</AssemblyVersion>
     <FileVersion Condition=" '$(CurrentVersion)' == '' ">0.0.1.0</FileVersion>
