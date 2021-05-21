@@ -214,6 +214,8 @@ namespace Compass
                         var rotate = false;
                         switch (iconId)
                         {
+                            case 0 when _config.UseAreaMapAsSource:
+                                continue;
                             case 0 when imgNode->PartId == 21: //Glowy thingy
                                 rotate = true; // TODO I guess better to just duplicate then to introduce branching just for that
                                 uv = new Vector2( (float) part.U / 448, (float) part.V / 212);
