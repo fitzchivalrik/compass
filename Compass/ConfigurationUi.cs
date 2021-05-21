@@ -53,7 +53,7 @@ namespace Compass
             ("Levequests", new uint[] {071081, 71082, 071041}),
             ("Triple Triad Regular", new uint[] {071101}),
             ("Triple Triad New Cards", new uint[] {071102}),
-            ("Fate Markers", new uint[] {060501, 60502, 60503, 60504, 60505, 60506, 60507, 60508}),
+            ("FATE Markers", new uint[] {060501, 60502, 60503, 60504, 60505, 60506, 60507, 60508}),
             ("Dungeon Symbols", new uint[] {060414}),
             ("Porter", new uint[] {060311}),
             ("Area Transition Markers", new uint[] {060457}),
@@ -99,16 +99,18 @@ namespace Compass
         {
             ImGui.OpenPopup("Compass Note");
             var contentSize = ImGuiHelpers.MainViewport.Size;
-            var modalSize = new Vector2(418 * scale, 175 * scale);
+            var modalSize = new Vector2(400 * scale, 175 * scale);
             var modalPosition = new Vector2(contentSize.X / 2 - modalSize.X / 2, contentSize.Y / 2 - modalSize.Y / 2);
             ImGui.SetNextWindowSize(modalSize, ImGuiCond.Always);
             ImGuiHelpers.SetNextWindowPosRelativeMainViewport(modalPosition, ImGuiCond.Always);
             if (!ImGui.BeginPopupModal("Compass Note")) return;
-            ImGui.Text("Thank you for installing the Compass plugin.");
-            ImGui.Text("Please have a look at the configuration, especially at the FAQ section,");
-            ImGui.Text("for a quick explanation of the current caveats and settings needed");
-            ImGui.Text("for the compass to work.");
-            ImGui.Text("May Hydaelyn protect you in your adventures across Eorzea and beyond!");
+            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 22f);
+            ImGui.TextWrapped("Thank you for installing the Compass plugin.\n"
+            + "Please have a look at the configuration, especially at the FAQ section, "
+            + "for a quick explanation of the current caveats and settings needed "
+            + "for the compass to work.\n"
+            + "May Hydaelyn protect you in your adventures across Eorzea and beyond!");
+            ImGui.PopTextWrapPos();
             ImGui.Spacing();
             if (ImGui.Button("Continue the adventure##FreshInstallPopUp"))
             {
@@ -123,82 +125,77 @@ namespace Compass
         {
             // TODO TextUnformatted with ImGui.PushTextWrapPos();
             if (!ImGui.BeginTabItem("FAQ")) return;
-            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
+            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 22f);
             
             if (ImGui.TreeNode("How does this work?"))
             {
-                ImGui.TextWrapped($"The current implementation reads the minimap data and");
-                ImGui.Text($"displays it on the monodimensional compass.");
-                ImGui.Text($"This also works when the minimap HUD element is hidden. ");
+                ImGui.TextWrapped($"The current implementation reads the minimap data and "
+                                + $"displays it on the monodimensional compass.\n"
+                                + $"This also works when the minimap HUD element is hidden.");
                 ImGui.TreePop();
             }
 
             if (ImGui.TreeNode("What are the current limitations?"))
             {
-                ImGui.TextWrapped($"Because of the current implementation,");
-                ImGui.Text($"only data the minimap knows about can be displayed.");
-                ImGui.Text($"This usually means icons immediate vicinity");
-                ImGui.Text($"of the player plus object markers for the current tracked quests.");
-                ImGui.Text($"Different zoom levels of the minimap influence not the overall");
-                ImGui.Text($"distance but how soon the 'arrow' icon for tracked quests");
-                ImGui.Text($"turns into a more proper goal icon (e.g. area circle).");
-                ImGui.Text($"I therefore would recommend zooming out as much as possible");
-                ImGui.Text($"but this is entirely up to preference.");
+                ImGui.TextWrapped($"Because of the current implementation, "
+                                + $"only data the minimap knows about can be displayed. "
+                                + $"This usually means icons in the immediate vicinity "
+                                + $"of the player plus objective markers for the current tracked quests.\n"
+                                + $"Different zoom levels of the minimap influence not the overall "
+                                + $"distance but how soon the 'arrow' icon for tracked quests "
+                                + $"turns into a more proper goal icon (e.g. area circle).\n"
+                                + $"I therefore recommend to zoom out as much as possible "
+                                + $"but this is entirely up to preference.");
                 ImGui.TreePop();
             }
 
             if (ImGui.TreeNode("The icons are all placed wrong, what gives?"))
             {
-                ImGui.TextWrapped("The current math only supports");
-                ImGui.Text("a minimap which is locked  (meaning north is always upwards).");
-                ImGui.Text("The minimap can be locked with a click on the cog");
-                ImGui.Text($"on the minimap HUD element.");
-                ImGui.Text("(In the case of Material UI, its a lock, not a cog.)");
+                ImGui.TextWrapped("The current math only supports "
+                                + "a minimap which is locked  (meaning north is always upwards). "
+                                + "The minimap can be locked with a click on the cog "
+                                + $"on the minimap HUD element. "
+                                + "(In the case of Material UI, its a lock, not a cog.)");
                 ImGui.TreePop();
             }
-            if (ImGui.TreeNode("How can I resize/move the compass?"))
+            if (ImGui.TreeNode("How can I resize the compass?"))
             {
-                ImGui.TextWrapped($"The icons on the compass can be resized in this settings menu");
-                ImGui.Text($"(other tab), the overall size of the compass (e.g. the height) is");
-                ImGui.Text($"influenced by the global font scale set in the Dalamud settings.");
-                ImGui.Text($"As long as the configuration window is open,");
-                ImGui.Text($"the compass width and position can also be adjusted.");
+                ImGui.TextWrapped($"The icons on the compass can be resized in this settings menu "
+                                + $"(other tab), the overall size of the compass (e.g. the height) is "
+                                + $"influenced by the global font scale set in Dalamud's settings.\n"
+                                + $"After modifying the font scale in Dalamud, a compass' settings needs to be changed " 
+                                + $"(e.g. disable/enable the compass) to recalculate the size.");
                 ImGui.TreePop();
             }
+
+            if (ImGui.TreeNode("Why does filtering FATE markers does not filter out the FATE area circles?"))
+            {
+                ImGui.TextWrapped($"Currently, there is no way to distinguish between "
+                                  + $"FATE circles and quest circles. Each circle is therefore treated as belonging "
+                                  + $"to a quest-in-progress and therefore always shown.\n");
+                ImGui.TreePop();
+            }
+            
             if (ImGui.TreeNode("What means using the map, and not the minimap, as source?"))
             {
-                ImGui.TextWrapped($"The map (the one you can open via clicking on the minimap)");
-                ImGui.Text($"has more data points of the current area and therefore, in theory,");
-                ImGui.Text($"allows the compass to show more icons.");
-                ImGui.Text($"When checking this setting, the compass will use the data from the map");
-                ImGui.Text($"instead of the minimap to show the icons.");
-                ImGui.Text($"This comes with its own trade-offs, however.");
+                ImGui.TextWrapped($"The map (the one you can open via clicking on the minimap) "
+                                + $"has more data points of the current area and therefore, in theory, "
+                                + $"allows the compass to show more icons. "
+                                + $"When checking this setting, the compass will use the data from the map"
+                                + $"instead of the minimap to show the icons.\n"
+                                + $"This comes with its own trade-offs, however.");
                 ImGui.TreePop();
             }
             ImGui.EndTabItem();
             if (ImGui.TreeNode("What trade-offs are there for using the map as source?"))
             {
-                ImGui.TextWrapped($"The map needs to be open for the compass to be able");
-                ImGui.Text($"to use it as the source. The map can, however, be made 100%% transparent");
-                ImGui.Text($"via the settings and/or made very small. It also does not");
-                ImGui.Text($"need to be in focus, only open.");
-                ImGui.Text($"Currently, there is a hardcoded value for the maximum distance a icon");
-                ImGui.Text($"will still appear on the compass. The slider left on the map can be used");
-                ImGui.Text($"to adjust this distance somewhat. Quest in progress should always appear,");
-                ImGui.Text($"regardless of the distance. As there currently is no way to distinguish between");
-                ImGui.Text($"FATE circles and quest circles, all FATEs are treated as quest in progress.");
-                ImGui.Text($"Furthermore, gathering points are only available when using the minimap as source.");
-                ImGui.Text($"Last but not least, querying the map instead of the minimap is a more taxing");
-                ImGui.Text($"operations and needs more resources.");
-                ImGui.TreePop();
-            }
-            if (ImGui.TreeNode("Why does the compass keeps closing when I open e.g. the map?"))
-            {
-                ImGui.TextWrapped($"Open the tree 'Hide Compass when ... window is open.'");
-                ImGui.Text($"by clicking on it in the other tab and deselect the window.");
-                ImGui.Text($"If one wants to use the map as source,");
-                ImGui.Text($"the map should be unchecked, else");
-                ImGui.Text($"the compass will be hiding itself when the map is open.");
+                ImGui.TextWrapped($"The map needs to be open for the compass to be able "
+                                  + $"to use it as the source. The map can, however, be made 100%% transparent "
+                                  + $"via the settings and/or made very small. It also does not "
+                                  + $"need to be in focus, only open.\n"
+                                  + $"Furthermore, gathering points are only available when using the minimap as source. "
+                                  + $"Last but not least, querying the map instead of the minimap is a more taxing "
+                                  + $"operation and needs more resources.");
                 ImGui.TreePop();
             }
             
@@ -227,7 +224,6 @@ namespace Compass
         private static bool DrawOnAddonHideTab(Configuration config, float scale)
         {
             var changed = false;
-            if (!config.ImGuiCompassEnable) return changed;
             if (!ImGui.BeginTabItem("Hiding Options")) return changed;
             
             //ImGui.SetWindowFontScale();
@@ -268,6 +264,7 @@ namespace Compass
                
                 changed |= ImGui.SliderFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.02f, 3f, "%.2f");
                 changed |= ImGui.DragInt("Cardinals Offset##ImGui", ref config.ImGuiCompassCardinalsOffset);
+                changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);
                 changed |= DrawTreeCheckbox("Enable Centre Marker", ref config.ImGuiCompassEnableCenterMarker, () =>
                     {
                         var changed = false;
@@ -278,8 +275,7 @@ namespace Compass
                         return changed;
                     });
                 changed |= DrawTreeCheckbox("Enable Background", ref config.ImGuiCompassEnableBackground, DrawBackgroundConfig(config));
-                changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);
-                changed |= DrawTreeCheckbox("Use Map instead of minimap as source##ImGui",
+                changed |= DrawTreeCheckbox("Use Map instead of Minimap as source##ImGui",
                     ref config.UseAreaMapAsSource,
                     () =>
                     {

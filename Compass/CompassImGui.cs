@@ -218,6 +218,8 @@ namespace Compass
                                 rotate = true; // TODO I guess better to just duplicate then to introduce branching just for that
                                 uv = new Vector2( (float) part.U / 448, (float) part.V / 212);
                                 uv1 = new Vector2( (float) (part.U + 40) / 448, (float) (part.V + 40) / 212);
+                                // NOTE (Chiv) Glowy thingy always rotates, but whether its in or outside the mask
+                                // determines how to calculate its position on the compass
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                     goto default;
                                 goto case 1;
@@ -247,7 +249,7 @@ namespace Compass
                                 pMax = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + naviMapCutIconOffset + naviMapIconHalfWidth, _imGuiCompassData.ImGuiCompassCentre.Y - naviMapYOffset + naviMapIconHalfWidth);
                                 break;
                             case 1: // Rotation icons (except naviMap arrows) go here after setting up their UVs
-                                // NOTE (Chiv) Rotations for icons on the map are mirrowed from the
+                                // NOTE (Chiv) Rotations for icons on the map are mirrored from the
                                 var rotationIconOffset = _imGuiCompassData.ImGuiCompassUnit *
                                                          SignedAngle(mapIconComponentNode->AtkResNode.Rotation,
                                                              playerForward);
@@ -257,7 +259,6 @@ namespace Compass
                             case 060443: //Player Marker
                                 if (!_config.ImGuiCompassEnableCenterMarker) continue;
                                 drawList = ImGui.GetBackgroundDrawList();
-                                //SimpleLog.Log("Player marker");
                                 pMin = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * _imGuiCompassData.ImGuiCompassScale - _imGuiCompassData.HalfWidth40);
                                 pMax = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * _imGuiCompassData.ImGuiCompassScale + _imGuiCompassData.HalfWidth40);
                                 uv1 = _config.ImGuiCompassFlipCentreMarker ? new Vector2(1, -1) : Vector2.One;
@@ -336,7 +337,6 @@ namespace Compass
                                 var iconHalfWidth = _imGuiCompassData.HalfWidth40 * distanceScaleFactor;
                                 pMin = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - iconHalfWidth + iconOffset, _imGuiCompassData.ImGuiCompassCentre.Y - iconHalfWidth);
                                 pMax = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + iconOffset + iconHalfWidth, _imGuiCompassData.ImGuiCompassCentre.Y + iconHalfWidth);
-                                
                                 break;
                         }
 
@@ -370,21 +370,15 @@ namespace Compass
             
             var cosA = (float)Math.Cos(angle);
             var sinA = (float)Math.Sin(angle);
-            var pos = new[]
+            var pos = stackalloc[]
             {
-                /*
-                center + ImRotate(new Vector2(0, size.Y), cos_a, sin_a),
-                center + ImRotate(new Vector2(+size.X, size.Y), cos_a, sin_a),
-                center + ImRotate(new Vector2(+size.X, 0), cos_a, sin_a),
-                center + ImRotate(new Vector2(0, 0), cos_a, sin_a)
-                */
                 center + Rotate(new Vector2(-size.X * 0.5f, -size.Y * 0.5f), cosA, sinA),
                 center + Rotate(new Vector2(+size.X * 0.5f, -size.Y * 0.5f), cosA, sinA),
                 center + Rotate(new Vector2(+size.X * 0.5f, +size.Y * 0.5f), cosA, sinA),
                 center + Rotate(new Vector2(-size.X * 0.5f, +size.Y * 0.5f), cosA, sinA)
                 
             };
-            var uvs = new[] 
+            var uvs = stackalloc[] 
             { 
                 new Vector2(uv.X, uv.Y),
                 new Vector2(uv1.X, uv.Y),
