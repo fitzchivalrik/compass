@@ -61,7 +61,6 @@ namespace Compass
             _imGuiCompassData.ImGuiCompassHalfHeight = ImGuiCompassData.ImGuiCompassHeight * 0.5f * _imGuiCompassData.CompassHeightScale;
 
             _imGuiCompassData.ImGuiCompassUnit = _config.ImGuiCompassWidth / (2f*(float)Math.PI);
-            // TODO Main viewport position offset?
             _imGuiCompassData.ImGuiCompassCentre =
                 new Vector2(_config.ImGuiCompassPosition.X + _imGuiCompassData.ImGuiCompassHalfWidth,
                     _config.ImGuiCompassPosition.Y + _imGuiCompassData.ImGuiCompassHalfHeight);
@@ -97,8 +96,6 @@ namespace Compass
             _currentUiObjectIndex = 0;
         }
         
-        
-        // TODO Cut this s@>!? in smaller methods
         private void BuildImGuiCompassNavi()
         {
             if (!_config.ImGuiCompassEnable) return;
@@ -177,9 +174,7 @@ namespace Compass
                     if (!mapIconComponentNode->AtkResNode.IsVisible) continue;
                     for (var j = 2; j < _iconLoopEnd; j++)
                     {
-                        // NOTE (Chiv) Invariant: From 2 onward, only ImageNodes
                         var imgNode = (AtkImageNode*) mapIconComponentNode->Component->UldManager.NodeList[j];
-                        // TODO
                         if (imgNode->AtkResNode.Type != NodeType.Image) continue;
                         if (!imgNode->AtkResNode.IsVisible || !imgNode->AtkResNode.ParentNode->IsVisible) continue;
                         var part = imgNode->PartsList->Parts[imgNode->PartId];
@@ -217,7 +212,7 @@ namespace Compass
                             case 0 when _config.UseAreaMapAsSource:
                                 continue;
                             case 0 when imgNode->PartId == 21: //Glowy thingy
-                                rotate = true; // TODO I guess better to just duplicate then to introduce branching just for that
+                                rotate = true; // TODO(Chiv) Duplicate code instead of branching?
                                 uv = new Vector2( (float) part.U / 448, (float) part.V / 212);
                                 uv1 = new Vector2( (float) (part.U + 40) / 448, (float) (part.V + 40) / 212);
                                 // NOTE (Chiv) Glowy thingy always rotates, but whether its in or outside the mask
@@ -240,7 +235,6 @@ namespace Compass
                                 uv = new Vector2(u, v);
                                 uv1 = new Vector2(u1, v1);
                                 // Arrows and such are always rotation based, we draw them slightly on top
-                                // TODO (Chiv) Glowing thingy is not
                                 var naviMapCutIconOffset = _imGuiCompassData.ImGuiCompassUnit *
                                                            SignedAngle(mapIconComponentNode->AtkResNode.Rotation,
                                                                playerForward);

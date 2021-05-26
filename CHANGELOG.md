@@ -1,6 +1,13 @@
 ﻿# CHANGELOG
 
-## Unreleased
+## 1.0.0
+
+- feat: Release
+
+## 0.10.1-testing
+
+- feat: Add filters
+- fix: Various fixes under the hood
 
 ## 0.8.4-testing
 

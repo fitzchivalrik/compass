@@ -78,7 +78,7 @@ namespace Compass
             ImGui.Text("Filter ... on compass.");
             for (var i = 1; i <= FilterIconIds.Length; i++)
             {
-                if (i % 2 == 0) ImGui.SameLine(225);
+                if (i % 2 == 0) ImGui.SameLine(225 * scale);
                 changed |= DrawFilterCheckBox(config, FilterIconIds[i-1].description, FilterIconIds[i-1].ids);
             }
             ImGui.EndTabItem();
@@ -123,7 +123,6 @@ namespace Compass
 
         private static void DrawHelpTab()
         {
-            // TODO TextUnformatted with ImGui.PushTextWrapPos();
             if (!ImGui.BeginTabItem("FAQ")) return;
             ImGui.PushTextWrapPos(ImGui.GetFontSize() * 22f);
             
@@ -230,7 +229,7 @@ namespace Compass
             ImGui.Text("Hide Compass when ... window is open.");
             for (var i = 1; i <= config.ShouldHideOnUiObject.Length; i++)
             {
-                if (i % 2 == 0) ImGui.SameLine(225);
+                if (i % 2 == 0) ImGui.SameLine(225 * scale);
                 changed |= ImGui.Checkbox(
                     config.ShouldHideOnUiObject[i-1].userFacingIdentifier
                     , ref config.ShouldHideOnUiObject[i-1].disable);

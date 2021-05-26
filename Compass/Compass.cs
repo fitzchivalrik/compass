@@ -134,7 +134,7 @@ namespace Compass
                 
             })
             {
-                HelpMessage = $"Open {PluginName} configuration menu. User \"{Command} toggle|on|off\" to enable/disable.",
+                HelpMessage = $"Open {PluginName} configuration menu. Use \"{Command} toggle|on|off\" to enable/disable.",
                 ShowInHelp = true
             });
             
@@ -142,7 +142,7 @@ namespace Compass
 #if RELEASE
 
             if (_pluginInterface.Reason == PluginLoadReason.Installer
-                || _pluginInterface.ClientState.LocalPlayer is not null
+                //|| _pluginInterface.ClientState.LocalPlayer is not null
             )
             {
                  OnLogin(null!, null!);
@@ -164,7 +164,6 @@ namespace Compass
         private void OnLogin(object sender, EventArgs e)
         {
             _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
-            //TODO Yolo. Checks? -> Seems to be stable all the time, even if hidden by HUD Layouy
             _naviMap = (AtkUnitBase*)_pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
             _naviMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->UldManager.NodeList[2];
             _areaMap = (AtkUnitBase*)_pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
