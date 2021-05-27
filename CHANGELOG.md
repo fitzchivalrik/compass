@@ -1,5 +1,12 @@
 ﻿# CHANGELOG
 
+## Unreleased
+
+- fix: Update NaviMap/AreaMap reference on configuration change too.
+  This allows one to easily reset the cached variables by enabling/disabling the compass.
+  The cache e.g. needs to be reset after a DeepDungeon visit.
+- fix: Add Gemstone trader to 'Shops' filter (closing #2)
+
 ## 1.0.0
 
 - feat: Release

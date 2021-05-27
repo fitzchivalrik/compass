@@ -63,7 +63,7 @@ namespace Compass
             ("Map Pins", new uint[] {060442}),
             ("Materia Melder", new uint[] {060910}),
             ("Skywatcher", new uint[] {60581}),
-            ("Shops", new uint[] {060412, 60935}),
+            ("Shops", new uint[] {060412, 60935, 60987}),
             ("Mender", new uint[] {060434}),
             ("Retainer Bell", new uint[] {060560,60425}),
             ("Market Board", new uint[] {060570}),
