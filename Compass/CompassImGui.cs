@@ -49,8 +49,23 @@ namespace Compass
         private int _componentIconLoopStart = 0;
         private int _iconLoopEnd = 0;
 
+        private void UpdateMapAddonCache()
+        {
+            _naviMap = (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+            _naviMapIconsRootComponentNode = (AtkComponentNode*) _naviMap->UldManager.NodeList[2];
+            _areaMap = (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
+            _areaMapIconsRootComponentNode = (AtkComponentNode*) _areaMap->UldManager.NodeList[3];
+            var westCardinalAtkImageNode = (AtkImageNode*) _naviMap->UldManager.NodeList[11];
+
+            _naviMapTextureD3D11ShaderResourceView = new IntPtr(
+                westCardinalAtkImageNode->PartsList->Parts[0]
+                    .UldAsset->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
+            );
+        }
+        
         private void UpdateCompassVariables()
         {
+            UpdateMapAddonCache();
             _imGuiCompassData.ImGuiCompassScale = _config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
             _imGuiCompassData.CompassHeightScale = ImGui.GetIO().FontGlobalScale;
 
@@ -95,7 +110,7 @@ namespace Compass
                 .ToArray();
             _currentUiObjectIndex = 0;
         }
-        
+
         private void BuildImGuiCompassNavi()
         {
             if (!_config.ImGuiCompassEnable) return;

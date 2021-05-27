@@ -120,9 +120,11 @@ namespace Compass
                 {
                     case "toggle":
                         _config.ImGuiCompassEnable = !_config.ImGuiCompassEnable;
+                        UpdateCompassVariables();
                         break;
                     case "on":
                         _config.ImGuiCompassEnable = true;
+                        UpdateCompassVariables();
                         break;
                     case "off":
                         _config.ImGuiCompassEnable = false;
@@ -142,7 +144,7 @@ namespace Compass
 #if RELEASE
 
             if (_pluginInterface.Reason == PluginLoadReason.Installer
-                //|| _pluginInterface.ClientState.LocalPlayer is not null
+                || _pluginInterface.ClientState.LocalPlayer is not null
             )
             {
                  OnLogin(null!, null!);
@@ -164,20 +166,9 @@ namespace Compass
         private void OnLogin(object sender, EventArgs e)
         {
             _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
-            _naviMap = (AtkUnitBase*)_pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
-            _naviMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->UldManager.NodeList[2];
-            _areaMap = (AtkUnitBase*)_pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
-            _areaMapIconsRootComponentNode = (AtkComponentNode*)_areaMap->UldManager.NodeList[3];
-            var westCardinalAtkImageNode = (AtkImageNode*) _naviMap->UldManager.NodeList[11];
-            
-            _naviMapTextureD3D11ShaderResourceView = new IntPtr(
-                westCardinalAtkImageNode->PartsList->Parts[0]
-                    .UldAsset->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
-            );
             UpdateCompassVariables();
             _pluginInterface.UiBuilder.OnBuildUi += BuildImGuiCompassNavi;
         }
-        
 
         #region UI
 
