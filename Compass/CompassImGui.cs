@@ -301,6 +301,7 @@ namespace Compass
                             case 071143: // BlueQuest Ongoing Marker
                             case 071145: // BlueQuest Complete Marker
                             case 071146: // Weird Blueish Round Exclamation Mark //TODO More of those?
+                            case 071026: // Weird Blueish Round Exclamation Mark 2 
                             case 071111: // Weird Round Quest Mark  
                             case 071112: // Weird Round Quest Complete Mark
                             case 060954: // Arrow up for quests
