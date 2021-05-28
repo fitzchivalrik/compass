@@ -198,6 +198,14 @@ namespace Compass
                 ImGui.TreePop();
             }
             
+            if (ImGui.TreeNode("The compass is wrong/missing after a DeepDungeon?"))
+            {
+                ImGui.TextWrapped($"Please type '/compass on' or toggle the compass in the settings tab " +
+                                  $"to reset the internal cache. Visiting a DeepDungeon unfortunately kills the mini map " +
+                                  $"completely and as such the cache needs to be reset for the compass to work again.");
+                ImGui.TreePop();
+            }
+            
             
             ImGui.PopTextWrapPos();
             ImGui.EndTabItem();
