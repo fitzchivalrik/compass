@@ -185,7 +185,7 @@ namespace Compass
                                 + $"This comes with its own trade-offs, however.");
                 ImGui.TreePop();
             }
-            ImGui.EndTabItem();
+            
             if (ImGui.TreeNode("What trade-offs are there for using the map as source?"))
             {
                 ImGui.TextWrapped($"The map needs to be open for the compass to be able "
@@ -197,6 +197,7 @@ namespace Compass
                                   + $"operation and needs more resources.");
                 ImGui.TreePop();
             }
+            
             
             ImGui.PopTextWrapPos();
             ImGui.EndTabItem();
