@@ -308,7 +308,9 @@ namespace Compass
                             case 071003: // MSQ Ongoing Marker
                             case 071005: // MSQ Complete Marker
                             case 071023: // Quest Ongoing Marker
+                            case 071033: // Quest Ongoing Red Marker
                             case 071025: // Quest Complete Marker
+                            case 071035: // Quest Complete Red Marker
                             case 071063: // BookQuest Ongoing Marker
                             case 071065: // BookQuest Complete Marker
                             case 071083: // LeveQuest Ongoing Marker
