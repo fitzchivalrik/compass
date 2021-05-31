@@ -69,6 +69,7 @@ namespace Compass
             ("Market Board", new uint[] {060570}),
             ("DoW/DoM Guild Symbols",  new uint[] {060319, 060320, 060322, 60330, 60331, 60342, 60344, 60347, 60362, 60363, 60364}),
             ("DoH/DoL Guild Symbols",  new uint[] {060318, 060321, 060326, 60333, 60334, 60335, 60337, 60345, 60346, 60348, 60351}),
+            ("Chocobo Companion",  new uint[] {060961}),
         };
         
         private static bool DrawFilterTab(Configuration config, float scale)
