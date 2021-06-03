@@ -144,7 +144,7 @@ namespace Compass
 #if RELEASE
 
             if (_pluginInterface.Reason == PluginLoadReason.Installer
-                || _pluginInterface.ClientState.LocalPlayer is not null
+                //|| _pluginInterface.ClientState.LocalPlayer is not null
             )
             {
                  OnLogin(null!, null!);
