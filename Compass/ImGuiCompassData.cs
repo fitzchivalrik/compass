@@ -20,6 +20,10 @@ namespace Compass
         public Vector2 ImGuiCompassBackgroundPMax;
         public Vector2 ImGuiCompassBackgroundLinePMin;
         public Vector2 ImGuiCompassBackgroundLinePMax;
+        public Vector2 ImGuiCompassDrawListPMin;
+        public Vector2 ImGuiCompassDrawListPMax;
+        public Vector2 ImGuiCompassDrawListBackgroundPMin;
+        public Vector2 ImGuiCompassDrawListBackgroundPMax;
         public float ImGuiCompassHalfWidth;
         public float ImGuiCompassHalfHeight;
         public float ImGuiCompassScale;

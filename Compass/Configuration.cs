@@ -34,6 +34,7 @@ namespace Compass
 
         public Vector2 ImGuiCompassPosition = new(835, 515);
         public float ImGuiCompassWidth = 250f;
+        public float ImGuiCompassReverseMaskPercentage = 1f;
 
         public bool ImGuiCompassEnableCenterMarker = true;
         public bool ImGuiCompassFlipCentreMarker;

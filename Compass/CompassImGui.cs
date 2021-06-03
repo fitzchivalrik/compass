@@ -21,6 +21,10 @@ namespace Compass
             ImGuiCompassBackgroundPMax = Vector2.Zero,
             ImGuiCompassBackgroundLinePMin = Vector2.Zero,
             ImGuiCompassBackgroundLinePMax = Vector2.Zero,
+            ImGuiCompassDrawListPMin = Vector2.Zero,
+            ImGuiCompassDrawListPMax = Vector2.Zero,
+            ImGuiCompassDrawListBackgroundPMin = Vector2.Zero,
+            ImGuiCompassDrawListBackgroundPMax = Vector2.Zero,
             ImGuiCompassHalfWidth = 125f,
             ImGuiCompassHalfHeight = 125f,
             ImGuiCompassScale = 1f,
@@ -80,11 +84,33 @@ namespace Compass
                 new Vector2(_config.ImGuiCompassPosition.X + _imGuiCompassData.ImGuiCompassHalfWidth,
                     _config.ImGuiCompassPosition.Y + _imGuiCompassData.ImGuiCompassHalfHeight);
 
-            _imGuiCompassData.ImGuiCompassBackgroundPMin = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - 5 - _imGuiCompassData.ImGuiCompassHalfWidth, _imGuiCompassData.ImGuiCompassCentre.Y - _imGuiCompassData.ImGuiCompassHalfHeight * 0.5f - 2);
-            _imGuiCompassData.ImGuiCompassBackgroundPMax = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + 5 + _imGuiCompassData.ImGuiCompassHalfWidth, _imGuiCompassData.ImGuiCompassCentre.Y + _imGuiCompassData.ImGuiCompassHalfHeight * 0.5f + 2);
-            _imGuiCompassData.ImGuiCompassBackgroundLinePMin = new Vector2(_imGuiCompassData.ImGuiCompassBackgroundPMin.X, _config.ImGuiCompassBackgroundLineOffset + _imGuiCompassData.ImGuiCompassBackgroundPMin.Y + _imGuiCompassData.ImGuiCompassHalfHeight);
-            _imGuiCompassData.ImGuiCompassBackgroundLinePMax = new Vector2(_imGuiCompassData.ImGuiCompassBackgroundPMax.X, _config.ImGuiCompassBackgroundLineOffset + _imGuiCompassData.ImGuiCompassBackgroundPMin.Y + _imGuiCompassData.ImGuiCompassHalfHeight);
+            _imGuiCompassData.ImGuiCompassBackgroundPMin = new Vector2(
+                _imGuiCompassData.ImGuiCompassCentre.X - 5 - _imGuiCompassData.ImGuiCompassHalfWidth * _config.ImGuiCompassReverseMaskPercentage
+                , _imGuiCompassData.ImGuiCompassCentre.Y - _imGuiCompassData.ImGuiCompassHalfHeight * 0.5f - 2
+                );
+            _imGuiCompassData.ImGuiCompassBackgroundPMax = new Vector2(
+                _imGuiCompassData.ImGuiCompassCentre.X + 5 + _imGuiCompassData.ImGuiCompassHalfWidth * _config.ImGuiCompassReverseMaskPercentage
+                , _imGuiCompassData.ImGuiCompassCentre.Y + _imGuiCompassData.ImGuiCompassHalfHeight * 0.5f + 2
+                );
+            _imGuiCompassData.ImGuiCompassBackgroundLinePMin = new Vector2(
+                _imGuiCompassData.ImGuiCompassBackgroundPMin.X
+                , _config.ImGuiCompassBackgroundLineOffset + _imGuiCompassData.ImGuiCompassBackgroundPMin.Y + _imGuiCompassData.ImGuiCompassHalfHeight
+                );
+            _imGuiCompassData.ImGuiCompassBackgroundLinePMax = new Vector2(
+                _imGuiCompassData.ImGuiCompassBackgroundPMax.X,
+                _config.ImGuiCompassBackgroundLineOffset + _imGuiCompassData.ImGuiCompassBackgroundPMin.Y + _imGuiCompassData.ImGuiCompassHalfHeight
+                );
 
+            _imGuiCompassData.ImGuiCompassDrawListPMin =
+                _imGuiCompassData.ImGuiCompassBackgroundPMin + new Vector2(-3, -3);
+            _imGuiCompassData.ImGuiCompassDrawListPMax = 
+                _imGuiCompassData.ImGuiCompassBackgroundPMax + new Vector2(3, 3);
+            _imGuiCompassData.ImGuiCompassDrawListBackgroundPMin =
+                _imGuiCompassData.ImGuiCompassBackgroundPMin + new Vector2(-3, -50);
+            _imGuiCompassData.ImGuiCompassDrawListBackgroundPMax =
+                _imGuiCompassData.ImGuiCompassBackgroundPMax + new Vector2(3, 50);
+            
+            
             _imGuiCompassData.HalfWidth40 = 20 * _imGuiCompassData.ImGuiCompassScale;
             _imGuiCompassData.HalfWidth28 = 14 * _imGuiCompassData.ImGuiCompassScale;
 
@@ -136,7 +162,7 @@ namespace Compass
                                            | ImGuiWindowFlags.NoCollapse
                                            | ImGuiWindowFlags.NoSavedSettings;
             ImGuiHelpers.ForceNextWindowMainViewport();
-            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(Vector2.Zero, ImGuiCond.Always);
+            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(_config.ImGuiCompassPosition, ImGuiCond.Always);
             if (!ImGui.Begin("###ImGuiCompassWindow", flags)
             )
             {
@@ -144,8 +170,16 @@ namespace Compass
                 return;
             }
             var drawlist = ImGui.GetWindowDrawList();
-            drawlist.PushClipRectFullScreen();
-
+            var drawlistBackground = ImGui.GetBackgroundDrawList();
+            //drawlist.PushClipRectFullScreen();
+            drawlist.PushClipRect(
+                _imGuiCompassData.ImGuiCompassDrawListPMin
+                , _imGuiCompassData.ImGuiCompassDrawListPMax
+                );
+            drawlistBackground.PushClipRect(
+                _imGuiCompassData.ImGuiCompassDrawListBackgroundPMin
+                , _imGuiCompassData.ImGuiCompassDrawListBackgroundPMax
+                );
             const uint playerViewTriangleRotationOffset = 0x254;
             // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
             //var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
@@ -169,6 +203,7 @@ namespace Compass
             if (_config.ShowOnlyCardinals) return;
             DrawCompassIcons(playerForward);
             drawlist.PopClipRect();
+            drawlistBackground.PopClipRect();
             ImGui.End();
         }
         

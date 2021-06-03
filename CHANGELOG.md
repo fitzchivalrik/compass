@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- feat: Add option to only show cardinals.
+- feat: Add a mask percentage to visually cut off part of the compass.
+  ![](docs/compass_mask_50.png)
+- feat: Add chocobro companion to filter list
 - fix: Update NaviMap/AreaMap reference on configuration change too.
   This allows one to easily reset the cached variables by enabling/disabling the compass.
   The cache e.g. needs to be reset after a DeepDungeon visit.
