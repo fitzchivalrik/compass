@@ -17,6 +17,7 @@ namespace Compass
         [JsonIgnore] public bool AddonCompassEnable;
 
         public bool UseAreaMapAsSource;
+        public bool ShowOnlyCardinals;
         public float AreaMapMaxDistance = 360f;
         
         public float ImGuiCompassScale = 1f;

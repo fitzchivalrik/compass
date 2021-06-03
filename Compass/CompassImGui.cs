@@ -166,6 +166,7 @@ namespace Compass
             DrawImGuiCompassBackground();
             // Second, we position our Cardinals
             DrawCardinals(playerForward);
+            if (_config.ShowOnlyCardinals) return;
             DrawCompassIcons(playerForward);
             drawlist.PopClipRect();
             ImGui.End();
