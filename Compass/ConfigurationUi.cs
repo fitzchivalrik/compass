@@ -71,6 +71,7 @@ namespace Compass
             ("DoH/DoL Guild Symbols",  new uint[] {060318, 060321, 060326, 60333, 60334, 60335, 60337, 60345, 60346, 60348, 60351}),
             ("Chocobo Companion",  new uint[] {060961}),
             ("Party Members",  new uint[] {060421}),
+            ("Enemies",  new uint[] {060422}),
         };
         
         private static bool DrawFilterTab(Configuration config, float scale)
