@@ -102,13 +102,13 @@ namespace Compass
                 );
 
             _imGuiCompassData.ImGuiCompassDrawListPMin =
-                _imGuiCompassData.ImGuiCompassBackgroundPMin + new Vector2(-3, -3);
+                _imGuiCompassData.ImGuiCompassBackgroundPMin + new Vector2(-2, -100);
             _imGuiCompassData.ImGuiCompassDrawListPMax = 
-                _imGuiCompassData.ImGuiCompassBackgroundPMax + new Vector2(3, 3);
+                _imGuiCompassData.ImGuiCompassBackgroundPMax + new Vector2(2, 100);
             _imGuiCompassData.ImGuiCompassDrawListBackgroundPMin =
-                _imGuiCompassData.ImGuiCompassBackgroundPMin + new Vector2(-3, -50);
+                _imGuiCompassData.ImGuiCompassBackgroundPMin + new Vector2(-3, -100);
             _imGuiCompassData.ImGuiCompassDrawListBackgroundPMax =
-                _imGuiCompassData.ImGuiCompassBackgroundPMax + new Vector2(3, 50);
+                _imGuiCompassData.ImGuiCompassBackgroundPMax + new Vector2(3, 100);
             
             
             _imGuiCompassData.HalfWidth40 = 20 * _imGuiCompassData.ImGuiCompassScale;

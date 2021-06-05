@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.6.1
+
+- fix: Icons are no longer cut off along the Y axes when e.g. scaled or close.
+
 ## 1.6.0
 
 - feat: Add option to only show cardinals.
