@@ -3,23 +3,32 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <LangVersion>9</LangVersion>
-    <CurrentVersion>1.6.1.$([System.DateTime]::UtcNow.ToString(mmff))</CurrentVersion>
-    <AssemblyVersion Condition=" '$(CurrentVersion)' == '' ">0.0.0.1</AssemblyVersion>
-    <AssemblyVersion Condition=" '$(CurrentVersion)' != '' ">$(CurrentVersion)</AssemblyVersion>
-    <FileVersion Condition=" '$(CurrentVersion)' == '' ">0.0.1.0</FileVersion>
-    <FileVersion Condition=" '$(CurrentVersion)' != '' ">$(CurrentVersion)</FileVersion>
+    <VersionPrefix>1.6.1</VersionPrefix>
     <Authors>Chivalrik</Authors>
     <Company>Chivalrik</Company>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
+    <Exec
+            Command="git rev-parse --short HEAD"
+            ConsoleToMSBuild="True"
+            IgnoreExitCode="False"
+    >
+      <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput"/>
+    </Exec>
+  </Target>
+
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <VersionSuffix>dirty</VersionSuffix>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugSymbols>false</DebugSymbols>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
 
   <ItemGroup>
