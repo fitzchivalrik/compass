@@ -22,8 +22,12 @@ namespace Compass
         public Vector2 ImGuiCompassBackgroundLinePMax;
         public Vector2 ImGuiCompassDrawListPMin;
         public Vector2 ImGuiCompassDrawListPMax;
-        public Vector2 ImGuiCompassDrawListBackgroundPMin;
-        public Vector2 ImGuiCompassDrawListBackgroundPMax;
+        public Vector2 ImGuiCompassBackgroundDrawListPMin;
+        public Vector2 ImGuiCompassBackgroundDrawListPMax;
+        public Vector2 ImGuiCompassWeatherIconPMin;
+        public Vector2 ImGuiCompassWeatherIconPMax;
+        public Vector2 ImGuiCompassWeatherIconBorderPMin;
+        public Vector2 ImGuiCompassWeatherIconBorderPMax;
         public float ImGuiCompassHalfWidth;
         public float ImGuiCompassHalfHeight;
         public float ImGuiCompassScale;

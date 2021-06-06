@@ -18,6 +18,8 @@ namespace Compass
 
         public bool UseAreaMapAsSource;
         public bool ShowOnlyCardinals;
+        public bool ShowWeatherIcon;
+        public bool ShowWeatherIconBorder = true;
         public float AreaMapMaxDistance = 360f;
         
         public float ImGuiCompassScale = 1f;
@@ -40,6 +42,8 @@ namespace Compass
         public bool ImGuiCompassFlipCentreMarker;
         public int ImGuiCompassCentreMarkerOffset = 20;
         public int ImGuiCompassCardinalsOffset;
+        public Vector2 ImGuiCompassWeatherIconOffset = new(-20, -28);
+        public float ImGuiCompassWeatherIconScale = 1f;
         public bool ImGuiCompassEnable = true;
         
         public bool[] ShouldHideOnUiObjectSerializer = new bool[0];

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- feat: Optionally show weather on compass (closing #3)  
+  ![](docs/weather_icon.png)
+
 ## 1.6.1
 
 - fix: Icons are no longer cut off along the Y axes when e.g. scaled or close.

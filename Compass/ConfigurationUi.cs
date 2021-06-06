@@ -14,7 +14,7 @@ namespace Compass
             var changed = false;
             var scale = ImGui.GetIO().FontGlobalScale;
             ImGuiHelpers.ForceNextWindowMainViewport();
-            ImGui.SetNextWindowSize(new Vector2(400 * scale, 410 * scale), ImGuiCond.FirstUseEver);
+            ImGui.SetNextWindowSize(new Vector2(400 * scale, 420 * scale), ImGuiCond.FirstUseEver);
             ImGui.SetNextWindowSizeConstraints(new Vector2(410 * scale, 200 * scale),
                 new Vector2(float.MaxValue, float.MaxValue));
             if (!ImGui.Begin($"{Compass.PluginName} Configuration", ref shouldBuildConfigUi,
@@ -290,6 +290,14 @@ namespace Compass
                         return changed;
                     });
                 changed |= DrawTreeCheckbox("Enable Background", ref config.ImGuiCompassEnableBackground, DrawBackgroundConfig(config));
+                changed |= DrawTreeCheckbox("Show Weather Icon", ref config.ShowWeatherIcon, () =>
+                {
+                    var changed = false;
+                    changed |= ImGui.Checkbox("Show Border##ImGuiCompass_WeatherIcon", ref config.ShowWeatherIconBorder);
+                    changed |= ImGui.DragFloat2("Offset##ImGuiCompass_WeatherIcon", ref config.ImGuiCompassWeatherIconOffset, 1f);
+                    changed |= ImGui.SliderFloat("Scale##ImGuiCompass_WeatherIcon", ref config.ImGuiCompassWeatherIconScale, 0.01f, 3f, "%.2f");
+                    return changed;
+                });
                 changed |= DrawTreeCheckbox("Use Map instead of Minimap as source##ImGui",
                     ref config.UseAreaMapAsSource,
                     () =>
@@ -311,7 +319,7 @@ namespace Compass
                     ImGui.PopTextWrapPos();
                     ImGui.EndTooltip();
                 }
-                
+
                 ImGui.PopItemWidth();
                 ImGui.Unindent();
             }

@@ -23,8 +23,12 @@ namespace Compass
             ImGuiCompassBackgroundLinePMax = Vector2.Zero,
             ImGuiCompassDrawListPMin = Vector2.Zero,
             ImGuiCompassDrawListPMax = Vector2.Zero,
-            ImGuiCompassDrawListBackgroundPMin = Vector2.Zero,
-            ImGuiCompassDrawListBackgroundPMax = Vector2.Zero,
+            ImGuiCompassBackgroundDrawListPMin = Vector2.Zero,
+            ImGuiCompassBackgroundDrawListPMax = Vector2.Zero,
+            ImGuiCompassWeatherIconPMin = Vector2.Zero,
+            ImGuiCompassWeatherIconPMax = Vector2.Zero,
+            ImGuiCompassWeatherIconBorderPMin = Vector2.Zero,
+            ImGuiCompassWeatherIconBorderPMax = Vector2.Zero,
             ImGuiCompassHalfWidth = 125f,
             ImGuiCompassHalfHeight = 125f,
             ImGuiCompassScale = 1f,
@@ -48,6 +52,7 @@ namespace Compass
         private AtkComponentNode* _naviMapIconsRootComponentNode = null!;
         private AtkComponentNode* _areaMapIconsRootComponentNode = null!;
         private AtkComponentNode* _currentMapIconsRootComponentNode = null!;
+        private AtkImageNode* _weatherIconNode = null!;
         private IntPtr _naviMapTextureD3D11ShaderResourceView;
 
         private int _componentIconLoopStart = 0;
@@ -65,6 +70,7 @@ namespace Compass
                 westCardinalAtkImageNode->PartsList->Parts[0]
                     .UldAsset->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
             );
+            _weatherIconNode =(AtkImageNode*) ((AtkComponentNode*) _naviMap->UldManager.NodeList[6])->Component->UldManager.NodeList[2];
         }
         
         private void UpdateCompassVariables()
@@ -105,12 +111,23 @@ namespace Compass
                 _imGuiCompassData.ImGuiCompassBackgroundPMin + new Vector2(-2, -100);
             _imGuiCompassData.ImGuiCompassDrawListPMax = 
                 _imGuiCompassData.ImGuiCompassBackgroundPMax + new Vector2(2, 100);
-            _imGuiCompassData.ImGuiCompassDrawListBackgroundPMin =
+            _imGuiCompassData.ImGuiCompassBackgroundDrawListPMin =
                 _imGuiCompassData.ImGuiCompassBackgroundPMin + new Vector2(-3, -100);
-            _imGuiCompassData.ImGuiCompassDrawListBackgroundPMax =
+            _imGuiCompassData.ImGuiCompassBackgroundDrawListPMax =
                 _imGuiCompassData.ImGuiCompassBackgroundPMax + new Vector2(3, 100);
+
+            _imGuiCompassData.ImGuiCompassWeatherIconPMin =
+                _imGuiCompassData.ImGuiCompassBackgroundPMin + _config.ImGuiCompassWeatherIconOffset + new Vector2(2, 1) * _config.ImGuiCompassWeatherIconScale;
+            _imGuiCompassData.ImGuiCompassWeatherIconPMax = 
+                _imGuiCompassData.ImGuiCompassWeatherIconPMin + new Vector2(32, 32) * _config.ImGuiCompassWeatherIconScale;
             
-            
+            _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin = _config.ShowWeatherIconBorder
+                ? _imGuiCompassData.ImGuiCompassBackgroundPMin + _config.ImGuiCompassWeatherIconOffset 
+                : Vector2.Zero;
+            _imGuiCompassData.ImGuiCompassWeatherIconBorderPMax = _config.ShowWeatherIconBorder
+                 ? _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin + new Vector2(36, 36)* _config.ImGuiCompassWeatherIconScale
+                 : Vector2.Zero;
+                            
             _imGuiCompassData.HalfWidth40 = 20 * _imGuiCompassData.ImGuiCompassScale;
             _imGuiCompassData.HalfWidth28 = 14 * _imGuiCompassData.ImGuiCompassScale;
 
@@ -201,10 +218,39 @@ namespace Compass
             // Second, we position our Cardinals
             DrawCardinals(playerForward);
             if (_config.ShowOnlyCardinals) return;
+            if (_config.ShowWeatherIcon) DrawWeatherIcon();
             DrawCompassIcons(playerForward);
-            drawlist.PopClipRect();
-            drawlistBackground.PopClipRect();
+            drawList.PopClipRect();
+            backgroundDrawList.PopClipRect();
             ImGui.End();
+        }
+
+        private void DrawWeatherIcon()
+        {
+            var backgroundDrawList = ImGui.GetBackgroundDrawList();
+            backgroundDrawList.PushClipRectFullScreen();
+            
+            //Background of Weather Icon
+            backgroundDrawList.AddImage(
+                _naviMapTextureD3D11ShaderResourceView
+                , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin
+                , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMax
+                , new Vector2(0.08035714f, 0.8301887f)
+                , new Vector2(0.1607143f, 1));
+            //Weather Icon
+            var tex = _weatherIconNode->PartsList->Parts[0].UldAsset->AtkTexture.Resource->KernelTextureObject;
+            backgroundDrawList.AddImage(
+                new IntPtr(tex->D3D11ShaderResourceView), _imGuiCompassData.ImGuiCompassWeatherIconPMin, _imGuiCompassData.ImGuiCompassWeatherIconPMax);
+            //Border around Weather Icon
+            backgroundDrawList.AddImage(
+                _naviMapTextureD3D11ShaderResourceView
+                , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin
+                , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMax
+                , new Vector2(0.1607143f, 0.8301887f)
+                , new Vector2(0.2410714f, 1));
+            
+            backgroundDrawList.PopClipRect();
+
         }
         
         private void DrawCompassIcons(Vector2 playerForward)
