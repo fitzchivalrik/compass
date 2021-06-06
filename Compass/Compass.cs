@@ -160,14 +160,14 @@ namespace Compass
             _pluginInterface.UiBuilder.OnOpenConfigUi -= OnOpenConfigUi;
             _pluginInterface.UiBuilder.OnBuildUi -= BuildConfigUi;
 
-            _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompassNavi;
+            _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompass;
         }
 
         private void OnLogin(object sender, EventArgs e)
         {
             _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
             UpdateCompassVariables();
-            _pluginInterface.UiBuilder.OnBuildUi += BuildImGuiCompassNavi;
+            _pluginInterface.UiBuilder.OnBuildUi += BuildImGuiCompass;
         }
 
         #region UI

@@ -154,7 +154,7 @@ namespace Compass
             _currentUiObjectIndex = 0;
         }
 
-        private void BuildImGuiCompassNavi()
+        private void BuildImGuiCompass()
         {
             if (!_config.ImGuiCompassEnable) return;
             if (_config.HideInCombat && _pluginInterface.ClientState.Condition[ConditionFlag.InCombat]) return;
@@ -186,16 +186,15 @@ namespace Compass
                 ImGui.End();
                 return;
             }
-            var drawlist = ImGui.GetWindowDrawList();
-            var drawlistBackground = ImGui.GetBackgroundDrawList();
-            //drawlist.PushClipRectFullScreen();
-            drawlist.PushClipRect(
+            var drawList = ImGui.GetWindowDrawList();
+            var backgroundDrawList = ImGui.GetBackgroundDrawList();
+            drawList.PushClipRect(
                 _imGuiCompassData.ImGuiCompassDrawListPMin
                 , _imGuiCompassData.ImGuiCompassDrawListPMax
                 );
-            drawlistBackground.PushClipRect(
-                _imGuiCompassData.ImGuiCompassDrawListBackgroundPMin
-                , _imGuiCompassData.ImGuiCompassDrawListBackgroundPMax
+            backgroundDrawList.PushClipRect(
+                _imGuiCompassData.ImGuiCompassBackgroundDrawListPMin
+                , _imGuiCompassData.ImGuiCompassBackgroundDrawListPMax
                 );
             const uint playerViewTriangleRotationOffset = 0x254;
             // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
@@ -497,7 +496,7 @@ namespace Compass
             var pMaxY = _imGuiCompassData.ImGuiCompassCentre.Y + _imGuiCompassData.HalfWidth40 + _config.ImGuiCompassCardinalsOffset;
             backgroundDrawList.AddImage(
                 _naviMapTextureD3D11ShaderResourceView
-                , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - _imGuiCompassData.HalfWidth28 + eastOffset, pMinY) // Width = 20
+                , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - _imGuiCompassData.HalfWidth28 + eastOffset, pMinY)
                 , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + eastOffset + _imGuiCompassData.HalfWidth28, pMaxY)
                 , new Vector2(0.5446429f, 0.8301887f)
                 , new Vector2(0.5892857f, 0.9811321f)

@@ -45,7 +45,7 @@
     </Reference>
     <Reference Include="ImGui.NET">
       <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\ImGui.NET.dll</HintPath>
-      <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\ImGuiScene.dll</HintPath>
+      <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\ImGui.NET.dll</HintPath>
       <HintPath Condition="Exists('..\..\Dalamud\Dalamud\bin\Debug')">..\..\Dalamud\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
       <HintPath Condition="Exists('..\..\..\Dalamud\Dalamud\bin\Debug')">..\..\..\Dalamud\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
       <Private>false</Private>
