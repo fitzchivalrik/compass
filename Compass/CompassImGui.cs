@@ -226,6 +226,7 @@ namespace Compass
 
         private void DrawWeatherIcon()
         {
+            if (!_weatherIconNode->AtkResNode.IsVisible) return;
             var backgroundDrawList = ImGui.GetBackgroundDrawList();
             backgroundDrawList.PushClipRectFullScreen();
             
