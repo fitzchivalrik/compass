@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.7.1
+
 - feat: Optionally show weather on compass (closing #3)  
   ![](docs/weather_icon.png)
 
