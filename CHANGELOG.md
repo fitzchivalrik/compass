@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.8.0
+
+- feat/fix: Add new commands which toggle/on/off compass _and_ save that (#5).  
+  The existing commands 'toggle|on|off' were intended to be permanent but I messed up and forgot
+  to include the configuration save into them. Changing that now is technically a breaking change, however,
+  I do not feel like it makes sense to make that breaking. Instead, three new commands 'togglep|onp|offp'
+  (note the added 'p' for permanent)
+  are introduced which work the same way albeit this time they do save the configuration.
+
 ## 1.7.1
 
 - feat: Optionally show weather on compass (closing #3)  

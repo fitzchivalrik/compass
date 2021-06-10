@@ -119,7 +119,7 @@ namespace Compass
                 switch (args)
                 {
                     case "toggle":
-                        _config.ImGuiCompassEnable = !_config.ImGuiCompassEnable;
+                        _config.ImGuiCompassEnable ^= true;
                         UpdateCompassVariables();
                         break;
                     case "on":
@@ -129,6 +129,20 @@ namespace Compass
                     case "off":
                         _config.ImGuiCompassEnable = false;
                         break;
+                    case "togglep":
+                        _config.ImGuiCompassEnable ^= true;
+                        UpdateCompassVariables();
+                        _pluginInterface.SavePluginConfig(_config);
+                        break;
+                    case "onp":
+                        _config.ImGuiCompassEnable = true;
+                        UpdateCompassVariables();
+                        _pluginInterface.SavePluginConfig(_config);
+                        break;
+                    case "offp":
+                        _config.ImGuiCompassEnable = false;
+                        _pluginInterface.SavePluginConfig(_config);
+                        break;
                     default:
                         OnOpenConfigUi(null!, null!);
                         break;
@@ -136,7 +150,7 @@ namespace Compass
                 
             })
             {
-                HelpMessage = $"Open {PluginName} configuration menu. Use \"{Command} toggle|on|off\" to enable/disable.",
+                HelpMessage = $"Open {PluginName} configuration menu. Use \"{Command} <toggle|on|off>\" to enable/disable. Add 'p' to the command to also save the state (<togglep|onp|offp>)",
                 ShowInHelp = true
             });
             
