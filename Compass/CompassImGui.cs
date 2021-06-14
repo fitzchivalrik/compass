@@ -167,8 +167,34 @@ namespace Compass
                 return;
             }
 #endif
-            if (_currentSourceBase->UldManager.LoadedState != 3) return;
-            if (!_currentSourceBase->IsVisible) return;
+            const uint playerViewTriangleRotationOffset = 0x254;
+            float cameraRotationInRadian;
+            try
+            {
+                if (_currentSourceBase->UldManager.LoadedState != 3) return;
+                if (!_currentSourceBase->IsVisible) return;
+                // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
+                //var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
+                //var _miniMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->ULDData.NodeList[2];
+                // Minimap rotation thingy is even already flipped!
+                // And apparently even accessible & updated if _NaviMap is disabled
+                // => This leads to jerky behaviour though
+                cameraRotationInRadian = *(float*) ((nint) _naviMap + playerViewTriangleRotationOffset) * Deg2Rad;
+            }
+#if DEBUG
+            catch (Exception e)
+            {
+
+                SimpleLog.Error(e);
+                return;
+            }
+#else
+            catch
+            {
+                // ignored
+                return;
+#endif
+            }
             const ImGuiWindowFlags flags = ImGuiWindowFlags.NoDecoration
                                            | ImGuiWindowFlags.NoMove
                                            | ImGuiWindowFlags.NoMouseInputs
@@ -186,6 +212,13 @@ namespace Compass
                 ImGui.End();
                 return;
             }
+            
+            var cosPlayer = (float) Math.Cos(cameraRotationInRadian);
+            var sinPlayer = (float) Math.Sin(cameraRotationInRadian);
+            // NOTE (Chiv) Interpret game's camera rotation as
+            // 0 => (0,1) (North), PI/2 => (-1,0) (West)  in default coordinate system
+            // Games Map coordinate system origin is upper left, with positive Y grow
+            var playerForward = new Vector2(-sinPlayer, cosPlayer);
             var drawList = ImGui.GetWindowDrawList();
             var backgroundDrawList = ImGui.GetBackgroundDrawList();
             drawList.PushClipRect(
@@ -196,21 +229,6 @@ namespace Compass
                 _imGuiCompassData.ImGuiCompassBackgroundDrawListPMin
                 , _imGuiCompassData.ImGuiCompassBackgroundDrawListPMax
                 );
-            const uint playerViewTriangleRotationOffset = 0x254;
-            // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
-            //var cameraRotationInRadian = *(float*) (_maybeCameraStruct + 0x130);
-            //var _miniMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->ULDData.NodeList[2];
-            // Minimap rotation thingy is even already flipped!
-            // And apparently even accessible & updated if _NaviMap is disabled
-            // => This leads to jerky behaviour though
-            var cameraRotationInRadian = *(float*)((nint)_naviMap + playerViewTriangleRotationOffset) * Deg2Rad;
-            
-            var cosPlayer = (float) Math.Cos(cameraRotationInRadian);
-            var sinPlayer = (float) Math.Sin(cameraRotationInRadian);
-            // NOTE (Chiv) Interpret game's camera rotation as
-            // 0 => (0,1) (North), PI/2 => (-1,0) (West)  in default coordinate system
-            // Games Map coordinate system origin is upper left, with positive Y grow
-            var playerForward = new Vector2(-sinPlayer, cosPlayer);
             
             // First, the background
             DrawImGuiCompassBackground();
@@ -226,29 +244,43 @@ namespace Compass
 
         private void DrawWeatherIcon()
         {
-            if (!_weatherIconNode->AtkResNode.IsVisible) return;
             var backgroundDrawList = ImGui.GetBackgroundDrawList();
             backgroundDrawList.PushClipRectFullScreen();
+            try
+            {
+                if (!_weatherIconNode->AtkResNode.IsVisible) return;
+                //Background of Weather Icon
+                backgroundDrawList.AddImage(
+                    _naviMapTextureD3D11ShaderResourceView
+                    , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin
+                    , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMax
+                    , new Vector2(0.08035714f, 0.8301887f)
+                    , new Vector2(0.1607143f, 1));
+                //Weather Icon
+                var tex = _weatherIconNode->PartsList->Parts[0].UldAsset->AtkTexture.Resource->KernelTextureObject;
+                backgroundDrawList.AddImage(
+                    new IntPtr(tex->D3D11ShaderResourceView), _imGuiCompassData.ImGuiCompassWeatherIconPMin,
+                    _imGuiCompassData.ImGuiCompassWeatherIconPMax);
+                //Border around Weather Icon
+                backgroundDrawList.AddImage(
+                    _naviMapTextureD3D11ShaderResourceView
+                    , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin
+                    , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMax
+                    , new Vector2(0.1607143f, 0.8301887f)
+                    , new Vector2(0.2410714f, 1));
+            }
             
-            //Background of Weather Icon
-            backgroundDrawList.AddImage(
-                _naviMapTextureD3D11ShaderResourceView
-                , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin
-                , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMax
-                , new Vector2(0.08035714f, 0.8301887f)
-                , new Vector2(0.1607143f, 1));
-            //Weather Icon
-            var tex = _weatherIconNode->PartsList->Parts[0].UldAsset->AtkTexture.Resource->KernelTextureObject;
-            backgroundDrawList.AddImage(
-                new IntPtr(tex->D3D11ShaderResourceView), _imGuiCompassData.ImGuiCompassWeatherIconPMin, _imGuiCompassData.ImGuiCompassWeatherIconPMax);
-            //Border around Weather Icon
-            backgroundDrawList.AddImage(
-                _naviMapTextureD3D11ShaderResourceView
-                , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin
-                , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMax
-                , new Vector2(0.1607143f, 0.8301887f)
-                , new Vector2(0.2410714f, 1));
-            
+#if DEBUG
+            catch (Exception e)
+            {
+
+                SimpleLog.Error(e);
+#else
+            catch
+            {
+                // ignored
+#endif
+            }
             backgroundDrawList.PopClipRect();
 
         }
