@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.8.2
+
+- fix: Potential compass crash after e.g. Chocobo race, Lord of Vermillion match, DeepDungeon etc.
+- fix: Add more botanist, fisher and miner icons to special rotation handling
+- fix: Add locked quest to rotation handling
+
 ## 1.8.0
 
 - feat/fix: Add new commands which toggle/on/off compass _and_ save that (#5).  

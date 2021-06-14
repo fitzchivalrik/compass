@@ -421,10 +421,14 @@ namespace Compass
                                 break;
                             case 071003: // MSQ Ongoing Marker
                             case 071005: // MSQ Complete Marker
+                            case 071013: // MSQ Ongoing Red Marker
+                            case 071015: // MSQ Complete Red Marker
                             case 071023: // Quest Ongoing Marker
                             case 071033: // Quest Ongoing Red Marker
+                            case 071153: // Quest Ongoing Red Marker 2
                             case 071025: // Quest Complete Marker
                             case 071035: // Quest Complete Red Marker
+                            case 071155: // Quest Complete Red Marker
                             case 071063: // BookQuest Ongoing Marker
                             case 071065: // BookQuest Complete Marker
                             case 071083: // LeveQuest Ongoing Marker
@@ -440,8 +444,15 @@ namespace Compass
                             case 060561: // Red Flag (Custom marker)
                             case 060437: // Mining Crop Icon  
                             case 060438: // Mining Crop Icon 2
+                            case 060463: // Mining Crop Icon 3
+                            case 060464: // Mining Crop Icon 4
                             case 060432: // Botanic Crop Icon 
                             case 060433: // Botanic Crop Icon 2 
+                            case 060461: // Botanic Crop Icon 3
+                            case 060462: // Botanic Crop Icon 4
+                            case 060455: // Fishing Icon 
+                            case 060465: // Fishing Icon 2 
+                            case 060466: // Fishing Icon 3
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                     // => The current quest marker is inside the mask and should be
                                     // treated as a map point
