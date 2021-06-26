@@ -72,6 +72,10 @@ namespace Compass
             ("Chocobo Companion",  new uint[] {060961}),
             ("Party Members",  new uint[] {060421}),
             ("Enemies",  new uint[] {060422}),
+            ("Alliance Members",  new uint[] {060358}),
+            ("Letter Waymarks",  new uint[] {060474,060475, 060476, 060936}),
+            ("Number Waymarks",  new uint[] {060931, 060932, 060933, 063904}),
+            ("Red Flag",  new uint[] {060561}),
         };
         
         private static bool DrawFilterTab(Configuration config, float scale)
@@ -201,7 +205,7 @@ namespace Compass
                 ImGui.TreePop();
             }
             
-            if (ImGui.TreeNode("The compass is wrong/missing after a DeepDungeon/Chocobo race/Lord of Vermillion match etc.?"))
+            if (ImGui.TreeNode("The compass is wrong/missing after a DeepDungeon/Chocobo race/Lord of Verminion match etc.?"))
             {
                 ImGui.TextWrapped($"Please type '/compass on' or toggle the compass in the settings tab " +
                                   $"to reset the internal cache. Visiting a DeepDungeon/Chocobo race etc. unfortunately kills the mini map " +
