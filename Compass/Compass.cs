@@ -1,95 +1,103 @@
 ﻿using System;
 using System.Numerics;
+using Dalamud.Data;
+using Dalamud.Game;
+using Dalamud.Game.ClientState;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.Command;
+using Dalamud.Game.Gui;
+using Dalamud.Interface;
+using Dalamud.IoC;
 using Dalamud.Plugin;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace Compass
 {
-    public unsafe partial class Compass : IDisposable
+    public unsafe partial class Compass : IDalamudPlugin
     {
         public const string PluginName = "Compass";
         private const string Command = "/compass";
-        
+        public string Name => PluginName;
+
         private readonly Configuration _config;
         private readonly DalamudPluginInterface _pluginInterface;
-        
+        private readonly ClientState _clientState;
+        private readonly Framework _framework;
+        private readonly CommandManager _commands;
+        private readonly Condition _condition;
+        private readonly GameGui _gameGui;
+
         private string[] _uiIdentifiers = null!; //Constructor calls method which initializes
         private int _currentUiObjectIndex;
         private bool _shouldHideCompass;
         private bool _shouldHideCompassIteration;
         private bool _isDisposed;
         private bool _buildingConfigUi;
-        
 
-        public Compass(DalamudPluginInterface pi, Configuration config)
+
+        public Compass(DalamudPluginInterface pi
+            , SigScanner sigScanner
+            , ClientState clientState
+            , CommandManager commands
+            , Framework framework
+            , Condition condition
+            , [RequiredVersion("1.0")] GameGui gameGui)
         {
             #region Signatures
 
             #endregion
 
-
+            var config = pi.GetPluginConfig() as Configuration ?? new Configuration();
             _pluginInterface = pi;
             _config = config;
-
+            _clientState = clientState;
+            _commands = commands;
+            _framework = framework;
+            _condition = condition;
+            _gameGui = gameGui;
+            
             #region Configuration Setup
 
             _config.ShouldHideOnUiObject = new[]
             {
-                  (new [] {"_BattleTalk"}, false, "Dialogue Box During Battle")
-                , (new [] {"Talk"}, false, "Dialogue Box")
-                , (new [] {"AreaMap"}, false, "Map")
-                , (new [] {"Character"}, false, "Character")
-                , (new [] {"ConfigCharacter"}, false, "Character Configuration")
-                , (new [] {"ConfigSystem"}, false, "System Configuration")
-                , (new [] {"Inventory", "InventoryLarge", "InventoryExpansion"}, false, "Inventory")
-                , (new [] {"InventoryRetainer", "InventoryRetainerLarge"}, false, "Retainer Inventory")
-                , (new [] {"InventoryBuddy"}, false, "Saddle Bag")
-                , (new [] {"ArmouryBoard"}, false, "Armoury")
-                , (new [] {"Shop", "InclusionShop", "ShopExchangeCurrency"}, false, "Shops")
-                , (new [] {"Teleport"}, false, "Teleport")
-                , (new [] {"ContentsInfo"}, false, "Timers")
-                , (new [] {"ContentsFinder"}, false, "Duty Finder")
-                , (new [] {"LookingForGroup"}, false, "Party Finder")
-                , (new [] {"AOZNotebook"}, false, "Bluemage Notebook")
-                , (new [] {"MountNoteBook"}, false, "Mount Guide")
-                , (new [] {"MinionNoteBook"}, false, "Minion Guide")
-                , (new [] {"Achievement"}, false, "Achievements")
-                , (new [] {"GoldSaucerInfo"}, false, "Action Help")
-                , (new [] {"PvpProfile"}, false, "PVP Profile")
-                , (new [] {"LinkShell"}, false, "Linkshell")
-                , (new [] {"CrossWorldLinkshell"}, false, "Crossworld Linkshell")
-                , (new [] {"ActionDetail"}, false, "Action Help (Tooltip)")
-                , (new [] {"ItemDetail"}, false, "Item Tooltip")
-                , (new [] {"ActionMenu"}, false, "Action List")
-                , (new [] {"QuestRedo", "QuestRedoHud"}, false, "New Game+")
-                , (new [] {"Journal"}, false, "Journal")
-                , (new [] {"RecipeNote"}, false, "Crafting Log")
-                , (new [] {"AdventureNoteBook"}, false, "Sightseeing Log")
-                , (new [] {"GatheringNote"}, false, "Gathering Log")
-                , (new [] {"FishingNote"}, false, "Fishing Log")
-                , (new [] {"FishGuide"}, false, "Fishing Guide")
-                , (new [] {"Orchestrion"}, false, "Orchestrion List")
-                , (new [] {"ContentsNote"}, false, "Challenge Log")
-                , (new [] {"MonsterNote"}, false, "Hunting Log")
-                , (new [] {"PartyMemberList"}, false, "Party Members")
-                , (new [] {"FriendList"}, false, "Friend list")
-                , (new [] {"BlackList"}, false, "Black List")
-                , (new [] {"SocialList"}, false, "Player Search")
-                , (new [] {"Emote"}, false, "Emote")
-                , (new [] {"FreeCompany"}, false, "Free Company")
-                , (new [] {"SupportDesk"}, false, "Support Desk")
-                , (new [] {"ConfigKeybind"}, false, "Keybinds")
-                , (new [] {"_HudLayoutScreen"}, false, "HUD Layout")
-                , (new [] {"Macro"}, false, "Macro")
-                , (new [] {"GrandCompanySupplyList"}, false, "Grand Company Delivery")
-                , (new [] {"GrandCompanyExchange"}, false, "Grand Company Shop")
-                , (new [] {"MiragePrismPrismBox"}, false, "Glamour Dresser")
-                , (new [] {"Currency"}, false, "Currency")
-                , (new [] {"_MainCross"}, false, "Controller Main Menu")
-                , (new [] {"JournalResult"}, false, "Quest Complete")
+                (new[] { "_BattleTalk" }, false, "Dialogue Box During Battle"),
+                (new[] { "Talk" }, false, "Dialogue Box"), (new[] { "AreaMap" }, false, "Map"),
+                (new[] { "Character" }, false, "Character"),
+                (new[] { "ConfigCharacter" }, false, "Character Configuration"),
+                (new[] { "ConfigSystem" }, false, "System Configuration"),
+                (new[] { "Inventory", "InventoryLarge", "InventoryExpansion" }, false, "Inventory"),
+                (new[] { "InventoryRetainer", "InventoryRetainerLarge" }, false, "Retainer Inventory"),
+                (new[] { "InventoryBuddy" }, false, "Saddle Bag"), (new[] { "ArmouryBoard" }, false, "Armoury"),
+                (new[] { "Shop", "InclusionShop", "ShopExchangeCurrency" }, false, "Shops"),
+                (new[] { "Teleport" }, false, "Teleport"), (new[] { "ContentsInfo" }, false, "Timers"),
+                (new[] { "ContentsFinder" }, false, "Duty Finder"),
+                (new[] { "LookingForGroup" }, false, "Party Finder"),
+                (new[] { "AOZNotebook" }, false, "Bluemage Notebook"),
+                (new[] { "MountNoteBook" }, false, "Mount Guide"), (new[] { "MinionNoteBook" }, false, "Minion Guide"),
+                (new[] { "Achievement" }, false, "Achievements"), (new[] { "GoldSaucerInfo" }, false, "Action Help"),
+                (new[] { "PvpProfile" }, false, "PVP Profile"), (new[] { "LinkShell" }, false, "Linkshell"),
+                (new[] { "CrossWorldLinkshell" }, false, "Crossworld Linkshell"),
+                (new[] { "ActionDetail" }, false, "Action Help (Tooltip)"),
+                (new[] { "ItemDetail" }, false, "Item Tooltip"), (new[] { "ActionMenu" }, false, "Action List"),
+                (new[] { "QuestRedo", "QuestRedoHud" }, false, "New Game+"), (new[] { "Journal" }, false, "Journal"),
+                (new[] { "RecipeNote" }, false, "Crafting Log"),
+                (new[] { "AdventureNoteBook" }, false, "Sightseeing Log"),
+                (new[] { "GatheringNote" }, false, "Gathering Log"), (new[] { "FishingNote" }, false, "Fishing Log"),
+                (new[] { "FishGuide" }, false, "Fishing Guide"), (new[] { "Orchestrion" }, false, "Orchestrion List"),
+                (new[] { "ContentsNote" }, false, "Challenge Log"), (new[] { "MonsterNote" }, false, "Hunting Log"),
+                (new[] { "PartyMemberList" }, false, "Party Members"), (new[] { "FriendList" }, false, "Friend list"),
+                (new[] { "BlackList" }, false, "Black List"), (new[] { "SocialList" }, false, "Player Search"),
+                (new[] { "Emote" }, false, "Emote"), (new[] { "FreeCompany" }, false, "Free Company"),
+                (new[] { "SupportDesk" }, false, "Support Desk"), (new[] { "ConfigKeybind" }, false, "Keybinds"),
+                (new[] { "_HudLayoutScreen" }, false, "HUD Layout"), (new[] { "Macro" }, false, "Macro"),
+                (new[] { "GrandCompanySupplyList" }, false, "Grand Company Delivery"),
+                (new[] { "GrandCompanyExchange" }, false, "Grand Company Shop"),
+                (new[] { "MiragePrismPrismBox" }, false, "Glamour Dresser"), (new[] { "Currency" }, false, "Currency"),
+                (new[] { "_MainCross" }, false, "Controller Main Menu"),
+                (new[] { "JournalResult" }, false, "Quest Complete")
             };
-            
+
             for (var i = 0; i < _config.ShouldHideOnUiObjectSerializer.Length; i++)
             {
                 _config.ShouldHideOnUiObject[i].disable = _config.ShouldHideOnUiObjectSerializer[i];
@@ -99,12 +107,12 @@ namespace Compass
             {
                 Array.Resize(ref _config.ShouldHideOnUiObjectSerializer, _config.ShouldHideOnUiObject.Length);
             }
-            
+
             #endregion
-            
-            
-            _pluginInterface.ClientState.OnLogin += OnLogin;
-            _pluginInterface.ClientState.OnLogout += OnLogout;
+
+
+            _clientState.Login += OnLogin;
+            _clientState.Logout += OnLogout;
 
             #region Hooks, Functions and Addresses
 
@@ -113,8 +121,8 @@ namespace Compass
             #region Excel Data
 
             #endregion
-            
-            pi.CommandManager.AddHandler(Command, new CommandInfo((_, args) =>
+
+            _commands.AddHandler(Command, new CommandInfo((_, args) =>
             {
                 switch (args)
                 {
@@ -144,49 +152,55 @@ namespace Compass
                         _pluginInterface.SavePluginConfig(_config);
                         break;
                     default:
-                        OnOpenConfigUi(null!, null!);
+                        OnOpenConfigUi();
                         break;
                 }
-                
             })
             {
-                HelpMessage = $"Open {PluginName} configuration menu. Use \"{Command} <toggle|on|off>\" to enable/disable. Add 'p' to the command to also save the state (<togglep|onp|offp>)",
+                HelpMessage =
+                    $"Open {PluginName} configuration menu. Use \"{Command} <toggle|on|off>\" to enable/disable. Add 'p' to the command to also save the state (<togglep|onp|offp>)",
                 ShowInHelp = true
             });
-            
-            DebugCtor();
-#if RELEASE
 
+            DebugCtor(sigScanner);
+#if RELEASE
+            //NOTE (Chiv) Invariant: LocalPlayer never null on install, as install is
+            // executed after login
             if (_pluginInterface.Reason == PluginLoadReason.Installer
                 //|| _pluginInterface.ClientState.LocalPlayer is not null
             )
             {
+                
+                // NOTE (Chiv) Centers the compass on first install
+                var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size * 0.5f).X;
+                config.ImGuiCompassPosition = new Vector2(screenSizeCenterX - config.ImGuiCompassWidth * 0.5f,
+                    config.ImGuiCompassPosition.Y);
                  OnLogin(null!, null!);
                 _buildingConfigUi = true;
                 _config.FreshInstall = true;
-                _pluginInterface.UiBuilder.OnBuildUi += BuildConfigUi;
+                _pluginInterface.UiBuilder.Draw += DrawConfigUi;
             }
 #endif
         }
-        
-        private void OnLogout(object sender, EventArgs e)
-        {
-            _pluginInterface.UiBuilder.OnOpenConfigUi -= OnOpenConfigUi;
-            _pluginInterface.UiBuilder.OnBuildUi -= BuildConfigUi;
 
-            _pluginInterface.UiBuilder.OnBuildUi -= BuildImGuiCompass;
+        private void OnLogout(object? sender, EventArgs e)
+        {
+            _pluginInterface.UiBuilder.OpenConfigUi -= OnOpenConfigUi;
+            _pluginInterface.UiBuilder.Draw -= DrawConfigUi;
+
+            _pluginInterface.UiBuilder.Draw -= DrawImGuiCompass;
         }
 
-        private void OnLogin(object sender, EventArgs e)
+        private void OnLogin(object? sender, EventArgs e)
         {
-            _pluginInterface.UiBuilder.OnOpenConfigUi += OnOpenConfigUi;
+            _pluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
             UpdateCompassVariables();
-            _pluginInterface.UiBuilder.OnBuildUi += BuildImGuiCompass;
+            _pluginInterface.UiBuilder.Draw += DrawImGuiCompass;
         }
 
         #region UI
 
-        private void BuildConfigUi()
+        private void DrawConfigUi()
         {
             var (shouldBuildConfigUi, changedConfig) = ConfigurationUi.DrawConfigUi(_config);
             if (changedConfig)
@@ -196,27 +210,26 @@ namespace Compass
             }
 
             if (shouldBuildConfigUi) return;
-            _pluginInterface.UiBuilder.OnBuildUi -= BuildConfigUi;
+            _pluginInterface.UiBuilder.Draw -= DrawConfigUi;
             _buildingConfigUi = false;
         }
-        
-        private void OnOpenConfigUi(object sender, EventArgs e)
+
+        private void OnOpenConfigUi()
         {
             _buildingConfigUi = !_buildingConfigUi;
-            if(_buildingConfigUi)
-                _pluginInterface.UiBuilder.OnBuildUi += BuildConfigUi;
+            if (_buildingConfigUi)
+                _pluginInterface.UiBuilder.Draw += DrawConfigUi;
             else
-                _pluginInterface.UiBuilder.OnBuildUi -= BuildConfigUi;
-            
+                _pluginInterface.UiBuilder.Draw -= DrawConfigUi;
         }
 
         #endregion
-        
+
         #region Debug Partials
-        
-        partial void DebugCtor();
+
+        partial void DebugCtor(SigScanner sigScanner);
         partial void DebugDtor();
-        
+
         #endregion
 
         #region Dispose
@@ -235,9 +248,9 @@ namespace Compass
                 // TODO (Chiv) Still not quite sure about correct dispose
                 // NOTE (Chiv) Explicit, non GC? call - remove managed thingies too.
                 OnLogout(null!, null!);
-                _pluginInterface.ClientState.OnLogin -= OnLogin;
-                _pluginInterface.ClientState.OnLogout -= OnLogout;
-                _pluginInterface.CommandManager.RemoveHandler(Command);
+                _clientState.Login -= OnLogin;
+                _clientState.Logout -= OnLogout;
+                _commands.RemoveHandler(Command);
                 DebugDtor();
             }
 

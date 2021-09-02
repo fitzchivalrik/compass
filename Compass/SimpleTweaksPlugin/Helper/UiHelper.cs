@@ -27,41 +27,41 @@ namespace SimpleTweaksPlugin.Helper {
             newNode->CollisionNodeList = null;
             newNode->CollisionNodeListCount = 0;
             //TODO I imagine this needs to be somehow treated too.
-            newNode->ULDData.ComponentData = null;
+            newNode->UldManager.ComponentData = null;
             // Handle to the ULD file?
-            newNode->ULDData.UldResourceHandle = null;
+            newNode->UldManager.UldResourceHandle = null;
             // TODO ?? ?? Crashes of null
-            //newNode->ULDData.AtkResourceRendererManager = null;
-            newNode->ULDData.ComponentData = null;
+            //newNode->UldManager.AtkResourceRendererManager = null;
+            newNode->UldManager.ComponentData = null;
             // TODO Only set in ComponentNodes ULD Data?
-            newNode->ULDData.RootNode  = null;
-            newNode->ULDData.RootNodeWidth = 0;
-            newNode->ULDData.RootNodeHeight = 0;
+            newNode->UldManager.RootNode  = null;
+            newNode->UldManager.RootNodeWidth = 0;
+            newNode->UldManager.RootNodeHeight = 0;
             if (!keepObjects)
             {
-                newNode->ULDData.Objects = null;
-                newNode->ULDData.ObjectCount = 0;
+                newNode->UldManager.Objects = null;
+                newNode->UldManager.ObjectCount = 0;
             }
 
             if (!keepTextures)
             {
-                newNode->ULDData.Textures = null;
-                newNode->ULDData.TextureCount = 0;
+                newNode->UldManager.Assets = null;
+                newNode->UldManager.AssetCount = 0;
             }
 
             if (!keepParts)
             {
                 // TODO Any sense in keeping parts without textures?
-                newNode->ULDData.PartsList = null;
-                newNode->ULDData.PartsListCount = 0;
+                newNode->UldManager.PartsList = null;
+                newNode->UldManager.PartsListCount = 0;
             }
 
-            newNode->ULDData.NodeListCount = 0;
+            newNode->UldManager.NodeListCount = 0;
             SimpleLog.Log($"Original has Rootnode? {original->RootNode != null}");
             var newSize = original->RootNode == null ? 0 : 1; 
-            newNode->ULDData.NodeList = (AtkResNode**)Alloc((ulong)((newSize + 1) * 8));
-            newNode->ULDData.NodeList[newNode->ULDData.NodeListCount++] = original->RootNode == null ? null : CloneNode(original->RootNode);
-            newNode->RootNode = newNode->ULDData.NodeList[0];
+            newNode->UldManager.NodeList = (AtkResNode**)Alloc((ulong)((newSize + 1) * 8));
+            newNode->UldManager.NodeList[newNode->UldManager.NodeListCount++] = original->RootNode == null ? null : CloneNode(original->RootNode);
+            newNode->RootNode = newNode->UldManager.NodeList[0];
             return newNode;
         }
         
@@ -118,7 +118,7 @@ namespace SimpleTweaksPlugin.Helper {
         }
 
         public static void SetWindowSize(AtkComponentNode* windowNode, ushort? width, ushort? height) {
-            if (((ULDComponentInfo*) windowNode->Component->ULDData.Objects)->ComponentType != ComponentType.Window) return;
+            if (((AtkUldComponentInfo*) windowNode->Component->UldManager.Objects)->ComponentType != ComponentType.Window) return;
 
             width ??= windowNode->AtkResNode.Width;
             height ??= windowNode->AtkResNode.Height;
@@ -126,7 +126,7 @@ namespace SimpleTweaksPlugin.Helper {
             if (width < 64) width = 64;
 
             SetSize(windowNode, width, height);  // Window
-            var n = windowNode->Component->ULDData.RootNode;
+            var n = windowNode->Component->UldManager.RootNode;
             SetSize(n, width, height);  // Collision
             n = n->PrevSiblingNode;
             SetSize(n, (ushort)(width - 14), null); // Header Collision
@@ -149,13 +149,13 @@ namespace SimpleTweaksPlugin.Helper {
         }
 
         public static void ExpandNodeList(AtkComponentNode* componentNode, ushort addSize) {
-            var newNodeList = ExpandNodeList(componentNode->Component->ULDData.NodeList, componentNode->Component->ULDData.NodeListCount, (ushort) (componentNode->Component->ULDData.NodeListCount + addSize));
-            componentNode->Component->ULDData.NodeList = newNodeList;
+            var newNodeList = ExpandNodeList(componentNode->Component->UldManager.NodeList, componentNode->Component->UldManager.NodeListCount, (ushort) (componentNode->Component->UldManager.NodeListCount + addSize));
+            componentNode->Component->UldManager.NodeList = newNodeList;
         }
 
         public static void ExpandNodeList(AtkUnitBase* atkUnitBase, ushort addSize) {
-            var newNodeList = ExpandNodeList(atkUnitBase->ULDData.NodeList, atkUnitBase->ULDData.NodeListCount, (ushort)(atkUnitBase->ULDData.NodeListCount + addSize));
-            atkUnitBase->ULDData.NodeList = newNodeList;
+            var newNodeList = ExpandNodeList(atkUnitBase->UldManager.NodeList, atkUnitBase->UldManager.NodeListCount, (ushort)(atkUnitBase->UldManager.NodeListCount + addSize));
+            atkUnitBase->UldManager.NodeList = newNodeList;
         }
 
         private static AtkResNode** ExpandNodeList(AtkResNode** originalList, ushort originalSize, ushort newSize = 0) {

@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Dalamud.Game;
 using Dalamud.Game.ClientState;
-using Dalamud.Game.ClientState.Actors;
+using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.Command;
 using Dalamud.Game.Internal;
 using Dalamud.Hooking;
@@ -42,35 +42,35 @@ namespace Compass
         private nint _a2NaviOnUpdate;
         private nint _a3NaviOnUpdate;
 
-        partial void DebugCtor()
+        partial void DebugCtor(SigScanner sigScanner)
         {
-            _fateSig = _pluginInterface.TargetModuleScanner.ScanText("80 3D ?? ?? ?? ?? ?? 0F 84 ?? ?? ?? ?? 48 8B 42 20");
+            _fateSig = sigScanner.ScanText("80 3D ?? ?? ?? ?? ?? 0F 84 ?? ?? ?? ?? 48 8B 42 20");
             _inFateAreaPtr = _fateSig + Marshal.ReadInt32(_fateSig, 2) + 7;
 
 
             var naviOnUpdate =
-                _pluginInterface.TargetModuleScanner.ScanText("48 8B C4 55 48 81 EC ?? ?? ?? ?? F6 81 ?? ?? ?? ?? ??");
+                sigScanner.ScanText("48 8B C4 55 48 81 EC ?? ?? ?? ?? F6 81 ?? ?? ?? ?? ??");
             _naviOnUpdateHook =
                 new Hook<AddonNaviMap_OnUpdate>(naviOnUpdate, (AddonNaviMap_OnUpdate) NaviMapOnUpdateDetour);
             _naviOnUpdateHook.Enable();
 
-            _pluginInterface.CommandManager.AddHandler($"{Command}debug", new CommandInfo((_, _) =>
+            _commands.AddHandler($"{Command}debug", new CommandInfo((_, _) =>
             {
-                _pluginInterface.UiBuilder.OnBuildUi -= BuildDebugUi;
-                _pluginInterface.UiBuilder.OnBuildUi += BuildDebugUi;
+                _pluginInterface.UiBuilder.Draw -= BuildDebugUi;
+                _pluginInterface.UiBuilder.Draw += BuildDebugUi;
             })
             {
                 HelpMessage = $"Open {PluginName} Debug menu.",
                 ShowInHelp = false
             });
-            if (_pluginInterface.ClientState.LocalPlayer is not null)
+            if (_clientState.LocalPlayer is not null)
             {
                 OnLogin(null!, null!);
             }
             
-            _pluginInterface.UiBuilder.OnBuildUi += BuildDebugUi;
+            _pluginInterface.UiBuilder.Draw += BuildDebugUi;
 
-            UiHelper.Setup(_pluginInterface.TargetModuleScanner);
+            UiHelper.Setup(sigScanner);
         }
 
         private void NaviMapOnUpdateDetour(nint thisNaviMap, nint a2, nint a3)
@@ -116,12 +116,12 @@ namespace Compass
             // Minimap rotation thingy is even already flipped!
             // And apparently even accessible & updated if _NaviMap is disabled
 
-            var navimapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+            var navimapPtr = _gameGui.GetAddonByName("_NaviMap", 1);
             const uint playerViewTriangleRotationOffset = 0x254;
             if (navimapPtr == IntPtr.Zero) return;
             var naviMap = (AtkUnitBase*) navimapPtr;
             //NOTE (chiv) 3 means fully loaded
-            if (naviMap->ULDData.LoadedState != 3) return;
+            if (naviMap->UldManager.LoadedState != 3) return;
             if (!naviMap->IsVisible) return;
             var cameraRotationInRadian = *(float*)((nint)naviMap + playerViewTriangleRotationOffset) * Deg2Rad;
 
@@ -181,16 +181,16 @@ namespace Compass
                     _cardinalsClonedImageNodes[3]->AtkResNode.ScaleY = scale;
 
                 //Then, we do the dance through all relevant nodes on _NaviMap
-                var iconsRootComponentNode = (AtkComponentNode*) naviMap->ULDData.NodeList[2];
-                for (var i = 4; i < iconsRootComponentNode->Component->ULDData.NodeListCount; i++)
+                var iconsRootComponentNode = (AtkComponentNode*) naviMap->UldManager.NodeList[2];
+                for (var i = 4; i < iconsRootComponentNode->Component->UldManager.NodeListCount; i++)
                 {
                     var iconComponentNode =
-                        (AtkComponentNode*) iconsRootComponentNode->Component->ULDData.NodeList[i];
-                    for (var j = 2; j < iconComponentNode->Component->ULDData.NodeListCount; j++)
+                        (AtkComponentNode*) iconsRootComponentNode->Component->UldManager.NodeList[i];
+                    for (var j = 2; j < iconComponentNode->Component->UldManager.NodeListCount; j++)
                     {
                         // NOTE (Chiv) Invariant: From 2 onward, only ImageNodes
                         var clone = _clonedImageNodes[i - 4, j - 2];
-                        var imgNode = (AtkImageNode*) iconComponentNode->Component->ULDData.NodeList[j];
+                        var imgNode = (AtkImageNode*) iconComponentNode->Component->UldManager.NodeList[j];
                         if (imgNode->AtkResNode.Type != NodeType.Image)
                         {
                             SimpleLog.Error($"{i}{j} was not an ImageNode");
@@ -236,7 +236,7 @@ namespace Compass
                         var texFileNamePtr =
                             part.UldAsset->AtkTexture.Resource->TexFileResourceHandle->ResourceHandle
                                 .FileName;
-                        var texString = Marshal.PtrToStringAnsi(new IntPtr(texFileNamePtr));
+                        var texString = texFileNamePtr.ToString();
                         switch (texString)
                         {
                             case var _ when texString?.EndsWith("060443.tex",
@@ -308,23 +308,23 @@ namespace Compass
         {
             try
             {
-                var navimapPtr = _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+                var navimapPtr = _gameGui.GetAddonByName("_NaviMap", 1);
                 if (navimapPtr == IntPtr.Zero) return;
                 var naviMap = (AtkUnitBase*) navimapPtr;
                 //NOTE (chiv) 3 means fully loaded
-                if (naviMap->ULDData.LoadedState != 3) return;
+                if (naviMap->UldManager.LoadedState != 3) return;
                 //NOTE (chiv) There should be no real need to care for visibility for cloning but oh well, untested.
                 if (!naviMap->IsVisible) return;
                 //NOTE (chiv) 19 should be the unmodified default
                 //if (naviMap->ULDData.NodeListCount != 19) return;
 
                 UiHelper.ExpandNodeList(naviMap, (ushort) _clonedImageNodes.Length);
-                var prototypeImgNode = naviMap->ULDData.NodeList[11];
+                var prototypeImgNode = naviMap->UldManager.NodeList[11];
                 var currentNodeId = uint.MaxValue;
 
                 //First, Background (Reusing empty slot)
                 _background = (AtkImageNode*) CloneAndAttach(
-                    ref naviMap->ULDData,
+                    ref naviMap->UldManager,
                     naviMap->RootNode,
                     prototypeImgNode,
                     currentNodeId--);
@@ -334,9 +334,9 @@ namespace Compass
                 // Next, Cardinals
                 for (var i = 0; i < _cardinalsClonedImageNodes.Length; i++)
                     _cardinalsClonedImageNodes[i] = (AtkImageNode*) CloneAndAttach(
-                        ref naviMap->ULDData,
+                        ref naviMap->UldManager,
                         naviMap->RootNode,
-                        naviMap->ULDData.NodeList[i + 9],
+                        naviMap->UldManager.NodeList[i + 9],
                         currentNodeId--);
 
                 // NOTE (Chiv) Set for rest
@@ -346,7 +346,7 @@ namespace Compass
                 for (var j = 0; j < _clonedImageNodes.GetLength(1); j++)
                 {
                     _clonedImageNodes[i, j] = (AtkImageNode*) CloneAndAttach(
-                        ref naviMap->ULDData,
+                        ref naviMap->UldManager,
                         naviMap->RootNode,
                         prototypeImgNode,
                         currentNodeId--);
@@ -367,7 +367,7 @@ namespace Compass
             }
         }
 
-        private static AtkResNode* CloneAndAttach(ref ULDData uld, AtkResNode* parent, AtkResNode* prototype,
+        private static AtkResNode* CloneAndAttach(ref AtkUldManager uld, AtkResNode* parent, AtkResNode* prototype,
             uint nodeId = uint.MaxValue)
         {
             var clone = UiHelper.CloneNode(prototype);
@@ -385,8 +385,8 @@ namespace Compass
 
         partial void DebugDtor()
         {
-            _pluginInterface.UiBuilder.OnBuildUi -= BuildDebugUi;
-            _pluginInterface.CommandManager.RemoveHandler($"{Command}debug");
+            _pluginInterface.UiBuilder.Draw -= BuildDebugUi;
+            _commands.RemoveHandler($"{Command}debug");
             
             _naviOnUpdateHook?.Disable();
             _naviOnUpdateHook?.Dispose();

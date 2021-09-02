@@ -4,7 +4,10 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Dalamud.Game.ClientState;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.Gui;
 using Dalamud.Interface;
+using Dalamud.IoC;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using SimpleTweaksPlugin;
@@ -45,7 +48,7 @@ namespace Compass
             ImGuiBackgroundLineColourUInt32 = ImGuiCompassData.WhiteColor,
             CurrentScaleOffset =  ImGuiCompassData.NaviMapScaleOffset
         };
-        
+
         private AtkUnitBase* _naviMap = null!;
         private AtkUnitBase* _areaMap = null!;
         private AtkUnitBase* _currentSourceBase;
@@ -60,9 +63,9 @@ namespace Compass
 
         private void UpdateMapAddonCache()
         {
-            _naviMap = (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("_NaviMap", 1);
+            _naviMap = (AtkUnitBase*) _gameGui.GetAddonByName("_NaviMap", 1);
             _naviMapIconsRootComponentNode = (AtkComponentNode*) _naviMap->UldManager.NodeList[2];
-            _areaMap = (AtkUnitBase*) _pluginInterface.Framework.Gui.GetUiObjectByName("AreaMap", 1);
+            _areaMap = (AtkUnitBase*) _gameGui.GetAddonByName("AreaMap", 1);
             _areaMapIconsRootComponentNode = (AtkComponentNode*) _areaMap->UldManager.NodeList[3];
             var westCardinalAtkImageNode = (AtkImageNode*) _naviMap->UldManager.NodeList[11];
 
@@ -154,10 +157,10 @@ namespace Compass
             _currentUiObjectIndex = 0;
         }
 
-        private void BuildImGuiCompass()
+        private void DrawImGuiCompass()
         {
             if (!_config.ImGuiCompassEnable) return;
-            if (_config.HideInCombat && _pluginInterface.ClientState.Condition[ConditionFlag.InCombat]) return;
+            if (_config.HideInCombat && _condition[ConditionFlag.InCombat]) return;
             UpdateHideCompass();
             if (_shouldHideCompass) return;
 #if DEBUG
@@ -187,7 +190,6 @@ namespace Compass
 
                 SimpleLog.Error(e);
                 return;
-            }
 #else
             catch
             {
@@ -317,12 +319,12 @@ namespace Compass
                         };
 #endif
                         var tex = part.UldAsset->AtkTexture.Resource->KernelTextureObject;
-                        var texFileNamePtr =
+                        var texFileNameStdString =
                             part.UldAsset->AtkTexture.Resource->TexFileResourceHandle->ResourceHandle
                                 .FileName;
                         // NOTE (Chiv) We are in a try-catch, so we just throw if the read failed.
                         // Cannot act anyways if the texture path is butchered
-                        var textureFileName = new string((sbyte*) texFileNamePtr);
+                        var textureFileName = texFileNameStdString.ToString();
                         var _ = uint.TryParse(
                             textureFileName.Substring(textureFileName.LastIndexOfAny(new[] {'/', '\\'}) + 1, 6),
                             out var iconId);
@@ -502,7 +504,7 @@ namespace Compass
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ImageRotated(IntPtr texId, Vector2 center, Vector2 size, float angle, Vector2 uv, Vector2 uv1, ImDrawListPtr? drawList = null)
+        private static unsafe void ImageRotated(IntPtr texId, Vector2 center, Vector2 size, float angle, Vector2 uv, Vector2 uv1, ImDrawListPtr? drawList = null)
         {
             
             drawList ??= ImGui.GetWindowDrawList();
@@ -609,7 +611,7 @@ namespace Compass
                     _shouldHideCompass = _shouldHideCompassIteration;
                     _shouldHideCompassIteration = false;
                 }
-                var unitBase = _pluginInterface.Framework.Gui.GetUiObjectByName(uiIdentifier, 1);
+                var unitBase = _gameGui.GetAddonByName(uiIdentifier, 1);
                 if (unitBase == IntPtr.Zero) continue;
                 _shouldHideCompassIteration |= ((AtkUnitBase*) unitBase)->IsVisible;
             }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using Dalamud.Game.ClientState.Actors.Types;
+using Dalamud.Game.ClientState.Objects.SubKinds;
+using Dalamud.Game.ClientState.Objects.Types;
 using Lumina.Excel.GeneratedSheets;
 
 /* NOTE (Chiv) From
@@ -24,7 +25,7 @@ namespace Compass.Interop
 
     public static class Extensions
     {
-        public static unsafe bool IsStatus(this Actor actor, StatusFlags flags)
+        public static unsafe bool IsStatus(this PlayerCharacter actor, StatusFlags flags)
         {
             var f = *(byte*) (actor.Address + 0x1980);
             return (f & (byte) flags) > 0;
