@@ -7,6 +7,6 @@
                 AssemblyName="$(AssemblyName)"
                 MakeZip="true"
                 VersionComponents="3"
-                Exclude="Compass.pdb"/>
+                Exclude="Compass.pdb;Compass.deps.json"/>
     </Target>
 </Project>

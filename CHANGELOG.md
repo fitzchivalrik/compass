@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.11.0
+
+- feat: Update to API4
+- feat: Show distance to target on compass
+
 ## 1.8.2
 
 - fix: Potential compass crash after e.g. Chocobo race, Lord of Vermillion match, DeepDungeon etc.

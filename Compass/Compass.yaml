@@ -1,5 +1,9 @@
 ﻿name: Compass
 author: Chivalrik
 description: |-
-  Monodimensional compass for your adventures.
+  Check-out the repository for steps on how to report missing/wrong filter
+  and hiding options. Have a look at the FAQ tab in the config window
+  after install for common caveats.
 repo_url: https://github.com/fitzchivalrik/compass
+punchline: Monodimensional compass for your adventures.
+changelog: Update to API 4 and optional show approx. distance to target on compass.
