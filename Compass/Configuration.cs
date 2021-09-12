@@ -20,7 +20,13 @@ namespace Compass
         public bool ShowOnlyCardinals;
         public bool ShowWeatherIcon;
         public bool ShowWeatherIconBorder = true;
+        public bool ShowDistanceToTarget = true;
+        // TODO (Chiv) Wait for feedback if this is desired
+        //public bool DistanceToTargetPrioritiseSoft = true;
+        //public bool DistanceToTargetPrioritiseMouseOver = true;
         public float AreaMapMaxDistance = 360f;
+        public string DistanceToTargetPrefix = string.Empty;
+        public string DistanceToTargetSuffix = " yalm to target";
         
         public float ImGuiCompassScale = 1f;
         public ImGuiCompassBackgroundStyle ImGuiCompassBackground = ImGuiCompassBackgroundStyle.FilledAndBorder;
@@ -44,9 +50,12 @@ namespace Compass
         public int ImGuiCompassCardinalsOffset;
         public Vector2 ImGuiCompassWeatherIconOffset = new(-20, -28);
         public float ImGuiCompassWeatherIconScale = 1f;
+        public float ImGuiCompassDistanceToTargetScale = 1.75f;
+        public Vector2 ImGuiCompassDistanceToTargetOffset = new(-60, 20);
+        public Vector4 ImGuiCompassDistanceToTargetColour = new(1f,1f,1f,1f);
         public bool ImGuiCompassEnable = true;
         
-        public bool[] ShouldHideOnUiObjectSerializer = new bool[0];
+        public bool[] ShouldHideOnUiObjectSerializer = System.Array.Empty<bool>();
         [JsonIgnore] public (string[] getUiObjectIdentifier,bool disable, string userFacingIdentifier)[] ShouldHideOnUiObject = null!;
         public HashSet<uint> FilteredIconIds = new();
         public bool HideInCombat;

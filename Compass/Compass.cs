@@ -10,11 +10,12 @@ using Dalamud.Game.Gui;
 using Dalamud.Interface;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using FFXIVClientStructs.FFXIV.Component.GUI;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using SimpleTweaksPlugin;
 
 namespace Compass
 {
-    public unsafe partial class Compass : IDalamudPlugin
+    public partial class Compass : IDalamudPlugin
     {
         public const string PluginName = "Compass";
         private const string Command = "/compass";
@@ -23,8 +24,8 @@ namespace Compass
         private readonly Configuration _config;
         private readonly DalamudPluginInterface _pluginInterface;
         private readonly ClientState _clientState;
-        private readonly Framework _framework;
         private readonly CommandManager _commands;
+        private readonly TargetManager _targetManager;
         private readonly Condition _condition;
         private readonly GameGui _gameGui;
 
@@ -40,8 +41,8 @@ namespace Compass
             , SigScanner sigScanner
             , ClientState clientState
             , CommandManager commands
-            , Framework framework
             , Condition condition
+            , TargetManager targetManager
             , [RequiredVersion("1.0")] GameGui gameGui)
         {
             #region Signatures
@@ -53,9 +54,13 @@ namespace Compass
             _config = config;
             _clientState = clientState;
             _commands = commands;
-            _framework = framework;
             _condition = condition;
             _gameGui = gameGui;
+            _targetManager = targetManager;
+            unsafe
+            {
+                _targetSystem = (TargetSystem*)_targetManager.Address;
+            }
             
             #region Configuration Setup
 
@@ -163,24 +168,21 @@ namespace Compass
             });
 
             DebugCtor(sigScanner);
-#if RELEASE
-            //NOTE (Chiv) Invariant: LocalPlayer never null on install, as install is
-            // executed after login
-            if (_pluginInterface.Reason == PluginLoadReason.Installer
-                //|| _pluginInterface.ClientState.LocalPlayer is not null
-            )
+            if (_pluginInterface.Reason == PluginLoadReason.Installer)
             {
-                
                 // NOTE (Chiv) Centers the compass on first install
+                SimpleLog.Information("Fresh install of compass; centering compass, drawing modal.");
                 var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size * 0.5f).X;
                 config.ImGuiCompassPosition = new Vector2(screenSizeCenterX - config.ImGuiCompassWidth * 0.5f,
                     config.ImGuiCompassPosition.Y);
-                 OnLogin(null!, null!);
                 _buildingConfigUi = true;
                 _config.FreshInstall = true;
                 _pluginInterface.UiBuilder.Draw += DrawConfigUi;
             }
-#endif
+            if (_clientState.LocalPlayer is not null)
+            {
+                OnLogin(null!, null!);
+            }
         }
 
         private void OnLogout(object? sender, EventArgs e)

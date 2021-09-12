@@ -1,7 +1,9 @@
 ﻿using System.Numerics;
+using ImGuiNET;
 
 namespace Compass
 {
+    // ReSharper disable once InconsistentNaming
     public struct ImGuiCompassData
     {
         // NOTE (Chiv) This is the position of the player in the minimap coordinate system
@@ -13,35 +15,39 @@ namespace Compass
         public const int NaviMapScaleOffset = 0x24C;
         public const int AreaMapScaleOffset = 0x374;
         public const uint WhiteColor = 0xFFFFFFFF;
-        public const float ImGuiCompassHeight = 50f;
+        public const float Height = 50f;
         public Vector2 PlayerPosition;
-        public Vector2 ImGuiCompassCentre;
-        public Vector2 ImGuiCompassBackgroundPMin;
-        public Vector2 ImGuiCompassBackgroundPMax;
-        public Vector2 ImGuiCompassBackgroundLinePMin;
-        public Vector2 ImGuiCompassBackgroundLinePMax;
-        public Vector2 ImGuiCompassDrawListPMin;
-        public Vector2 ImGuiCompassDrawListPMax;
-        public Vector2 ImGuiCompassBackgroundDrawListPMin;
-        public Vector2 ImGuiCompassBackgroundDrawListPMax;
-        public Vector2 ImGuiCompassWeatherIconPMin;
-        public Vector2 ImGuiCompassWeatherIconPMax;
-        public Vector2 ImGuiCompassWeatherIconBorderPMin;
-        public Vector2 ImGuiCompassWeatherIconBorderPMax;
-        public float ImGuiCompassHalfWidth;
-        public float ImGuiCompassHalfHeight;
-        public float ImGuiCompassScale;
-        public float CompassHeightScale;
+        public Vector2 Centre;
+        public Vector2 BackgroundPMin;
+        public Vector2 BackgroundPMax;
+        public Vector2 BackgroundLinePMin;
+        public Vector2 BackgroundLinePMax;
+        public Vector2 DrawListPMin;
+        public Vector2 DrawListPMax;
+        public Vector2 BackgroundDrawListPMin;
+        public Vector2 BackgroundDrawListPMax;
+        public Vector2 WeatherIconPMin;
+        public Vector2 WeatherIconPMax;
+        public Vector2 WeatherIconBorderPMin;
+        public Vector2 WeatherIconBorderPMax;
+        public Vector2 DistanceToTargetPMin;
+        public float HalfWidth;
+        public float HalfHeight;
+        public float Scale;
+        public float HeightScale;
         public float DistanceScaleFactorForRotationIcons;
         public float HalfWidth40;
         public float HalfWidth28;
-        public float ImGuiCompassUnit;
+        public float CompassUnit;
         public float RotationIconHalfWidth;
         public float MinScaleFactor;
         public float MaxDistance;
-        public uint ImGuiBackgroundColourUInt32;
-        public uint ImGuiBackgroundBorderColourUInt32;
-        public uint ImGuiBackgroundLineColourUInt32;
+        public float DistanceToTargetScale;
+        public uint BackgroundColourUInt32;
+        public uint BackgroundBorderColourUInt32;
+        public uint BackgroundLineColourUInt32;
+        public uint DistanceToTargetColourUInt32;
         public int CurrentScaleOffset;
+        public ImFontPtr Font;
     }
 }

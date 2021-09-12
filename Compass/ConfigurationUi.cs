@@ -302,6 +302,18 @@ namespace Compass
                     changed |= ImGui.SliderFloat("Scale##ImGuiCompass_WeatherIcon", ref config.ImGuiCompassWeatherIconScale, 0.01f, 3f, "%.2f");
                     return changed;
                 });
+                changed |= DrawTreeCheckbox("Show approx. Distance To Target", ref config.ShowDistanceToTarget, () =>
+                {
+                    var changed = false;
+                    changed |= ImGui.DragFloat2("Offset##ImGuiCompass_DistanceToTarget", ref config.ImGuiCompassDistanceToTargetOffset, 1f);
+                    changed |= ImGui.SliderFloat("Scale##ImGuiCompass_DistanceToTarget", ref config.ImGuiCompassDistanceToTargetScale, 0.01f, 3f, "%.2f");
+                    ImGui.InputText("Prefix##ImGuiCompass_DistanceToTarget",
+                        ref config.DistanceToTargetPrefix, 99);
+                    changed |= ImGui.InputText("Suffix##ImGuiCompass_DistanceToTarget",
+                        ref config.DistanceToTargetSuffix, 99);
+                    changed |= ImGui.ColorEdit4("Colour##ImGuiCompass_DistanceToTarget", ref config.ImGuiCompassDistanceToTargetColour);
+                    return changed;
+                });
                 changed |= DrawTreeCheckbox("Use Map instead of Minimap as source##ImGui",
                     ref config.UseAreaMapAsSource,
                     () =>

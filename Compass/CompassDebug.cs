@@ -62,10 +62,7 @@ namespace Compass
                 HelpMessage = $"Open {PluginName} Debug menu.",
                 ShowInHelp = false
             });
-            if (_clientState.LocalPlayer is not null)
-            {
-                OnLogin(null!, null!);
-            }
+            
             
             _pluginInterface.UiBuilder.Draw += BuildDebugUi;
 

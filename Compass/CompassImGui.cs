@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.Gui;
 using Dalamud.Interface;
-using Dalamud.IoC;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using SimpleTweaksPlugin;
 
 namespace Compass
 {
@@ -19,36 +16,41 @@ namespace Compass
         private ImGuiCompassData _imGuiCompassData =  new() 
         {
             PlayerPosition = new Vector2(ImGuiCompassData.NaviMapPlayerX, ImGuiCompassData.NaviMapPlayerY),
-            ImGuiCompassCentre = new Vector2(835 + 125f, 515 + 25f),
-            ImGuiCompassBackgroundPMin = Vector2.Zero,
-            ImGuiCompassBackgroundPMax = Vector2.Zero,
-            ImGuiCompassBackgroundLinePMin = Vector2.Zero,
-            ImGuiCompassBackgroundLinePMax = Vector2.Zero,
-            ImGuiCompassDrawListPMin = Vector2.Zero,
-            ImGuiCompassDrawListPMax = Vector2.Zero,
-            ImGuiCompassBackgroundDrawListPMin = Vector2.Zero,
-            ImGuiCompassBackgroundDrawListPMax = Vector2.Zero,
-            ImGuiCompassWeatherIconPMin = Vector2.Zero,
-            ImGuiCompassWeatherIconPMax = Vector2.Zero,
-            ImGuiCompassWeatherIconBorderPMin = Vector2.Zero,
-            ImGuiCompassWeatherIconBorderPMax = Vector2.Zero,
-            ImGuiCompassHalfWidth = 125f,
-            ImGuiCompassHalfHeight = 125f,
-            ImGuiCompassScale = 1f,
-            CompassHeightScale = 1f,
+            Centre = new Vector2(835 + 125f, 515 + 25f),
+            BackgroundPMin = Vector2.Zero,
+            BackgroundPMax = Vector2.Zero,
+            BackgroundLinePMin = Vector2.Zero,
+            BackgroundLinePMax = Vector2.Zero,
+            DrawListPMin = Vector2.Zero,
+            DrawListPMax = Vector2.Zero,
+            BackgroundDrawListPMin = Vector2.Zero,
+            BackgroundDrawListPMax = Vector2.Zero,
+            WeatherIconPMin = Vector2.Zero,
+            WeatherIconPMax = Vector2.Zero,
+            WeatherIconBorderPMin = Vector2.Zero,
+            WeatherIconBorderPMax = Vector2.Zero,
+            DistanceToTargetPMin = Vector2.Zero,
+            HalfWidth = 125f,
+            HalfHeight = 125f,
+            Scale = 1f,
+            HeightScale = 1f,
             DistanceScaleFactorForRotationIcons = 1f,
             HalfWidth40 = 20f,
             HalfWidth28 = 14f,
-            ImGuiCompassUnit = 0f,
+            CompassUnit = 0f,
             RotationIconHalfWidth = 12f,
             MinScaleFactor = 0.2f,
             MaxDistance = 180f,
-            ImGuiBackgroundColourUInt32 = ImGuiCompassData.WhiteColor,
-            ImGuiBackgroundBorderColourUInt32 = ImGuiCompassData.WhiteColor,
-            ImGuiBackgroundLineColourUInt32 = ImGuiCompassData.WhiteColor,
-            CurrentScaleOffset =  ImGuiCompassData.NaviMapScaleOffset
+            DistanceToTargetScale = 1f,
+            BackgroundColourUInt32 = ImGuiCompassData.WhiteColor,
+            BackgroundBorderColourUInt32 = ImGuiCompassData.WhiteColor,
+            BackgroundLineColourUInt32 = ImGuiCompassData.WhiteColor,
+            DistanceToTargetColourUInt32 = ImGuiCompassData.WhiteColor,
+            CurrentScaleOffset =  ImGuiCompassData.NaviMapScaleOffset,
+            Font = null,
         };
 
+        private readonly TargetSystem* _targetSystem;
         private AtkUnitBase* _naviMap = null!;
         private AtkUnitBase* _areaMap = null!;
         private AtkUnitBase* _currentSourceBase;
@@ -79,64 +81,67 @@ namespace Compass
         private void UpdateCompassVariables()
         {
             UpdateMapAddonCache();
-            _imGuiCompassData.ImGuiCompassScale = _config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
-            _imGuiCompassData.CompassHeightScale = ImGui.GetIO().FontGlobalScale;
+            _imGuiCompassData.Scale = _config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
+            _imGuiCompassData.HeightScale = ImGui.GetIO().FontGlobalScale;
 
-            _imGuiCompassData.DistanceScaleFactorForRotationIcons = _imGuiCompassData.ImGuiCompassScale * 0.7f;
+            _imGuiCompassData.DistanceScaleFactorForRotationIcons = _imGuiCompassData.Scale * 0.7f;
             _imGuiCompassData.RotationIconHalfWidth = 16f * _imGuiCompassData.DistanceScaleFactorForRotationIcons;
 
-            _imGuiCompassData.ImGuiCompassHalfWidth = _config.ImGuiCompassWidth * 0.5f;
-            _imGuiCompassData.ImGuiCompassHalfHeight = ImGuiCompassData.ImGuiCompassHeight * 0.5f * _imGuiCompassData.CompassHeightScale;
+            _imGuiCompassData.HalfWidth = _config.ImGuiCompassWidth * 0.5f;
+            _imGuiCompassData.HalfHeight = ImGuiCompassData.Height * 0.5f * _imGuiCompassData.HeightScale;
 
-            _imGuiCompassData.ImGuiCompassUnit = _config.ImGuiCompassWidth / (2f*(float)Math.PI);
-            _imGuiCompassData.ImGuiCompassCentre =
-                new Vector2(_config.ImGuiCompassPosition.X + _imGuiCompassData.ImGuiCompassHalfWidth,
-                    _config.ImGuiCompassPosition.Y + _imGuiCompassData.ImGuiCompassHalfHeight);
+            _imGuiCompassData.CompassUnit = _config.ImGuiCompassWidth / (2f*(float)Math.PI);
+            _imGuiCompassData.Centre =
+                new Vector2(_config.ImGuiCompassPosition.X + _imGuiCompassData.HalfWidth,
+                    _config.ImGuiCompassPosition.Y + _imGuiCompassData.HalfHeight);
 
-            _imGuiCompassData.ImGuiCompassBackgroundPMin = new Vector2(
-                _imGuiCompassData.ImGuiCompassCentre.X - 5 - _imGuiCompassData.ImGuiCompassHalfWidth * _config.ImGuiCompassReverseMaskPercentage
-                , _imGuiCompassData.ImGuiCompassCentre.Y - _imGuiCompassData.ImGuiCompassHalfHeight * 0.5f - 2
+            _imGuiCompassData.BackgroundPMin = new Vector2(
+                _imGuiCompassData.Centre.X - 5 - _imGuiCompassData.HalfWidth * _config.ImGuiCompassReverseMaskPercentage
+                , _imGuiCompassData.Centre.Y - _imGuiCompassData.HalfHeight * 0.5f - 2
                 );
-            _imGuiCompassData.ImGuiCompassBackgroundPMax = new Vector2(
-                _imGuiCompassData.ImGuiCompassCentre.X + 5 + _imGuiCompassData.ImGuiCompassHalfWidth * _config.ImGuiCompassReverseMaskPercentage
-                , _imGuiCompassData.ImGuiCompassCentre.Y + _imGuiCompassData.ImGuiCompassHalfHeight * 0.5f + 2
+            _imGuiCompassData.BackgroundPMax = new Vector2(
+                _imGuiCompassData.Centre.X + 5 + _imGuiCompassData.HalfWidth * _config.ImGuiCompassReverseMaskPercentage
+                , _imGuiCompassData.Centre.Y + _imGuiCompassData.HalfHeight * 0.5f + 2
                 );
-            _imGuiCompassData.ImGuiCompassBackgroundLinePMin = new Vector2(
-                _imGuiCompassData.ImGuiCompassBackgroundPMin.X
-                , _config.ImGuiCompassBackgroundLineOffset + _imGuiCompassData.ImGuiCompassBackgroundPMin.Y + _imGuiCompassData.ImGuiCompassHalfHeight
+            _imGuiCompassData.BackgroundLinePMin = new Vector2(
+                _imGuiCompassData.BackgroundPMin.X
+                , _config.ImGuiCompassBackgroundLineOffset + _imGuiCompassData.BackgroundPMin.Y + _imGuiCompassData.HalfHeight
                 );
-            _imGuiCompassData.ImGuiCompassBackgroundLinePMax = new Vector2(
-                _imGuiCompassData.ImGuiCompassBackgroundPMax.X,
-                _config.ImGuiCompassBackgroundLineOffset + _imGuiCompassData.ImGuiCompassBackgroundPMin.Y + _imGuiCompassData.ImGuiCompassHalfHeight
+            _imGuiCompassData.BackgroundLinePMax = new Vector2(
+                _imGuiCompassData.BackgroundPMax.X,
+                _config.ImGuiCompassBackgroundLineOffset + _imGuiCompassData.BackgroundPMin.Y + _imGuiCompassData.HalfHeight
                 );
+            _imGuiCompassData.DistanceToTargetPMin = _imGuiCompassData.Centre + _config.ImGuiCompassDistanceToTargetOffset;
+            _imGuiCompassData.DistanceToTargetScale =
+                ImGui.GetIO().FontGlobalScale * _config.ImGuiCompassDistanceToTargetScale;
+            _imGuiCompassData.DrawListPMin =
+                _imGuiCompassData.BackgroundPMin + new Vector2(-2, -100);
+            _imGuiCompassData.DrawListPMax = 
+                _imGuiCompassData.BackgroundPMax + new Vector2(2, 100);
+            _imGuiCompassData.BackgroundDrawListPMin =
+                _imGuiCompassData.BackgroundPMin + new Vector2(-3, -100);
+            _imGuiCompassData.BackgroundDrawListPMax =
+                _imGuiCompassData.BackgroundPMax + new Vector2(3, 100);
 
-            _imGuiCompassData.ImGuiCompassDrawListPMin =
-                _imGuiCompassData.ImGuiCompassBackgroundPMin + new Vector2(-2, -100);
-            _imGuiCompassData.ImGuiCompassDrawListPMax = 
-                _imGuiCompassData.ImGuiCompassBackgroundPMax + new Vector2(2, 100);
-            _imGuiCompassData.ImGuiCompassBackgroundDrawListPMin =
-                _imGuiCompassData.ImGuiCompassBackgroundPMin + new Vector2(-3, -100);
-            _imGuiCompassData.ImGuiCompassBackgroundDrawListPMax =
-                _imGuiCompassData.ImGuiCompassBackgroundPMax + new Vector2(3, 100);
-
-            _imGuiCompassData.ImGuiCompassWeatherIconPMin =
-                _imGuiCompassData.ImGuiCompassBackgroundPMin + _config.ImGuiCompassWeatherIconOffset + new Vector2(2, 1) * _config.ImGuiCompassWeatherIconScale;
-            _imGuiCompassData.ImGuiCompassWeatherIconPMax = 
-                _imGuiCompassData.ImGuiCompassWeatherIconPMin + new Vector2(32, 32) * _config.ImGuiCompassWeatherIconScale;
+            _imGuiCompassData.WeatherIconPMin =
+                _imGuiCompassData.BackgroundPMin + _config.ImGuiCompassWeatherIconOffset + new Vector2(2, 1) * _config.ImGuiCompassWeatherIconScale;
+            _imGuiCompassData.WeatherIconPMax = 
+                _imGuiCompassData.WeatherIconPMin + new Vector2(32, 32) * _config.ImGuiCompassWeatherIconScale;
             
-            _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin = _config.ShowWeatherIconBorder
-                ? _imGuiCompassData.ImGuiCompassBackgroundPMin + _config.ImGuiCompassWeatherIconOffset 
+            _imGuiCompassData.WeatherIconBorderPMin = _config.ShowWeatherIconBorder
+                ? _imGuiCompassData.BackgroundPMin + _config.ImGuiCompassWeatherIconOffset 
                 : Vector2.Zero;
-            _imGuiCompassData.ImGuiCompassWeatherIconBorderPMax = _config.ShowWeatherIconBorder
-                 ? _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin + new Vector2(36, 36)* _config.ImGuiCompassWeatherIconScale
+            _imGuiCompassData.WeatherIconBorderPMax = _config.ShowWeatherIconBorder
+                 ? _imGuiCompassData.WeatherIconBorderPMin + new Vector2(36, 36)* _config.ImGuiCompassWeatherIconScale
                  : Vector2.Zero;
                             
-            _imGuiCompassData.HalfWidth40 = 20 * _imGuiCompassData.ImGuiCompassScale;
-            _imGuiCompassData.HalfWidth28 = 14 * _imGuiCompassData.ImGuiCompassScale;
+            _imGuiCompassData.HalfWidth40 = 20 * _imGuiCompassData.Scale;
+            _imGuiCompassData.HalfWidth28 = 14 * _imGuiCompassData.Scale;
 
-            _imGuiCompassData.ImGuiBackgroundColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour);
-            _imGuiCompassData.ImGuiBackgroundBorderColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour);
-            _imGuiCompassData.ImGuiBackgroundLineColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundLineColour);
+            _imGuiCompassData.BackgroundColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundColour);
+            _imGuiCompassData.BackgroundBorderColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundBorderColour);
+            _imGuiCompassData.BackgroundLineColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundLineColour);
+            _imGuiCompassData.DistanceToTargetColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiCompassDistanceToTargetColour);
 
             _imGuiCompassData.MinScaleFactor = _config.UseAreaMapAsSource ? 0 : 0.2f;
             _imGuiCompassData.MaxDistance = _config.UseAreaMapAsSource ? _config.AreaMapMaxDistance : 180f;
@@ -155,6 +160,8 @@ namespace Compass
                 .SelectMany(it => it.getUiObjectIdentifier)
                 .ToArray();
             _currentUiObjectIndex = 0;
+
+            _imGuiCompassData.Font = ImGui.GetFont();
         }
 
         private void DrawImGuiCompass()
@@ -224,12 +231,12 @@ namespace Compass
             var drawList = ImGui.GetWindowDrawList();
             var backgroundDrawList = ImGui.GetBackgroundDrawList();
             drawList.PushClipRect(
-                _imGuiCompassData.ImGuiCompassDrawListPMin
-                , _imGuiCompassData.ImGuiCompassDrawListPMax
+                _imGuiCompassData.DrawListPMin
+                , _imGuiCompassData.DrawListPMax
                 );
             backgroundDrawList.PushClipRect(
-                _imGuiCompassData.ImGuiCompassBackgroundDrawListPMin
-                , _imGuiCompassData.ImGuiCompassBackgroundDrawListPMax
+                _imGuiCompassData.BackgroundDrawListPMin
+                , _imGuiCompassData.BackgroundDrawListPMax
                 );
             
             // First, the background
@@ -238,10 +245,80 @@ namespace Compass
             DrawCardinals(playerForward);
             if (_config.ShowOnlyCardinals) return;
             if (_config.ShowWeatherIcon) DrawWeatherIcon();
+            if (_config.ShowDistanceToTarget) DrawDistanceToTarget();
             DrawCompassIcons(playerForward);
             drawList.PopClipRect();
             backgroundDrawList.PopClipRect();
             ImGui.End();
+        }
+
+        private void DrawDistanceToTarget()
+        {
+            var drawList = ImGui.GetWindowDrawList();
+            var current = _targetSystem->GetCurrentTarget();
+            var distanceFromPlayer = byte.MaxValue;
+            if (_targetSystem->MouseOverTarget != null)
+            {
+                var kind = (ObjectKind)_targetSystem->MouseOverTarget->ObjectKind;
+                if (kind is ObjectKind.Pc or ObjectKind.BattleNpc or ObjectKind.EventNpc)
+                    distanceFromPlayer = _targetSystem->MouseOverTarget->YalmDistanceFromPlayerX;
+            }
+            else if (current is not null)
+            {
+                var kind = (ObjectKind)current->ObjectKind;
+                if (kind is ObjectKind.Pc or ObjectKind.BattleNpc or ObjectKind.EventNpc)
+                    distanceFromPlayer = current->YalmDistanceFromPlayerX;
+            }
+
+            if (distanceFromPlayer == byte.MaxValue) return;
+            var text = $"{_config.DistanceToTargetPrefix}{distanceFromPlayer + 1}{_config.DistanceToTargetSuffix}";
+            var distanceToTargetScale = _imGuiCompassData.Font.FontSize * _imGuiCompassData.DistanceToTargetScale;
+            drawList.AddText(_imGuiCompassData.Font,
+                distanceToTargetScale,
+                _imGuiCompassData.DistanceToTargetPMin + new Vector2(-1,+1)
+                , 0xFF000000,
+                text);
+            drawList.AddText(_imGuiCompassData.Font,
+                distanceToTargetScale,
+                _imGuiCompassData.DistanceToTargetPMin + new Vector2(0,+1)
+                , 0xFF000000
+                , text);
+            drawList.AddText(_imGuiCompassData.Font,
+                distanceToTargetScale,
+                _imGuiCompassData.DistanceToTargetPMin + new Vector2(+1,+1)
+                , 0xFF000000,
+                text);
+            drawList.AddText(_imGuiCompassData.Font,
+                distanceToTargetScale,
+                _imGuiCompassData.DistanceToTargetPMin + new Vector2(-1,0)
+                , 0xFF000000,
+                text);
+            drawList.AddText(_imGuiCompassData.Font,
+                distanceToTargetScale,
+                _imGuiCompassData.DistanceToTargetPMin + new Vector2(+1,0)
+                , 0xFF000000,
+                text);
+            drawList.AddText(_imGuiCompassData.Font,
+                distanceToTargetScale,
+                _imGuiCompassData.DistanceToTargetPMin + new Vector2(-1,-1)
+                , 0xFF000000,
+                text);
+            drawList.AddText(_imGuiCompassData.Font,
+                distanceToTargetScale,
+                _imGuiCompassData.DistanceToTargetPMin + new Vector2(0,-1)
+                , 0xFF000000,
+                text);
+            drawList.AddText(_imGuiCompassData.Font,
+                distanceToTargetScale,
+                _imGuiCompassData.DistanceToTargetPMin + new Vector2(+1,-1)
+                , 0xFF000000,
+                text);
+            drawList.AddText(_imGuiCompassData.Font,
+                distanceToTargetScale,
+                _imGuiCompassData.DistanceToTargetPMin
+                , _imGuiCompassData.DistanceToTargetColourUInt32,
+                text);
+
         }
 
         private void DrawWeatherIcon()
@@ -254,20 +331,20 @@ namespace Compass
                 //Background of Weather Icon
                 backgroundDrawList.AddImage(
                     _naviMapTextureD3D11ShaderResourceView
-                    , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin
-                    , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMax
+                    , _imGuiCompassData.WeatherIconBorderPMin
+                    , _imGuiCompassData.WeatherIconBorderPMax
                     , new Vector2(0.08035714f, 0.8301887f)
                     , new Vector2(0.1607143f, 1));
                 //Weather Icon
                 var tex = _weatherIconNode->PartsList->Parts[0].UldAsset->AtkTexture.Resource->KernelTextureObject;
                 backgroundDrawList.AddImage(
-                    new IntPtr(tex->D3D11ShaderResourceView), _imGuiCompassData.ImGuiCompassWeatherIconPMin,
-                    _imGuiCompassData.ImGuiCompassWeatherIconPMax);
+                    new IntPtr(tex->D3D11ShaderResourceView), _imGuiCompassData.WeatherIconPMin,
+                    _imGuiCompassData.WeatherIconPMax);
                 //Border around Weather Icon
                 backgroundDrawList.AddImage(
                     _naviMapTextureD3D11ShaderResourceView
-                    , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMin
-                    , _imGuiCompassData.ImGuiCompassWeatherIconBorderPMax
+                    , _imGuiCompassData.WeatherIconBorderPMin
+                    , _imGuiCompassData.WeatherIconBorderPMax
                     , new Vector2(0.1607143f, 0.8301887f)
                     , new Vector2(0.2410714f, 1));
             }
@@ -366,28 +443,28 @@ namespace Compass
                                 uv = new Vector2(u, v);
                                 uv1 = new Vector2(u1, v1);
                                 // Arrows and such are always rotation based, we draw them slightly on top
-                                var naviMapCutIconOffset = _imGuiCompassData.ImGuiCompassUnit *
+                                var naviMapCutIconOffset = _imGuiCompassData.CompassUnit *
                                                            SignedAngle(mapIconComponentNode->AtkResNode.Rotation,
                                                                playerForward);
                                 // We hope width == height
                                 const int naviMapIconHalfWidth = 12;
-                                var naviMapYOffset = 14 * _imGuiCompassData.ImGuiCompassScale;
-                                pMin = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - naviMapIconHalfWidth + naviMapCutIconOffset, _imGuiCompassData.ImGuiCompassCentre.Y - naviMapYOffset - naviMapIconHalfWidth);
-                                pMax = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + naviMapCutIconOffset + naviMapIconHalfWidth, _imGuiCompassData.ImGuiCompassCentre.Y - naviMapYOffset + naviMapIconHalfWidth);
+                                var naviMapYOffset = 14 * _imGuiCompassData.Scale;
+                                pMin = new Vector2(_imGuiCompassData.Centre.X - naviMapIconHalfWidth + naviMapCutIconOffset, _imGuiCompassData.Centre.Y - naviMapYOffset - naviMapIconHalfWidth);
+                                pMax = new Vector2(_imGuiCompassData.Centre.X + naviMapCutIconOffset + naviMapIconHalfWidth, _imGuiCompassData.Centre.Y - naviMapYOffset + naviMapIconHalfWidth);
                                 break;
                             case 1: // Rotation icons (except naviMap arrows) go here after setting up their UVs
                                 // NOTE (Chiv) Rotations for icons on the map are mirrored from the
-                                var rotationIconOffset = _imGuiCompassData.ImGuiCompassUnit *
+                                var rotationIconOffset = _imGuiCompassData.CompassUnit *
                                                          SignedAngle(mapIconComponentNode->AtkResNode.Rotation,
                                                              playerForward);
-                                pMin = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - _imGuiCompassData.RotationIconHalfWidth + rotationIconOffset, _imGuiCompassData.ImGuiCompassCentre.Y - _imGuiCompassData.RotationIconHalfWidth);
-                                pMax = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + rotationIconOffset + _imGuiCompassData.RotationIconHalfWidth, _imGuiCompassData.ImGuiCompassCentre.Y + _imGuiCompassData.RotationIconHalfWidth);
+                                pMin = new Vector2(_imGuiCompassData.Centre.X - _imGuiCompassData.RotationIconHalfWidth + rotationIconOffset, _imGuiCompassData.Centre.Y - _imGuiCompassData.RotationIconHalfWidth);
+                                pMax = new Vector2(_imGuiCompassData.Centre.X + rotationIconOffset + _imGuiCompassData.RotationIconHalfWidth, _imGuiCompassData.Centre.Y + _imGuiCompassData.RotationIconHalfWidth);
                                 break;
                             case 060443: //Player Marker
                                 if (!_config.ImGuiCompassEnableCenterMarker) continue;
                                 drawList = ImGui.GetBackgroundDrawList();
-                                pMin = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * _imGuiCompassData.ImGuiCompassScale - _imGuiCompassData.HalfWidth40);
-                                pMax = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre.Y + _config.ImGuiCompassCentreMarkerOffset * _imGuiCompassData.ImGuiCompassScale + _imGuiCompassData.HalfWidth40);
+                                pMin = new Vector2(_imGuiCompassData.Centre.X - _imGuiCompassData.HalfWidth40, _imGuiCompassData.Centre.Y + _config.ImGuiCompassCentreMarkerOffset * _imGuiCompassData.Scale - _imGuiCompassData.HalfWidth40);
+                                pMax = new Vector2(_imGuiCompassData.Centre.X + _imGuiCompassData.HalfWidth40, _imGuiCompassData.Centre.Y + _config.ImGuiCompassCentreMarkerOffset * _imGuiCompassData.Scale + _imGuiCompassData.HalfWidth40);
                                 uv1 = _config.ImGuiCompassFlipCentreMarker ? new Vector2(1, -1) : Vector2.One;
                                 _imGuiCompassData.PlayerPosition = new Vector2(mapIconComponentNode->AtkResNode.X, -mapIconComponentNode->AtkResNode.Y);
                                 break;
@@ -400,12 +477,12 @@ namespace Compass
                                 bool inArea;
                                 (pMin, pMax, tintColour, inArea)
                                     = CalculateAreaCirlceVariables(_imGuiCompassData.PlayerPosition, playerForward, mapIconComponentNode,
-                                        imgNode, distanceOffset, _imGuiCompassData.ImGuiCompassUnit, _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre,
+                                        imgNode, distanceOffset, _imGuiCompassData.CompassUnit, _imGuiCompassData.HalfWidth40, _imGuiCompassData.Centre,
                                         maxDistance, _imGuiCompassData.MinScaleFactor);
                                 if (inArea)
                                     //*((byte*) &tintColour + 3) = 0x33  == (0x33FFFFFF) & (tintColour)
-                                    ImGui.GetBackgroundDrawList().AddRectFilled(_imGuiCompassData.ImGuiCompassBackgroundPMin
-                                        , _imGuiCompassData.ImGuiCompassBackgroundPMax
+                                    ImGui.GetBackgroundDrawList().AddRectFilled(_imGuiCompassData.BackgroundPMin
+                                        , _imGuiCompassData.BackgroundPMax
                                         , 0x33FFFFFF & tintColour //Set A to 0.2
                                         , _config.ImGuiCompassBackgroundRounding
                                     );
@@ -418,7 +495,7 @@ namespace Compass
                             case 060547: // Arrow DOWN on Circle
                                 (pMin, pMax, tintColour, _)
                                     = CalculateAreaCirlceVariables(_imGuiCompassData.PlayerPosition, playerForward, mapIconComponentNode,
-                                        imgNode, distanceOffset, _imGuiCompassData.ImGuiCompassUnit, _imGuiCompassData.HalfWidth40, _imGuiCompassData.ImGuiCompassCentre,
+                                        imgNode, distanceOffset, _imGuiCompassData.CompassUnit, _imGuiCompassData.HalfWidth40, _imGuiCompassData.Centre,
                                         maxDistance, _imGuiCompassData.MinScaleFactor);
                                 break;
                             case 071003: // MSQ Ongoing Marker
@@ -474,10 +551,10 @@ namespace Compass
                                     maxDistance,
                                     _imGuiCompassData.MinScaleFactor
                                 );
-                                var iconOffset = _imGuiCompassData.ImGuiCompassUnit * iconAngle;
+                                var iconOffset = _imGuiCompassData.CompassUnit * iconAngle;
                                 var iconHalfWidth = _imGuiCompassData.HalfWidth40 * distanceScaleFactor;
-                                pMin = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - iconHalfWidth + iconOffset, _imGuiCompassData.ImGuiCompassCentre.Y - iconHalfWidth);
-                                pMax = new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + iconOffset + iconHalfWidth, _imGuiCompassData.ImGuiCompassCentre.Y + iconHalfWidth);
+                                pMin = new Vector2(_imGuiCompassData.Centre.X - iconHalfWidth + iconOffset, _imGuiCompassData.Centre.Y - iconHalfWidth);
+                                pMax = new Vector2(_imGuiCompassData.Centre.X + iconOffset + iconHalfWidth, _imGuiCompassData.Centre.Y + iconHalfWidth);
                                 break;
                         }
 
@@ -537,37 +614,37 @@ namespace Compass
             var south = -Vector2.UnitY;
             var west = -Vector2.UnitX;
             var north = Vector2.UnitY;
-            var eastOffset = _imGuiCompassData.ImGuiCompassUnit * SignedAngle(east, playerForward);
-            var pMinY = _imGuiCompassData.ImGuiCompassCentre.Y - _imGuiCompassData.HalfWidth40 + _config.ImGuiCompassCardinalsOffset;
-            var pMaxY = _imGuiCompassData.ImGuiCompassCentre.Y + _imGuiCompassData.HalfWidth40 + _config.ImGuiCompassCardinalsOffset;
+            var eastOffset = _imGuiCompassData.CompassUnit * SignedAngle(east, playerForward);
+            var pMinY = _imGuiCompassData.Centre.Y - _imGuiCompassData.HalfWidth40 + _config.ImGuiCompassCardinalsOffset;
+            var pMaxY = _imGuiCompassData.Centre.Y + _imGuiCompassData.HalfWidth40 + _config.ImGuiCompassCardinalsOffset;
             backgroundDrawList.AddImage(
                 _naviMapTextureD3D11ShaderResourceView
-                , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - _imGuiCompassData.HalfWidth28 + eastOffset, pMinY)
-                , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + eastOffset + _imGuiCompassData.HalfWidth28, pMaxY)
+                , new Vector2(_imGuiCompassData.Centre.X - _imGuiCompassData.HalfWidth28 + eastOffset, pMinY)
+                , new Vector2(_imGuiCompassData.Centre.X + eastOffset + _imGuiCompassData.HalfWidth28, pMaxY)
                 , new Vector2(0.5446429f, 0.8301887f)
                 , new Vector2(0.5892857f, 0.9811321f)
             );
-            var southOffset = _imGuiCompassData.ImGuiCompassUnit * SignedAngle(south, playerForward);
+            var southOffset = _imGuiCompassData.CompassUnit * SignedAngle(south, playerForward);
             backgroundDrawList.AddImage(
                 _naviMapTextureD3D11ShaderResourceView
-                , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - _imGuiCompassData.HalfWidth28 + southOffset, pMinY)
-                , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + southOffset + _imGuiCompassData.HalfWidth28, pMaxY)
+                , new Vector2(_imGuiCompassData.Centre.X - _imGuiCompassData.HalfWidth28 + southOffset, pMinY)
+                , new Vector2(_imGuiCompassData.Centre.X + southOffset + _imGuiCompassData.HalfWidth28, pMaxY)
                 , new Vector2(0.5892857f, 0.8301887f)
                 , new Vector2(0.6339286f, 0.9811321f)
             );
-            var westOffset = _imGuiCompassData.ImGuiCompassUnit * SignedAngle(west, playerForward);
+            var westOffset = _imGuiCompassData.CompassUnit * SignedAngle(west, playerForward);
             backgroundDrawList.AddImage(
                 _naviMapTextureD3D11ShaderResourceView
-                , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - _imGuiCompassData.HalfWidth40 + westOffset, pMinY)
-                , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + westOffset + _imGuiCompassData.HalfWidth40, pMaxY)
+                , new Vector2(_imGuiCompassData.Centre.X - _imGuiCompassData.HalfWidth40 + westOffset, pMinY)
+                , new Vector2(_imGuiCompassData.Centre.X + westOffset + _imGuiCompassData.HalfWidth40, pMaxY)
                 , new Vector2(0.4732143f, 0.8301887f)
                 , new Vector2(0.5446429f, 0.9811321f)
             );
-            var northOffset = _imGuiCompassData.ImGuiCompassUnit * SignedAngle(north, playerForward);
+            var northOffset = _imGuiCompassData.CompassUnit * SignedAngle(north, playerForward);
             backgroundDrawList.AddImage(
                 _naviMapTextureD3D11ShaderResourceView
-                , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X - _imGuiCompassData.HalfWidth40 + northOffset, pMinY)
-                , new Vector2(_imGuiCompassData.ImGuiCompassCentre.X + northOffset + _imGuiCompassData.HalfWidth40, pMaxY)
+                , new Vector2(_imGuiCompassData.Centre.X - _imGuiCompassData.HalfWidth40 + northOffset, pMinY)
+                , new Vector2(_imGuiCompassData.Centre.X + northOffset + _imGuiCompassData.HalfWidth40, pMaxY)
                 , new Vector2(0.4017857f, 0.8301887f)
                 , new Vector2(0.4732143f, 0.9811321f)
                 , 0xFF0064B0 //ABGR ImGui.ColorConvertFloat4ToU32(new Vector4(176f / 255f, 100f / 255f, 0f, 1))
@@ -579,23 +656,23 @@ namespace Compass
             if (!_config.ImGuiCompassEnableBackground) return;
             var backgroundDrawList = ImGui.GetBackgroundDrawList();
             if (_config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Filled or ImGuiCompassBackgroundStyle.FilledAndBorder)
-                backgroundDrawList.AddRectFilled(_imGuiCompassData.ImGuiCompassBackgroundPMin
-                    , _imGuiCompassData.ImGuiCompassBackgroundPMax
-                    , _imGuiCompassData.ImGuiBackgroundColourUInt32
+                backgroundDrawList.AddRectFilled(_imGuiCompassData.BackgroundPMin
+                    , _imGuiCompassData.BackgroundPMax
+                    , _imGuiCompassData.BackgroundColourUInt32
                     , _config.ImGuiCompassBackgroundRounding
                 );
             if (_config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Border or ImGuiCompassBackgroundStyle.FilledAndBorder)
-                backgroundDrawList.AddRect(_imGuiCompassData.ImGuiCompassBackgroundPMin - Vector2.One
-                    , _imGuiCompassData.ImGuiCompassBackgroundPMax + Vector2.One
-                    , _imGuiCompassData.ImGuiBackgroundBorderColourUInt32
+                backgroundDrawList.AddRect(_imGuiCompassData.BackgroundPMin - Vector2.One
+                    , _imGuiCompassData.BackgroundPMax + Vector2.One
+                    , _imGuiCompassData.BackgroundBorderColourUInt32
                     , _config.ImGuiCompassBackgroundRounding
                     , ImDrawFlags.RoundCornersAll
                     , _config.ImGuiBackgroundBorderThickness
                 );
             if (_config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Line)
-                backgroundDrawList.AddLine(_imGuiCompassData.ImGuiCompassBackgroundLinePMin
-                    , _imGuiCompassData.ImGuiCompassBackgroundLinePMax
-                    , _imGuiCompassData.ImGuiBackgroundLineColourUInt32
+                backgroundDrawList.AddLine(_imGuiCompassData.BackgroundLinePMin
+                    , _imGuiCompassData.BackgroundLinePMax
+                    , _imGuiCompassData.BackgroundLineColourUInt32
                     , _config.ImGuiBackgroundLineThickness
                     );
         }
