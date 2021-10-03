@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: Missing ImGui.End() when 'Drawing Cardinals only'
+
 ## 1.11.0
 
 - feat: Update to API4

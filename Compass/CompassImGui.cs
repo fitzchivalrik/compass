@@ -243,10 +243,12 @@ namespace Compass
             DrawImGuiCompassBackground();
             // Second, we position our Cardinals
             DrawCardinals(playerForward);
-            if (_config.ShowOnlyCardinals) return;
-            if (_config.ShowWeatherIcon) DrawWeatherIcon();
-            if (_config.ShowDistanceToTarget) DrawDistanceToTarget();
-            DrawCompassIcons(playerForward);
+            if (!_config.ShowOnlyCardinals)
+            {
+                if (_config.ShowWeatherIcon) DrawWeatherIcon();
+                if (_config.ShowDistanceToTarget) DrawDistanceToTarget();
+                DrawCompassIcons(playerForward);
+            }
             drawList.PopClipRect();
             backgroundDrawList.PopClipRect();
             ImGui.End();
