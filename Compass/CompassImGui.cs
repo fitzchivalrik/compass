@@ -243,10 +243,10 @@ namespace Compass
             DrawImGuiCompassBackground();
             // Second, we position our Cardinals
             DrawCardinals(playerForward);
+            if (_config.ShowWeatherIcon) DrawWeatherIcon();
+            if (_config.ShowDistanceToTarget) DrawDistanceToTarget();
             if (!_config.ShowOnlyCardinals)
             {
-                if (_config.ShowWeatherIcon) DrawWeatherIcon();
-                if (_config.ShowDistanceToTarget) DrawDistanceToTarget();
                 DrawCompassIcons(playerForward);
             }
             drawList.PopClipRect();
@@ -257,21 +257,19 @@ namespace Compass
         private void DrawDistanceToTarget()
         {
             var drawList = ImGui.GetWindowDrawList();
-            var current = _targetSystem->GetCurrentTarget();
-            var distanceFromPlayer = byte.MaxValue;
-            if (_targetSystem->MouseOverTarget != null)
+            var current = _targetSystem->MouseOverTarget switch
             {
-                var kind = (ObjectKind)_targetSystem->MouseOverTarget->ObjectKind;
-                if (kind is ObjectKind.Pc or ObjectKind.BattleNpc or ObjectKind.EventNpc)
-                    distanceFromPlayer = _targetSystem->MouseOverTarget->YalmDistanceFromPlayerX;
-            }
-            else if (current is not null)
+                null => _targetSystem->GetCurrentTarget(),
+                _  => _targetSystem->MouseOverTarget
+            };
+            if (current is null) return;
+            var distanceFromPlayer = *current switch
             {
-                var kind = (ObjectKind)current->ObjectKind;
-                if (kind is ObjectKind.Pc or ObjectKind.BattleNpc or ObjectKind.EventNpc)
-                    distanceFromPlayer = current->YalmDistanceFromPlayerX;
-            }
-
+                { ObjectKind: var o } when
+                    (ObjectKind)o is ObjectKind.Pc or ObjectKind.BattleNpc or ObjectKind.EventNpc
+                    => current->YalmDistanceFromPlayerX,
+                _ => byte.MaxValue,
+            };
             if (distanceFromPlayer == byte.MaxValue) return;
             var text = $"{_config.DistanceToTargetPrefix}{distanceFromPlayer + 1}{_config.DistanceToTargetSuffix}";
             var distanceToTargetScale = _imGuiCompassData.Font.FontSize * _imGuiCompassData.DistanceToTargetScale;
