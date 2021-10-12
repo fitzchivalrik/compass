@@ -143,7 +143,7 @@ namespace Compass
             _imGuiCompassData.BackgroundLineColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiBackgroundLineColour);
             _imGuiCompassData.DistanceToTargetColourUInt32 = ImGui.ColorConvertFloat4ToU32(_config.ImGuiCompassDistanceToTargetColour);
 
-            _imGuiCompassData.MinScaleFactor = _config.UseAreaMapAsSource ? 0 : 0.2f;
+            _imGuiCompassData.MinScaleFactor = _config.UseAreaMapAsSource ? _config.ImGuiCompassMinimumIconScaleFactorAreaMap : _config.ImGuiCompassMinimumIconScaleFactor;
             _imGuiCompassData.MaxDistance = _config.UseAreaMapAsSource ? _config.AreaMapMaxDistance : 180f;
             _imGuiCompassData.CurrentScaleOffset = _config.UseAreaMapAsSource
                 ? ImGuiCompassData.AreaMapScaleOffset

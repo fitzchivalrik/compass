@@ -50,6 +50,8 @@ namespace Compass
         public Vector2 ImGuiCompassWeatherIconOffset = new(-20, -28);
         public float ImGuiCompassWeatherIconScale = 1f;
         public float ImGuiCompassDistanceToTargetScale = 1.75f;
+        public float ImGuiCompassMinimumIconScaleFactor = 0.2f;
+        public float ImGuiCompassMinimumIconScaleFactorAreaMap = 0.0f;
         public Vector2 ImGuiCompassDistanceToTargetOffset = new(-60, 20);
         public Vector4 ImGuiCompassDistanceToTargetColour = new(1f,1f,1f,1f);
         public bool ImGuiCompassEnable = true;

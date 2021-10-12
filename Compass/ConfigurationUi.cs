@@ -292,6 +292,7 @@ namespace Compass
                     "%d %%");
                 config.ImGuiCompassReverseMaskPercentage = 1 - (mask / 100f);
                 changed |= ImGui.SliderFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.02f, 3f, "%.2f");
+                changed |= ImGui.SliderFloat("Minimum Scale Factor##ImGuiCompass_AreaMap", ref config.ImGuiCompassMinimumIconScaleFactor, 0.00f, 1f, "%.2f", ImGuiSliderFlags.AlwaysClamp);
                 changed |= ImGui.DragInt("Cardinals Offset##ImGui", ref config.ImGuiCompassCardinalsOffset);
                 changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);
                 changed |= ImGui.Checkbox("Show only Cardinals##ImGui", ref config.ShowOnlyCardinals);
@@ -330,7 +331,8 @@ namespace Compass
                     () =>
                     {
                         var changed = false;
-                        changed |= ImGui.DragFloat("Max Distance##ImGui", ref config.AreaMapMaxDistance, 10f, 80f, 2000f, "%.f", ImGuiSliderFlags.AlwaysClamp);
+                        changed |= ImGui.DragFloat("Max Distance##ImGui_AreaMap", ref config.AreaMapMaxDistance, 10f, 80f, 2000f, "%.f", ImGuiSliderFlags.AlwaysClamp);
+                        changed |= ImGui.SliderFloat("Minimum Scale Factor##ImGuiCompass_AreaMap", ref config.ImGuiCompassMinimumIconScaleFactorAreaMap, 0.00f, 1f, "%.2f", ImGuiSliderFlags.AlwaysClamp);
                         return changed;
                     });
                 ImGui.SameLine();
