@@ -6,4 +6,11 @@ description: |-
   after install for common caveats.
 repo_url: https://github.com/fitzchivalrik/compass
 punchline: Monodimensional compass for your adventures.
-changelog: Update to API 4 and optional show approx. distance to target on compass.
+changelog: |-
+  - fix: Missing ImGui.End() when 'Drawing Cardinals only'
+  - feat: Expose minimal scaling factor as an option
+  - feat: Add filtering ids (thanks for the reports!):
+    - Various in residential Area
+    - Delivery Moogle
+    - Settlement
+    - Ferry

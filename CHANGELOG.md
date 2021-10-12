@@ -2,7 +2,15 @@
 
 ## Unreleased
 
+## 1.13.0 
+
 - fix: Missing ImGui.End() when 'Drawing Cardinals only'
+- feat: Expose minimal scaling factor as an option
+- feat: Add filtering ids (thanks for the reports!):
+  - Various in residential Area
+  - Delivery Moogle
+  - Settlement
+  - Ferry
 
 ## 1.11.0
 
