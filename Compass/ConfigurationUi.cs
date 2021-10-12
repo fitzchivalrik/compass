@@ -53,7 +53,7 @@ namespace Compass
             ("Levequests", new uint[] {071081, 71082, 071041}),
             ("Triple Triad Regular", new uint[] {071101}),
             ("Triple Triad New Cards", new uint[] {071102}),
-            ("FATE Markers", new uint[] {060501, 60502, 60503, 60504, 60505, 60506, 60507, 60508}),
+            ("FATE Markers", new uint[] {060501, 60502, 60503, 60504, 60505, 60506, 60507, 60508, 60458}), // TODO CHECK LAST
             ("Dungeon Symbols", new uint[] {060414}),
             ("Porter", new uint[] {060311}),
             ("Area Transition Markers", new uint[] {060457}),
@@ -66,6 +66,7 @@ namespace Compass
             ("Shops", new uint[] {060412, 60935, 60987}),
             ("Mender", new uint[] {060434}),
             ("Retainer Bell", new uint[] {060560,60425}),
+            ("Retainer Advocate", new uint[] {60426}),
             ("Market Board", new uint[] {060570}),
             ("DoW/DoM Guild Symbols",  new uint[] {060319, 060320, 060322, 60330, 60331, 60342, 60344, 60347, 60362, 60363, 60364}),
             ("DoH/DoL Guild Symbols",  new uint[] {060318, 060321, 060326, 60333, 60334, 60335, 60337, 60345, 60346, 60348, 60351}),
@@ -76,6 +77,16 @@ namespace Compass
             ("Letter Waymarks",  new uint[] {060474,060475, 060476, 060936}),
             ("Number Waymarks",  new uint[] {060931, 060932, 060933, 063904}),
             ("Red Flag",  new uint[] {060561}),
+            ("Delivery Moogle", new uint []{060551}),
+            ("Settlements", new uint []{060448}),
+            ("Ferry Docks (Anchor)", new uint []{060339}), 
+            ("Ferry Docks (Ferry)", new uint []{060456, 63905, 63906}), 
+            ("Apartments", new uint []{060789,060790}),
+            ("Housing (Locked)", new uint []{060769, 060770, 060771, 060751, 060752, 060753}),
+            ("Housing (Open)", new uint []{060772, 060773, 060774, 060754, 060755, 060756}),
+            ("Apartments (Own)", new uint []{060791,060792}),
+            ("Housing (Own)", new uint []{060776,060777,060778,060779,060780,060781}),
+            ("Housing (Shared)", new uint []{060783,060784,060785,060786,060787,060788}),
         };
         
         private static bool DrawFilterTab(Configuration config, float scale)

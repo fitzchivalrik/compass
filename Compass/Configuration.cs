@@ -11,7 +11,6 @@ namespace Compass
         [JsonIgnore] public Vector2 AddonCompassOffset = new(0,0);
         [JsonIgnore] public float AddonCompassScale = 1f;
         [JsonIgnore] public int AddonCompassWidth = 550;
-        // NOTE (Chiv) ImGuiCompass Offset/Position are saved as the window coords/size.
         [JsonIgnore] public int AddonCompassBackgroundPartId = 1;
         [JsonIgnore] public bool AddonCompassDisableBackground;
         [JsonIgnore] public bool AddonCompassEnable;
