@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.14.0
+
+- Update to API 5, EW support
+
 ## 1.13.0 
 
 - fix: Missing ImGui.End() when 'Drawing Cardinals only'

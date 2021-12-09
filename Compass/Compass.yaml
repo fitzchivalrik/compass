@@ -1,16 +1,10 @@
 ﻿name: Compass
 author: Chivalrik
+DalamudApiLevel: 5
 description: |-
   Check-out the repository for steps on how to report missing/wrong filter
   and hiding options. Have a look at the FAQ tab in the config window
   after install for common caveats.
 repo_url: https://github.com/fitzchivalrik/compass
 punchline: Monodimensional compass for your adventures.
-changelog: |-
-  - fix: Missing ImGui.End() when 'Drawing Cardinals only'
-  - feat: Expose minimal scaling factor as an option
-  - feat: Add filtering ids (thanks for the reports!):
-    - Various in residential Area
-    - Delivery Moogle
-    - Settlement
-    - Ferry
+changelog: Update to API 5

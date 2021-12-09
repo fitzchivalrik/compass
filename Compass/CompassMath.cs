@@ -36,16 +36,16 @@ namespace Compass
             // NOTE (Chiv) We assume part.Width == part.Height == 32
             var areaCircleOffset = compassUnit * angleArea;
             var areaHalfWidth = halfWidth32 * scaleArea;
-            if (distanceArea >= radius)
-                return (
-                    new Vector2(compassCentre.X - areaHalfWidth + areaCircleOffset, compassCentre.Y - areaHalfWidth),
-                    new Vector2(compassCentre.X + areaCircleOffset + areaHalfWidth, compassCentre.Y + areaHalfWidth),
-                    0xFFFFFFFF, false);
             var tintColour = ImGui.ColorConvertFloat4ToU32(new Vector4(
                 (255 + imgNode->AtkResNode.AddRed) * (imgNode->AtkResNode.MultiplyRed / 100f) / 255f,
                 (255 + imgNode->AtkResNode.AddGreen) * (imgNode->AtkResNode.MultiplyGreen / 100f) / 255f,
                 (255 + imgNode->AtkResNode.AddBlue) * (imgNode->AtkResNode.MultiplyBlue / 100f) / 255f,
                 1));
+            if (distanceArea >= radius) // Player is not inside circle area
+                return (
+                    new Vector2(compassCentre.X - areaHalfWidth + areaCircleOffset, compassCentre.Y - areaHalfWidth),
+                    new Vector2(compassCentre.X + areaCircleOffset + areaHalfWidth, compassCentre.Y + areaHalfWidth),
+                    tintColour, false);
             return (new Vector2(compassCentre.X - areaHalfWidth, compassCentre.Y - areaHalfWidth)
                 , new Vector2(compassCentre.X + areaHalfWidth, compassCentre.Y + areaHalfWidth)
                 , tintColour, true);

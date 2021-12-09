@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
+using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -409,6 +410,8 @@ namespace Compass
                         if (_config.FilteredIconIds.Contains(iconId)) continue;
                         
                         var textureIdPtr = new IntPtr(tex->D3D11ShaderResourceView);
+                        //TODO DEBUG
+//                        PluginLog.Debug($"TextureIdPtr is null? {textureIdPtr == IntPtr.Zero}");
                         Vector2 pMin;
                         Vector2 pMax;
                         var uv = Vector2.Zero;
@@ -557,7 +560,7 @@ namespace Compass
                                 pMax = new Vector2(_imGuiCompassData.Centre.X + iconOffset + iconHalfWidth, _imGuiCompassData.Centre.Y + iconHalfWidth);
                                 break;
                         }
-
+                        //PluginLog.Debug($"ID: {iconId}; Tintcolor: {tintColour:x8}");
                         if (rotate)
                             ImageRotated(textureIdPtr,
                                 new Vector2(pMin.X + (pMax.X - pMin.X)*0.5f, pMin.Y + (pMax.Y - pMin.Y)*0.5f)
