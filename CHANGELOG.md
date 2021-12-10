@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat: Add Crafting (Synthesis) window to hiding options
+
 ## 1.14.0
 
 - Update to API 5, EW support

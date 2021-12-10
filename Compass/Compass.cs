@@ -100,7 +100,8 @@ namespace Compass
                 (new[] { "GrandCompanyExchange" }, false, "Grand Company Shop"),
                 (new[] { "MiragePrismPrismBox" }, false, "Glamour Dresser"), (new[] { "Currency" }, false, "Currency"),
                 (new[] { "_MainCross" }, false, "Controller Main Menu"),
-                (new[] { "JournalResult" }, false, "Quest Complete")
+                (new[] { "JournalResult" }, false, "Quest Complete"),
+                (new[] { "Synthesis" }, false, "Crafting (Synthesis)")
             };
 
             for (var i = 0; i < _config.ShouldHideOnUiObjectSerializer.Length; i++)
