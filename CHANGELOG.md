@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feat: Add Crafting (Synthesis) window to hiding options
+- feat: Add option to not prio MouseOver targets for target distance
 
 ## 1.14.0
 

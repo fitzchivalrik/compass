@@ -54,6 +54,7 @@ namespace Compass
         public float ImGuiCompassMinimumIconScaleFactorAreaMap = 0.0f;
         public Vector2 ImGuiCompassDistanceToTargetOffset = new(-60, 20);
         public Vector4 ImGuiCompassDistanceToTargetColour = new(1f,1f,1f,1f);
+        public bool ImGuiCompassDistanceToTargetMouseOverPrio = true;
         public bool ImGuiCompassEnable = true;
         
         public bool[] ShouldHideOnUiObjectSerializer = System.Array.Empty<bool>();

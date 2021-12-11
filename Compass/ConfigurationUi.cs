@@ -324,6 +324,8 @@ namespace Compass
                     changed |= ImGui.InputText("Suffix##ImGuiCompass_DistanceToTarget",
                         ref config.DistanceToTargetSuffix, 99);
                     changed |= ImGui.ColorEdit4("Colour##ImGuiCompass_DistanceToTarget", ref config.ImGuiCompassDistanceToTargetColour);
+                    changed |= ImGui.Checkbox("Prioritise MouseOver Target",
+                        ref config.ImGuiCompassDistanceToTargetMouseOverPrio);
                     return changed;
                 });
                 changed |= DrawTreeCheckbox("Use Map instead of Minimap as source##ImGui",

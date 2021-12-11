@@ -258,11 +258,9 @@ namespace Compass
         private void DrawDistanceToTarget()
         {
             var drawList = ImGui.GetWindowDrawList();
-            var current = _targetSystem->MouseOverTarget switch
-            {
-                null => _targetSystem->GetCurrentTarget(),
-                _  => _targetSystem->MouseOverTarget
-            };
+            var current = _config.ImGuiCompassDistanceToTargetMouseOverPrio && _targetSystem->MouseOverTarget != null
+                ? _targetSystem->MouseOverTarget
+                : _targetSystem->GetCurrentTarget();
             if (current is null) return;
             var distanceFromPlayer = *current switch
             {

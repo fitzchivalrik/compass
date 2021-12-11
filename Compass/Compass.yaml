@@ -7,4 +7,6 @@ description: |-
   after install for common caveats.
 repo_url: https://github.com/fitzchivalrik/compass
 punchline: Monodimensional compass for your adventures.
-changelog: Add 'Crafting (Synthesis)' window to hiding options
+changelog: |-
+  - Add 'Crafting (Synthesis)' window to hiding options
+  - Add option to not prio MouseOver targets for target distance
