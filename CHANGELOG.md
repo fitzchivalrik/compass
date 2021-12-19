@@ -2,8 +2,11 @@
 
 ## Unreleased
 
+## 1.16.1
+
 - feat: Add Crafting (Synthesis) window to hiding options
 - feat: Add option to not prio MouseOver targets for target distance
+- fix: Potential crash because of caching font pointer. Don't just do that.
 
 ## 1.14.0
 

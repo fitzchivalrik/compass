@@ -48,6 +48,5 @@ namespace Compass
         public uint BackgroundLineColourUInt32;
         public uint DistanceToTargetColourUInt32;
         public int CurrentScaleOffset;
-        public ImFontPtr Font;
     }
 }

@@ -48,7 +48,6 @@ namespace Compass
             BackgroundLineColourUInt32 = ImGuiCompassData.WhiteColor,
             DistanceToTargetColourUInt32 = ImGuiCompassData.WhiteColor,
             CurrentScaleOffset =  ImGuiCompassData.NaviMapScaleOffset,
-            Font = null,
         };
 
         private readonly TargetSystem* _targetSystem;
@@ -161,8 +160,6 @@ namespace Compass
                 .SelectMany(it => it.getUiObjectIdentifier)
                 .ToArray();
             _currentUiObjectIndex = 0;
-
-            _imGuiCompassData.Font = ImGui.GetFont();
         }
 
         private void DrawImGuiCompass()
@@ -271,48 +268,49 @@ namespace Compass
             };
             if (distanceFromPlayer == byte.MaxValue) return;
             var text = $"{_config.DistanceToTargetPrefix}{distanceFromPlayer + 1}{_config.DistanceToTargetSuffix}";
-            var distanceToTargetScale = _imGuiCompassData.Font.FontSize * _imGuiCompassData.DistanceToTargetScale;
-            drawList.AddText(_imGuiCompassData.Font,
+            var font = UiBuilder.DefaultFont;
+            var distanceToTargetScale = font.FontSize * _imGuiCompassData.DistanceToTargetScale;
+            drawList.AddText(font,
                 distanceToTargetScale,
                 _imGuiCompassData.DistanceToTargetPMin + new Vector2(-1,+1)
                 , 0xFF000000,
                 text);
-            drawList.AddText(_imGuiCompassData.Font,
+            drawList.AddText(font,
                 distanceToTargetScale,
                 _imGuiCompassData.DistanceToTargetPMin + new Vector2(0,+1)
                 , 0xFF000000
                 , text);
-            drawList.AddText(_imGuiCompassData.Font,
+            drawList.AddText(font,
                 distanceToTargetScale,
                 _imGuiCompassData.DistanceToTargetPMin + new Vector2(+1,+1)
                 , 0xFF000000,
                 text);
-            drawList.AddText(_imGuiCompassData.Font,
+            drawList.AddText(font,
                 distanceToTargetScale,
                 _imGuiCompassData.DistanceToTargetPMin + new Vector2(-1,0)
                 , 0xFF000000,
                 text);
-            drawList.AddText(_imGuiCompassData.Font,
+            drawList.AddText(font,
                 distanceToTargetScale,
                 _imGuiCompassData.DistanceToTargetPMin + new Vector2(+1,0)
                 , 0xFF000000,
                 text);
-            drawList.AddText(_imGuiCompassData.Font,
+            drawList.AddText(font,
                 distanceToTargetScale,
                 _imGuiCompassData.DistanceToTargetPMin + new Vector2(-1,-1)
                 , 0xFF000000,
                 text);
-            drawList.AddText(_imGuiCompassData.Font,
+            drawList.AddText(font,
                 distanceToTargetScale,
                 _imGuiCompassData.DistanceToTargetPMin + new Vector2(0,-1)
                 , 0xFF000000,
                 text);
-            drawList.AddText(_imGuiCompassData.Font,
+            drawList.AddText(font,
                 distanceToTargetScale,
                 _imGuiCompassData.DistanceToTargetPMin + new Vector2(+1,-1)
                 , 0xFF000000,
                 text);
-            drawList.AddText(_imGuiCompassData.Font,
+            drawList.AddText(font,
                 distanceToTargetScale,
                 _imGuiCompassData.DistanceToTargetPMin
                 , _imGuiCompassData.DistanceToTargetColourUInt32,

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
     <LangVersion>9</LangVersion>
-    <VersionPrefix>1.16.0</VersionPrefix>
+    <VersionPrefix>1.16.1</VersionPrefix>
     <Authors>Chivalrik</Authors>
     <Company>Chivalrik</Company>
     <Nullable>enable</Nullable>
