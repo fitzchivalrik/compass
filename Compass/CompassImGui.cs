@@ -539,6 +539,7 @@ namespace Compass
                             case 060932: // Waymark 2
                             case 060933: // Waymark 3
                             case 063904: // Waymark 4
+                            case 060934: // FATE EXP Bonus Icon
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                     // => The current quest marker is inside the mask and should be
                                     // treated as a map point
