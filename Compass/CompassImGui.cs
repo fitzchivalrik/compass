@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -531,6 +531,15 @@ namespace Compass
                             case 060455: // Fishing Icon 
                             case 060465: // Fishing Icon 2 
                             case 060466: // Fishing Icon 3
+                            case 060474: // Waymark A
+                            case 060475: // Waymark B
+                            case 060476: // Waymark C
+                            case 060936: // Waymark D
+                            case 060931: // Waymark 1
+                            case 060932: // Waymark 2
+                            case 060933: // Waymark 3
+                            case 063904: // Waymark 4
+                            case 060934: // FATE EXP Bonus Icon
                                 if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                     // => The current quest marker is inside the mask and should be
                                     // treated as a map point
