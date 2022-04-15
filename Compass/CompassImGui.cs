@@ -62,10 +62,14 @@ namespace Compass
 
         private int _componentIconLoopStart = 0;
         private int _iconLoopEnd = 0;
+        private bool _dirty;
 
-        private void UpdateMapAddonCache()
+        private bool UpdateMapAddonCache()
         {
-            _naviMap = (AtkUnitBase*) _gameGui.GetAddonByName("_NaviMap", 1);
+            var ptr = _gameGui.GetAddonByName("_NaviMap", 1);
+            if (ptr == IntPtr.Zero) return false;
+            _naviMap = (AtkUnitBase*) ptr;
+            if (_naviMap->UldManager.LoadedState != 3) return false;
             _naviMapIconsRootComponentNode = (AtkComponentNode*) _naviMap->UldManager.NodeList[2];
             _areaMap = (AtkUnitBase*) _gameGui.GetAddonByName("AreaMap", 1);
             _areaMapIconsRootComponentNode = (AtkComponentNode*) _areaMap->UldManager.NodeList[3];
@@ -76,11 +80,12 @@ namespace Compass
                     .UldAsset->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
             );
             _weatherIconNode =(AtkImageNode*) ((AtkComponentNode*) _naviMap->UldManager.NodeList[6])->Component->UldManager.NodeList[2];
+            return true;
         }
         
-        private void UpdateCompassVariables()
+        private bool UpdateCompassVariables()
         {
-            UpdateMapAddonCache();
+            if (!UpdateMapAddonCache()) return false;
             _imGuiCompassData.Scale = _config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
             _imGuiCompassData.HeightScale = ImGui.GetIO().FontGlobalScale;
 
@@ -160,11 +165,23 @@ namespace Compass
                 .SelectMany(it => it.getUiObjectIdentifier)
                 .ToArray();
             _currentUiObjectIndex = 0;
+            return true;
         }
 
         private void DrawImGuiCompass()
         {
             if (!_config.ImGuiCompassEnable) return;
+            if (_gameGui.GetAddonByName("_CharaMakeBgSelector", 1) != IntPtr.Zero)
+            {
+                _dirty = true;
+                return;
+            }
+
+            if (_dirty)
+            {
+                _dirty = !UpdateCompassVariables();
+                return;
+            }
             switch (_config.Visibility)
             {
                 case CompassVisibility.Always:

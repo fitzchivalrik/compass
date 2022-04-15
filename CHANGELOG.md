@@ -2,11 +2,14 @@
 
 ## Unreleased
 
+## 1.20.1
+
 - feat: Update to API 6, patch 6.1
 - feat: One more visibility option: 'Only in Combat'
 - feat: New Filter: 'Boss Enemy
 - feat: New Filter: 'Poetics Vendor'
 - fix: Waymark icons (thanks Maxunit)'
+- "fix": Dirty hack to prevent (?) Aesthetician crashes
 
 ## 1.16.1
 

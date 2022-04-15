@@ -1,6 +1,5 @@
 ﻿name: Compass
 author: Chivalrik
-DalamudApiLevel: 5
 description: |-
   Check-out the repository for steps on how to report missing/wrong filter
   and hiding options. Have a look at the FAQ tab in the config window
@@ -13,3 +12,4 @@ changelog: |-
   - New Filter: 'Boss Enemy'
   - New Filter: 'Poetics Vendor'
   - fix: Waymark icons (thanks Maxunit)
+  - "fix": Dirty hack to prevent (?) Aesthetician crashes
