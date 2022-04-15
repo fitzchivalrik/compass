@@ -73,6 +73,7 @@ namespace Compass
             ("Chocobo Companion",  new uint[] {060961}),
             ("Party Members",  new uint[] {060421}),
             ("Enemies",  new uint[] {060422}),
+            ("Boss Enemy",  new uint[] {060401}),
             ("Alliance Members",  new uint[] {060358}),
             ("Letter Waymarks",  new uint[] {060474,060475, 060476, 060936}),
             ("Number Waymarks",  new uint[] {060931, 060932, 060933, 063904}),

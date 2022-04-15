@@ -8,5 +8,7 @@ description: |-
 repo_url: https://github.com/fitzchivalrik/compass
 punchline: Monodimensional compass for your adventures.
 changelog: |-
-  - Add 'Crafting (Synthesis)' window to hiding options
-  - Add option to not prio MouseOver targets for target distance
+  - Update to APi 6, patch 6.1
+  - One more visibility option: 'Only in Combat'
+  - New Filter: 'Boss Enemy'
+  - fix: Waymark icons (thanks Maxunit)
