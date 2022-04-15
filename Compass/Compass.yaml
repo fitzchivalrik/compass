@@ -11,4 +11,5 @@ changelog: |-
   - Update to APi 6, patch 6.1
   - One more visibility option: 'Only in Combat'
   - New Filter: 'Boss Enemy'
+  - New Filter: 'Poetics Vendor'
   - fix: Waymark icons (thanks Maxunit)

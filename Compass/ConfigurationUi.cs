@@ -64,6 +64,7 @@ namespace Compass
             ("Materia Melder", new uint[] {060910}),
             ("Skywatcher", new uint[] {60581}),
             ("Shops", new uint[] {060412, 60935, 60987}),
+            ("Poetics Vendor", new uint[] {63919}),
             ("Mender", new uint[] {060434}),
             ("Retainer Bell", new uint[] {060560,60425}),
             ("Retainer Advocate", new uint[] {60426}),
