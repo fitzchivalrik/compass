@@ -294,7 +294,14 @@ namespace Compass
                 changed |= ImGui.SliderFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.02f, 3f, "%.2f");
                 changed |= ImGui.SliderFloat("Minimum Scale Factor##ImGuiCompass_AreaMap", ref config.ImGuiCompassMinimumIconScaleFactor, 0.00f, 1f, "%.2f", ImGuiSliderFlags.AlwaysClamp);
                 changed |= ImGui.DragInt("Cardinals Offset##ImGui", ref config.ImGuiCompassCardinalsOffset);
-                changed |= ImGui.Checkbox("Hide Compass when in Combat##ImGui", ref config.HideInCombat);
+                var visibility = (int) config.Visibility;
+                ImGui.Text($"Visibility");
+                changed |= ImGui.RadioButton("Always##ImGuiCompass", ref visibility, 0);
+                ImGui.SameLine();
+                changed |= ImGui.RadioButton("Not in Combat##ImGuiCompass", ref visibility, 1);
+                ImGui.SameLine();
+                changed |= ImGui.RadioButton("Only in Combat##ImGuiCompass", ref visibility, 2);
+                if (changed) config.Visibility = (CompassVisibility) visibility;
                 changed |= ImGui.Checkbox("Show only Cardinals##ImGui", ref config.ShowOnlyCardinals);
                 changed |= DrawTreeCheckbox("Enable Centre Marker", ref config.ImGuiCompassEnableCenterMarker, () =>
                     {
@@ -417,30 +424,6 @@ namespace Compass
                     ImGui.Indent();
                   
                     ImGui.Unindent();
-                }
-
-                ImGui.PopItemWidth();
-                return changed;
-            });
-            return changed;
-        }
-
-        private static bool DrawNativeUITree(Configuration config, float scale, bool changed)
-        {
-            changed |= DrawTreeCheckbox("Native UI Compass", ref config.AddonCompassEnable, () =>
-            {
-                // ReSharper disable once VariableHidesOuterVariable
-                changed = false;
-                ImGui.PushItemWidth(200f * scale);
-                changed |= ImGui.DragFloat2("Position##Addon", ref config.AddonCompassOffset);
-                changed |= ImGui.DragInt("Width##Addon", ref config.AddonCompassWidth);
-                changed |= ImGui.DragFloat("Scale###Addon", ref config.AddonCompassScale);
-                changed |= ImGui.Checkbox("Disable Background##Addon", ref config.AddonCompassDisableBackground);
-                if (!config.AddonCompassDisableBackground)
-                {
-                    //ImGui.SetNextItemWidth(52* scale);
-                    changed |= ImGui.SliderInt("##Addon", ref config.AddonCompassBackgroundPartId, 1, 23, "Background %d",
-                        ImGuiSliderFlags.NoInput);
                 }
 
                 ImGui.PopItemWidth();

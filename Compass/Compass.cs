@@ -49,7 +49,22 @@ namespace Compass
 
             #endregion
 
-            var config = pi.GetPluginConfig() as Configuration ?? new Configuration();
+            #region Config Migration
+
+            var config = (pi.GetPluginConfig() as Configuration) ?? new Configuration();
+            switch (config.Version)
+            {
+                case 0:
+                {
+                    SimpleLog.Debug(config.HideInCombat);
+                    config.Visibility = config.HideInCombat ? CompassVisibility.NotInCombat : CompassVisibility.Always;
+                    config.Version = 1;
+                    pi.SavePluginConfig(config);
+                    break;
+                }
+            }
+            #endregion
+            
             _pluginInterface = pi;
             _config = config;
             _clientState = clientState;

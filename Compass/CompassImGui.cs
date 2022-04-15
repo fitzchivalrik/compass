@@ -165,7 +165,19 @@ namespace Compass
         private void DrawImGuiCompass()
         {
             if (!_config.ImGuiCompassEnable) return;
-            if (_config.HideInCombat && _condition[ConditionFlag.InCombat]) return;
+            switch (_config.Visibility)
+            {
+                case CompassVisibility.Always:
+                    break;
+                case CompassVisibility.NotInCombat:
+                    if (_condition[ConditionFlag.InCombat]) return;
+                    break;
+                case CompassVisibility.InCombat:
+                    if (!_condition[ConditionFlag.InCombat]) return;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
             UpdateHideCompass();
             if (_shouldHideCompass) return;
 #if DEBUG
