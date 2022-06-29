@@ -306,6 +306,7 @@ namespace Compass
                 changed |= ImGui.RadioButton("Only in Combat##ImGuiCompass", ref visibility, 2);
                 if (changed) config.Visibility = (CompassVisibility) visibility;
                 changed |= ImGui.Checkbox("Show only Cardinals##ImGui", ref config.ShowOnlyCardinals);
+                changed |= ImGui.Checkbox("Show Intercardinals##ImGui", ref config.ShowInterCardinals);
                 changed |= DrawTreeCheckbox("Enable Centre Marker", ref config.ImGuiCompassEnableCenterMarker, () =>
                     {
                         var changed = false;

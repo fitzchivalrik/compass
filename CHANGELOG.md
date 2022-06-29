@@ -1,6 +1,8 @@
 ﻿# CHANGELOG
 
 ## Unreleased
+
+- feat: Add intercardinals
 - feat: Add own FC filter
 
 ## 1.20.1

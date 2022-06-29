@@ -10,6 +10,7 @@ namespace Compass
     {
         public bool UseAreaMapAsSource;
         public bool ShowOnlyCardinals;
+        public bool ShowInterCardinals;
         public bool ShowWeatherIcon;
         public bool ShowWeatherIconBorder = true;
         public bool ShowDistanceToTarget = true;
