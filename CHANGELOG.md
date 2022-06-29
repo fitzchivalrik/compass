@@ -1,6 +1,7 @@
 ﻿# CHANGELOG
 
 ## Unreleased
+- feat: Add own FC filter
 
 ## 1.20.1
 

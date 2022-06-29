@@ -89,6 +89,7 @@ namespace Compass
             ("Apartments (Own)", new uint []{060791,060792}),
             ("Housing (Own)", new uint []{060776,060777,060778,060779,060780,060781}),
             ("Housing (Shared)", new uint []{060783,060784,060785,060786,060787,060788}),
+            ("Housing (Own FC)", new uint[] { 060761, 060762, 060763, 060764, 060766 }),
         };
         
         private static bool DrawFilterTab(Configuration config, float scale)
