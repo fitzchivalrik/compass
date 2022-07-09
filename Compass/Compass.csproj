@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
-    <LangVersion>9</LangVersion>
+    <LangVersion>10</LangVersion>
     <VersionPrefix>1.20.1</VersionPrefix>
     <Authors>Chivalrik</Authors>
     <Company>Chivalrik</Company>
@@ -11,6 +11,7 @@
     <OutputType>Library</OutputType>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <PreserveCompilationContext>false</PreserveCompilationContext>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
