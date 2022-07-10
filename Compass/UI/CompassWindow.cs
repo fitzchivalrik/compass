@@ -184,70 +184,71 @@ internal static class CompassWindow {
         var southwest = new Vector2(-n, -n);
         var northwest = new Vector2(-n, n);
 
-        var pMinY           = centre.Y - 15f + cardinalsOffset;
-        var pMaxY           = centre.Y + 15f + cardinalsOffset;
+        var quarterWidth28  = 0.5f * halfWidth28;
+        var pMinY           = centre.Y - halfWidth28 + cardinalsOffset;
+        var pMaxY           = centre.Y + halfWidth28 + cardinalsOffset;
         var northeastOffset = compassUnit * Util.SignedAngle(northeast, playerForward);
         // TODO The numbers must be scaled and as such precalcualted
-        // var pMinXLeft = Centre.X - HalfWidth28 - 7f;
-        // var pMaxXLeft = Centre.X + HalfWidth28 - 7f;
-        // var pMinXRight = Centre.X - HalfWidth28 + 7f;
-        // var pMaxXRight = Centre.X + HalfWidth28 + 7f;
+        var pMinXLeft  = centre.X - 3 * quarterWidth28;
+        var pMaxXLeft  = centre.X + quarterWidth28;
+        var pMinXRight = centre.X - quarterWidth28;
+        var pMaxXRight = centre.X + 3 * quarterWidth28;
         backgroundDrawList.AddImage( // North
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth28 + northeastOffset - 7f, pMinY)
-            , new Vector2(centre.X + northeastOffset + halfWidth28 - 7f, pMaxY)
+            , new Vector2(pMinXLeft + northeastOffset, pMinY)
+            , new Vector2(pMaxXLeft + northeastOffset, pMaxY)
             , new Vector2(0.4017857f, 0.8301887f)
             , new Vector2(0.4732143f, 0.9811321f)
         );
         backgroundDrawList.AddImage( // East
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth28 + northeastOffset + 7f, pMinY)
-            , new Vector2(centre.X + northeastOffset + halfWidth28 + 7f, pMaxY)
+            , new Vector2(pMinXRight + northeastOffset, pMinY)
+            , new Vector2(pMaxXRight + northeastOffset, pMaxY)
             , new Vector2(0.5446429f, 0.8301887f)
             , new Vector2(0.5892857f, 0.9811321f)
         );
         var southeastOffset = compassUnit * Util.SignedAngle(southeast, playerForward);
         backgroundDrawList.AddImage( //South
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth28 + southeastOffset - 7f, pMinY)
-            , new Vector2(centre.X + southeastOffset + halfWidth28 - 7f, pMaxY)
+            , new Vector2(pMinXLeft + southeastOffset, pMinY)
+            , new Vector2(pMaxXLeft + southeastOffset, pMaxY)
             , new Vector2(0.5892857f, 0.8301887f)
             , new Vector2(0.6339286f, 0.9811321f)
         );
         backgroundDrawList.AddImage( // East
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth28 + southeastOffset + 7f, pMinY)
-            , new Vector2(centre.X + southeastOffset + halfWidth28 + 7f, pMaxY)
+            , new Vector2(pMinXRight + southeastOffset, pMinY)
+            , new Vector2(pMaxXRight + southeastOffset, pMaxY)
             , new Vector2(0.5446429f, 0.8301887f)
             , new Vector2(0.5892857f, 0.9811321f)
         );
         var southwestOffset = compassUnit * Util.SignedAngle(southwest, playerForward);
         backgroundDrawList.AddImage( //South
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth28 + southwestOffset - 7f, pMinY)
-            , new Vector2(centre.X + southwestOffset + halfWidth28 - 7f, pMaxY)
+            , new Vector2(pMinXLeft + southwestOffset, pMinY)
+            , new Vector2(pMaxXLeft + southwestOffset, pMaxY)
             , new Vector2(0.5892857f, 0.8301887f)
             , new Vector2(0.6339286f, 0.9811321f)
         );
         backgroundDrawList.AddImage( // West
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth28 + southwestOffset + 7f, pMinY)
-            , new Vector2(centre.X + southwestOffset + halfWidth28 + 7f, pMaxY)
+            , new Vector2(pMinXRight + southwestOffset, pMinY)
+            , new Vector2(pMaxXRight + southwestOffset, pMaxY)
             , new Vector2(0.4732143f, 0.8301887f)
             , new Vector2(0.5446429f, 0.9811321f)
         );
         var northwestOffset = compassUnit * Util.SignedAngle(northwest, playerForward);
         backgroundDrawList.AddImage( // North
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth28 + northwestOffset - 7f, pMinY)
-            , new Vector2(centre.X + northwestOffset + halfWidth28 - 7f, pMaxY)
+            , new Vector2(pMinXLeft + northwestOffset, pMinY)
+            , new Vector2(pMaxXLeft + northwestOffset, pMaxY)
             , new Vector2(0.4017857f, 0.8301887f)
             , new Vector2(0.4732143f, 0.9811321f)
         );
         backgroundDrawList.AddImage( // West
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth28 + northwestOffset + 7f, pMinY)
-            , new Vector2(centre.X + northwestOffset + halfWidth28 + 7f, pMaxY)
+            , new Vector2(pMinXRight + northwestOffset, pMinY)
+            , new Vector2(pMaxXRight + northwestOffset, pMaxY)
             , new Vector2(0.4732143f, 0.8301887f)
             , new Vector2(0.5446429f, 0.9811321f)
         );
