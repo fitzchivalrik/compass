@@ -11,11 +11,6 @@ namespace Compass.Data;
 // difference in draw time; a struct being faster.
 // TODO: Split up in smaller structs
 internal struct DrawVariables {
-    // NOTE (Chiv) This is the position of the player in the minimap coordinate system
-    // It has positive down Y grow, we do calculations in a 'default' coordinate system
-    // with positive up Y grow
-    // => All game Y needs to be flipped.
-    internal          Vector2 PlayerPosition         = new(Constant.NaviMapPlayerX, Constant.NaviMapPlayerY);
     internal readonly Vector2 Centre                 = new(835 + 125f, 515 + 25f);
     internal readonly Vector2 BackgroundPMin         = Vector2.Zero;
     internal readonly Vector2 BackgroundPMax         = Vector2.Zero;

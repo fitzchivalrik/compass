@@ -21,11 +21,19 @@ internal class Compass {
     private          bool          _dirty;
 
     private DrawVariables _drawVariables;
-    private Pointers      _pointers;
-    private Vector2       _playerPosition = new(Constant.NaviMapPlayerX, Constant.NaviMapPlayerY);
-    private bool          _shouldHideCompass;
-    private bool          _shouldHideCompassIteration;
-    private string[]      _uiIdentifiers = Array.Empty<string>();
+
+    private Pointers _pointers;
+
+    // NOTE: This is the position of the player in the minimap coordinate system.
+    // The position gets updated on each CompassWindow.Draw with the position of the 
+    // player marker in the map.
+    // The minimap coordinate system has positive down Y grow;
+    // we do calculations in a 'default' coordinate system with positive up Y grow.
+    // => All game Y needs to be flipped.
+    private Vector2  _playerPosition = new(Constant.NaviMapPlayerX, Constant.NaviMapPlayerY);
+    private bool     _shouldHideCompass;
+    private bool     _shouldHideCompassIteration;
+    private string[] _uiIdentifiers = Array.Empty<string>();
 
 
     internal Compass(
