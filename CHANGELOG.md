@@ -4,6 +4,7 @@
 
 - feat: Add intercardinals
 - feat: Add own FC filter
+- chore: Behind-the-scenes refactoring
 
 ## 1.20.1
 

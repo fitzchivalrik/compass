@@ -7,9 +7,6 @@ description: |-
 repo_url: https://github.com/fitzchivalrik/compass
 punchline: Monodimensional compass for your adventures.
 changelog: |-
-  - Update to APi 6, patch 6.1
-  - One more visibility option: 'Only in Combat'
-  - New Filter: 'Boss Enemy'
-  - New Filter: 'Poetics Vendor'
-  - fix: Waymark icons (thanks Maxunit)
-  - "fix": Dirty hack to prevent (?) Aesthetician crashes
+  - feat: Add intercardinals
+  - feat: Add own FC filter
+  - chore: Behind-the-scenes refactoring 

@@ -1,104 +1,104 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0-windows</TargetFramework>
-    <LangVersion>10</LangVersion>
-    <VersionPrefix>1.20.1</VersionPrefix>
-    <Authors>Chivalrik</Authors>
-    <Company>Chivalrik</Company>
-    <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
-    <OutputType>Library</OutputType>
-    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-    <PreserveCompilationContext>false</PreserveCompilationContext>
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net5.0-windows</TargetFramework>
+        <LangVersion>10</LangVersion>
+        <VersionPrefix>1.23.0</VersionPrefix>
+        <Authors>Chivalrik</Authors>
+        <Company>Chivalrik</Company>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <OutputType>Library</OutputType>
+        <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+        <PreserveCompilationContext>false</PreserveCompilationContext>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    </PropertyGroup>
 
-  <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
-    <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="True" IgnoreExitCode="False">
-      <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
-    </Exec>
-  </Target>
+    <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
+        <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="True" IgnoreExitCode="False">
+            <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput"/>
+        </Exec>
+    </Target>
 
-  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <VersionSuffix>dirty</VersionSuffix>
-  </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <VersionSuffix>dirty</VersionSuffix>
+    </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DebugSymbols>false</DebugSymbols>
-    <Deterministic>true</Deterministic>
-  </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <DebugSymbols>false</DebugSymbols>
+        <Deterministic>true</Deterministic>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="2.1.6" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="DalamudPackager" Version="2.1.6"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="Dalamud">
-      <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Dalamud.dll</HintPath>
-      <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Dalamud.dll</HintPath>
-      <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Dalamud.dll</HintPath>
-      <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Dalamud.dll</HintPath>
-      <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Dalamud.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="ImGui.NET">
-      <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\ImGuiScene.dll</HintPath>
-      <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
-      <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
-      <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
-      <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\ImGui.NET.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="ImGuiScene">
-      <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\ImGuiScene.dll</HintPath>
-      <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\ImGuiScene.dll</HintPath>
-      <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\ImGuiScene.dll</HintPath>
-      <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\ImGuiScene.dll</HintPath>
-      <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\ImGuiScene.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Lumina">
-      <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Lumina.dll</HintPath>
-      <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Lumina.dll</HintPath>
-      <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Lumina.dll</HintPath>
-      <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Lumina.dll</HintPath>
-      <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Lumina.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Lumina.Excel">
-      <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Lumina.Excel.dll</HintPath>
-      <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Lumina.Excel.dll</HintPath>
-      <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Lumina.Excel.dll</HintPath>
-      <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Lumina.Excel.dll</HintPath>
-      <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Lumina.Excel.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Newtonsoft.Json.dll</HintPath>
-      <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Newtonsoft.Json.dll</HintPath>
-      <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Newtonsoft.Json.dll</HintPath>
-      <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Newtonsoft.Json.dll</HintPath>
-      <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Newtonsoft.Json.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="FFXIVClientStructs">
-      <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\FFXIVClientStructs.dll</HintPath>
-      <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\FFXIVClientStructs.dll</HintPath>
-      <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\FFXIVClientStructs.dll</HintPath>
-      <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\FFXIVClientStructs.dll</HintPath>
-      <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\FFXIVClientStructs.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="SharpDX.Mathematics">
-      <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\SharpDX.Mathematics.dll</HintPath>
-      <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\SharpDX.Mathematics.dll</HintPath>
-      <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\SharpDX.Mathematics.dll</HintPath>
-      <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\SharpDX.Mathematics.dll</HintPath>
-      <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\SharpDX.Mathematics.dll</HintPath>
-      <Private>false</Private>
+    <ItemGroup>
+        <Reference Include="Dalamud">
+            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Dalamud.dll</HintPath>
+            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Dalamud.dll</HintPath>
+            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Dalamud.dll</HintPath>
+            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Dalamud.dll</HintPath>
+            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Dalamud.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="ImGui.NET">
+            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\ImGuiScene.dll</HintPath>
+            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
+            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
+            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
+            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\ImGui.NET.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="ImGuiScene">
+            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\ImGuiScene.dll</HintPath>
+            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\ImGuiScene.dll</HintPath>
+            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\ImGuiScene.dll</HintPath>
+            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\ImGuiScene.dll</HintPath>
+            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\ImGuiScene.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Lumina">
+            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Lumina.dll</HintPath>
+            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Lumina.dll</HintPath>
+            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Lumina.dll</HintPath>
+            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Lumina.dll</HintPath>
+            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Lumina.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Lumina.Excel">
+            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Lumina.Excel.dll</HintPath>
+            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Lumina.Excel.dll</HintPath>
+            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Lumina.Excel.dll</HintPath>
+            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Lumina.Excel.dll</HintPath>
+            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Lumina.Excel.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Newtonsoft.Json">
+            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Newtonsoft.Json.dll</HintPath>
+            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Newtonsoft.Json.dll</HintPath>
+            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Newtonsoft.Json.dll</HintPath>
+            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Newtonsoft.Json.dll</HintPath>
+            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Newtonsoft.Json.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="FFXIVClientStructs">
+            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\FFXIVClientStructs.dll</HintPath>
+            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\FFXIVClientStructs.dll</HintPath>
+            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\FFXIVClientStructs.dll</HintPath>
+            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\FFXIVClientStructs.dll</HintPath>
+            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\FFXIVClientStructs.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="SharpDX.Mathematics">
+            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\SharpDX.Mathematics.dll</HintPath>
+            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\SharpDX.Mathematics.dll</HintPath>
+            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\SharpDX.Mathematics.dll</HintPath>
+            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\SharpDX.Mathematics.dll</HintPath>
+            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\SharpDX.Mathematics.dll</HintPath>
+            <Private>false</Private>
         </Reference>
     </ItemGroup>
 

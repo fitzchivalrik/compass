@@ -32,5 +32,5 @@ Adjust for AreaMap accordingly if you are using that.
 ![](docs/icondid_example.png)
 
 For the window name, you need to be a bit creative. If the window is currently focused,
-there is a good chance its under `Focused Units`. 
+there is a good chance its under `Focused Units`.
 That is not always true though. 
