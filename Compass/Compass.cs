@@ -1,287 +1,169 @@
 ﻿using System;
+using System.Linq;
 using System.Numerics;
-using Dalamud.Data;
-using Dalamud.Game;
-using Dalamud.Game.ClientState;
+using Compass.Data;
+using Compass.UI;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects;
-using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
-using Dalamud.Interface;
 using Dalamud.IoC;
-using Dalamud.Plugin;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using SimpleTweaksPlugin;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace Compass;
 
-public partial class Compass : IDalamudPlugin
-{
-    public const string PluginName = "Compass";
-    private const string Command = "/compass";
-    public string Name => PluginName;
-
+internal class Compass {
+    private readonly Condition     _condition;
     private readonly Configuration _config;
-    private readonly DalamudPluginInterface _pluginInterface;
-    private readonly ClientState _clientState;
-    private readonly CommandManager _commands;
+    private readonly GameGui       _gameGui;
     private readonly TargetManager _targetManager;
-    private readonly Condition _condition;
-    private readonly GameGui _gameGui;
+    private          int           _currentUiObjectIndex;
+    private          bool          _dirty;
 
-    private string[] _uiIdentifiers = null!; //Constructor calls method which initializes
-    private int _currentUiObjectIndex;
-    private bool _shouldHideCompass;
-    private bool _shouldHideCompassIteration;
-    private bool _isDisposed;
-    private bool _buildingConfigUi;
+    private DrawVariables _drawVariables;
+    private Pointers      _pointers;
+    private Vector2       _playerPosition = new(Constant.NaviMapPlayerX, Constant.NaviMapPlayerY);
+    private bool          _shouldHideCompass;
+    private bool          _shouldHideCompassIteration;
+    private string[]      _uiIdentifiers = Array.Empty<string>();
 
 
-    public Compass(DalamudPluginInterface pi
-        , SigScanner sigScanner
-        , ClientState clientState
-        , CommandManager commands
-        , Condition condition
-        , TargetManager targetManager
-        , [RequiredVersion("1.0")] GameGui gameGui)
-    {
-        #region Signatures
-
-        #endregion
-
-        #region Config Migration
-
-        var config = (pi.GetPluginConfig() as Configuration) ?? new Configuration();
-        switch (config.Version)
-        {
-            case 0:
-            {
-                SimpleLog.Debug(config.HideInCombat);
-                config.Visibility = config.HideInCombat ? CompassVisibility.NotInCombat : CompassVisibility.Always;
-                config.Version = 1;
-                pi.SavePluginConfig(config);
-                break;
-            }
-        }
-        #endregion
-            
-        _pluginInterface = pi;
-        _config = config;
-        _clientState = clientState;
-        _commands = commands;
-        _condition = condition;
-        _gameGui = gameGui;
+    internal Compass(
+        Condition                          condition
+        , TargetManager                    targetManager
+        , [RequiredVersion("1.0")] GameGui gameGui
+        , Configuration                    config
+    ) {
+        _condition     = condition;
+        _gameGui       = gameGui;
         _targetManager = targetManager;
-        unsafe
-        {
-            _targetSystem = (TargetSystem*)_targetManager.Address;
-        }
-            
-        #region Configuration Setup
 
-        // NOTE: Technical debt: This array is order-sensitive and used in combination with
-        //  _config.ShouldHideOnUiObjectSerializer. There were problems serializing a Dictionary,
-        //  but apart from that I am unsure why _this_ was the solution I came up with. Oh well.
-        _config.ShouldHideOnUiObject = new[]
-        {
-            (new[] { "_BattleTalk" }, false, "Dialogue Box During Battle"),
-            (new[] { "Talk" }, false, "Dialogue Box"), (new[] { "AreaMap" }, false, "Map"),
-            (new[] { "Character" }, false, "Character"),
-            (new[] { "ConfigCharacter" }, false, "Character Configuration"),
-            (new[] { "ConfigSystem" }, false, "System Configuration"),
-            (new[] { "Inventory", "InventoryLarge", "InventoryExpansion" }, false, "Inventory"),
-            (new[] { "InventoryRetainer", "InventoryRetainerLarge" }, false, "Retainer Inventory"),
-            (new[] { "InventoryBuddy" }, false, "Saddle Bag"), (new[] { "ArmouryBoard" }, false, "Armoury"),
-            (new[] { "Shop", "InclusionShop", "ShopExchangeCurrency" }, false, "Shops"),
-            (new[] { "Teleport" }, false, "Teleport"), (new[] { "ContentsInfo" }, false, "Timers"),
-            (new[] { "ContentsFinder" }, false, "Duty Finder"),
-            (new[] { "LookingForGroup" }, false, "Party Finder"),
-            (new[] { "AOZNotebook" }, false, "Bluemage Notebook"),
-            (new[] { "MountNoteBook" }, false, "Mount Guide"), (new[] { "MinionNoteBook" }, false, "Minion Guide"),
-            (new[] { "Achievement" }, false, "Achievements"), (new[] { "GoldSaucerInfo" }, false, "Action Help"),
-            (new[] { "PvpProfile" }, false, "PVP Profile"), (new[] { "LinkShell" }, false, "Linkshell"),
-            (new[] { "CrossWorldLinkshell" }, false, "Crossworld Linkshell"),
-            (new[] { "ActionDetail" }, false, "Action Help (Tooltip)"),
-            (new[] { "ItemDetail" }, false, "Item Tooltip"), (new[] { "ActionMenu" }, false, "Action List"),
-            (new[] { "QuestRedo", "QuestRedoHud" }, false, "New Game+"), (new[] { "Journal" }, false, "Journal"),
-            (new[] { "RecipeNote" }, false, "Crafting Log"),
-            (new[] { "AdventureNoteBook" }, false, "Sightseeing Log"),
-            (new[] { "GatheringNote" }, false, "Gathering Log"), (new[] { "FishingNote" }, false, "Fishing Log"),
-            (new[] { "FishGuide" }, false, "Fishing Guide"), (new[] { "Orchestrion" }, false, "Orchestrion List"),
-            (new[] { "ContentsNote" }, false, "Challenge Log"), (new[] { "MonsterNote" }, false, "Hunting Log"),
-            (new[] { "PartyMemberList" }, false, "Party Members"), (new[] { "FriendList" }, false, "Friend list"),
-            (new[] { "BlackList" }, false, "Black List"), (new[] { "SocialList" }, false, "Player Search"),
-            (new[] { "Emote" }, false, "Emote"), (new[] { "FreeCompany" }, false, "Free Company"),
-            (new[] { "SupportDesk" }, false, "Support Desk"), (new[] { "ConfigKeybind" }, false, "Keybinds"),
-            (new[] { "_HudLayoutScreen" }, false, "HUD Layout"), (new[] { "Macro" }, false, "Macro"),
-            (new[] { "GrandCompanySupplyList" }, false, "Grand Company Delivery"),
-            (new[] { "GrandCompanyExchange" }, false, "Grand Company Shop"),
-            (new[] { "MiragePrismPrismBox" }, false, "Glamour Dresser"), (new[] { "Currency" }, false, "Currency"),
-            (new[] { "_MainCross" }, false, "Controller Main Menu"),
-            (new[] { "JournalResult" }, false, "Quest Complete"),
-            (new[] { "Synthesis" }, false, "Crafting (Synthesis)")
-        };
+        _config = config;
+        UpdateCachedVariables();
+    }
 
-        for (var i = 0; i < _config.ShouldHideOnUiObjectSerializer.Length; i++)
-        {
-            _config.ShouldHideOnUiObject[i].disable = _config.ShouldHideOnUiObjectSerializer[i];
+    internal void Draw() {
+        if (!_config.ImGuiCompassEnable) return;
+        // To prevent Aesthetician crash. This is unfortunate, but I do not know 
+        // of an event or similar which gets fired when transitioning to Aesthetician.
+        // Therefore, we need to check every frame.
+        if (_gameGui.GetAddonByName("_CharaMakeBgSelector", 1) != IntPtr.Zero) {
+            _dirty = true;
+            return;
         }
 
-        if (_config.ShouldHideOnUiObjectSerializer.Length < _config.ShouldHideOnUiObject.Length)
-        {
-            Array.Resize(ref _config.ShouldHideOnUiObjectSerializer, _config.ShouldHideOnUiObject.Length);
+        if (_dirty) {
+            _dirty = !UpdateCachedVariables();
+            return;
         }
 
-        #endregion
+        switch (_config.Visibility) {
+            case CompassVisibility.Always:
+                break;
+            case CompassVisibility.NotInCombat:
+                if (_condition[ConditionFlag.InCombat]) return;
+                break;
+            case CompassVisibility.InCombat:
+                if (!_condition[ConditionFlag.InCombat]) return;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
 
-
-        _clientState.Login += OnLogin;
-        _clientState.Logout += OnLogout;
-
-        #region Hooks, Functions and Addresses
-
-        #endregion
-
-        #region Excel Data
-
-        #endregion
-
-        _commands.AddHandler(Command, new CommandInfo((_, args) =>
-        {
-            switch (args)
-            {
-                case "toggle":
-                    _config.ImGuiCompassEnable ^= true;
-                    UpdateCompassVariables();
-                    break;
-                case "on":
-                    _config.ImGuiCompassEnable = true;
-                    UpdateCompassVariables();
-                    break;
-                case "off":
-                    _config.ImGuiCompassEnable = false;
-                    break;
-                case "togglep":
-                    _config.ImGuiCompassEnable ^= true;
-                    UpdateCompassVariables();
-                    _pluginInterface.SavePluginConfig(_config);
-                    break;
-                case "onp":
-                    _config.ImGuiCompassEnable = true;
-                    UpdateCompassVariables();
-                    _pluginInterface.SavePluginConfig(_config);
-                    break;
-                case "offp":
-                    _config.ImGuiCompassEnable = false;
-                    _pluginInterface.SavePluginConfig(_config);
-                    break;
-                default:
-                    OnOpenConfigUi();
-                    break;
+        UpdateHideCompass();
+        if (_shouldHideCompass) return;
+        float cameraRotationInRadian;
+        try {
+            unsafe {
+                var atkBase = _pointers.CurrentSourceBase;
+                if (atkBase->UldManager.LoadedState != 3) return;
+                if (!atkBase->IsVisible) return;
+                // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
+                //var _miniMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->ULDData.NodeList[2];
+                // Minimap rotation thingy is even already flipped!
+                // And apparently even accessible & updated if _NaviMap is disabled
+                // => This leads to jerky behaviour though
+                cameraRotationInRadian = *_pointers.PlayerViewTriangleRotation * Util.Deg2Rad;
             }
-        })
-        {
-            HelpMessage =
-                $"Open {PluginName} configuration menu. Use \"{Command} <toggle|on|off>\" to enable/disable. Add 'p' to the command to also save the state (<togglep|onp|offp>)",
-            ShowInHelp = true
-        });
-
-        DebugCtor(sigScanner);
-        if (_pluginInterface.Reason == PluginLoadReason.Installer)
-        {
-            // NOTE (Chiv) Centers the compass on first install
-            SimpleLog.Information("Fresh install of compass; centering compass, drawing modal.");
-            var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size * 0.5f).X;
-            config.ImGuiCompassPosition = new Vector2(screenSizeCenterX - config.ImGuiCompassWidth * 0.5f,
-                config.ImGuiCompassPosition.Y);
-            _buildingConfigUi = true;
-            _config.FreshInstall = true;
-            _pluginInterface.UiBuilder.Draw += DrawConfigUi;
         }
-        if (_clientState.LocalPlayer is not null)
-        {
-            OnLogin(null!, null!);
-        }
-    }
-
-    private void OnLogout(object? sender, EventArgs e)
-    {
-        _pluginInterface.UiBuilder.OpenConfigUi -= OnOpenConfigUi;
-        _pluginInterface.UiBuilder.Draw -= DrawConfigUi;
-
-        _pluginInterface.UiBuilder.Draw -= DrawImGuiCompass;
-    }
-
-    private void OnLogin(object? sender, EventArgs e)
-    {
-        _pluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
-        UpdateCompassVariables();
-        _pluginInterface.UiBuilder.Draw += DrawImGuiCompass;
-    }
-
-    #region UI
-
-    private void DrawConfigUi()
-    {
-        var (shouldBuildConfigUi, changedConfig) = ConfigurationUi.DrawConfigUi(_config);
-        if (changedConfig)
-        {
-            _pluginInterface.SavePluginConfig(_config);
-            UpdateCompassVariables();
+        catch {
+            // ignored
+            return;
         }
 
-        if (shouldBuildConfigUi) return;
-        _pluginInterface.UiBuilder.Draw -= DrawConfigUi;
-        _buildingConfigUi = false;
+        _playerPosition = CompassWindow.Draw(
+            _drawVariables,
+            _pointers,
+            cameraRotationInRadian,
+            _playerPosition,
+            _config
+        );
     }
 
-    private void OnOpenConfigUi()
-    {
-        _buildingConfigUi = !_buildingConfigUi;
-        if (_buildingConfigUi)
-            _pluginInterface.UiBuilder.Draw += DrawConfigUi;
-        else
-            _pluginInterface.UiBuilder.Draw -= DrawConfigUi;
+    internal bool UpdateCachedVariables() {
+        if (!UpdateMapPointersCache()) return false;
+        _drawVariables = new DrawVariables(_config);
+        _uiIdentifiers = _config.ShouldHideOnUiObject
+                                .Where(it => it.disable)
+                                .SelectMany(it => it.getUiObjectIdentifier)
+                                .ToArray();
+        _currentUiObjectIndex = 0;
+        return true;
     }
 
-    #endregion
+    // `GetAddonByName` is rather expensive, so we cache the ptr instead of
+    // retrieving it each frame. As the `_NaviMap/AreaMap` object _almost_ never gets
+    // reconstructed again, the ptr is valid almost the entire game.
+    // Some cases when `_NaviMap` gets created anew:
+    // - Aesthetician
+    // - Any Deep Dungeon
+    private bool UpdateMapPointersCache() {
+        var ptr = _gameGui.GetAddonByName("_NaviMap", 1);
+        if (ptr == IntPtr.Zero) return false;
+        unsafe {
+            var naviMap = (AtkUnitBase*)ptr;
+            if (naviMap->UldManager.LoadedState != 3) return false;
+            // Node indices valid as of 6.18
+            var naviMapIconsRootComponentNode = (AtkComponentNode*)naviMap->UldManager.NodeList[2];
+            var areaMap                       = (AtkUnitBase*)_gameGui.GetAddonByName("AreaMap", 1);
+            var areaMapIconsRootComponentNode = (AtkComponentNode*)areaMap->UldManager.NodeList[3];
 
-    #region Debug Partials
-
-    partial void DebugCtor(SigScanner sigScanner);
-    partial void DebugDtor();
-
-    #endregion
-
-    #region Dispose
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (_isDisposed) return;
-        if (disposing)
-        {
-            // TODO (Chiv) Still not quite sure about correct dispose
-            // NOTE (Chiv) Explicit, non GC? call - remove managed thingies too.
-            OnLogout(null!, null!);
-            _clientState.Login -= OnLogin;
-            _clientState.Logout -= OnLogout;
-            _commands.RemoveHandler(Command);
-            DebugDtor();
+            // Cardinals, etc. are on the same naviMap texture atlas
+            var westCardinalAtkImageNode = (AtkImageNode*)naviMap->UldManager.NodeList[11];
+            _pointers = new Pointers(
+                (TargetSystem*)_targetManager.Address,
+                (float*)((nint)naviMap + Constant.PlayerViewTriangleRotationOffset),
+                _config.UseAreaMapAsSource ? areaMap : naviMap,
+                _config.UseAreaMapAsSource ? areaMapIconsRootComponentNode : naviMapIconsRootComponentNode,
+                (AtkImageNode*)((AtkComponentNode*)naviMap->UldManager.NodeList[6])->Component->UldManager.NodeList[2],
+                new IntPtr(
+                    westCardinalAtkImageNode->PartsList->Parts[0]
+                       .UldAsset->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
+                )
+            );
         }
 
-        _isDisposed = true;
+        return true;
     }
 
-    ~Compass()
-    {
-        Dispose(false);
-    }
+    private void UpdateHideCompass() {
+        // NOTE: We loop through max 8 at a time because else performance suffers too much,
+        //  going through the whole list on each frame.
+        //  It is better to take each frame roughly the same amount of time instead of having spikes,
+        //  which is why this solution is used and not, e.g., only checking for open UI windows every 100ms or so.
+        for (var i = 0; i < Math.Min(8, _uiIdentifiers.Length); i++) {
+            var uiIdentifier = _uiIdentifiers[_currentUiObjectIndex++];
+            _currentUiObjectIndex %= _uiIdentifiers.Length;
+            if (_currentUiObjectIndex == 0) {
+                _shouldHideCompass          = _shouldHideCompassIteration;
+                _shouldHideCompassIteration = false;
+            }
 
-    #endregion
+            var unitBase = _gameGui.GetAddonByName(uiIdentifier, 1);
+            if (unitBase == IntPtr.Zero) continue;
+            unsafe {
+                _shouldHideCompassIteration |= ((AtkUnitBase*)unitBase)->IsVisible;
+            }
+        }
+    }
 }

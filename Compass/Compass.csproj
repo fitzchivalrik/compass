@@ -99,7 +99,22 @@
       <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\SharpDX.Mathematics.dll</HintPath>
       <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\SharpDX.Mathematics.dll</HintPath>
       <Private>false</Private>
-    </Reference>
-  </ItemGroup>
-  
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Update="Resources\i18n.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>i18n.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Resources\i18n.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>i18n.resx</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
 </Project>
