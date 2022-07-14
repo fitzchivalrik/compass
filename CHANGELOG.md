@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.25.0
+
 - feat: Add intercardinals
 - feat: Add own FC filter
 - feat: Ability to disable Cardinals
