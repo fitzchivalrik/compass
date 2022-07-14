@@ -152,6 +152,7 @@ internal static class Config {
         if (config.ImGuiCompassEnable) {
             ImGui.Indent();
             ImGui.PushItemWidth(200f * scale);
+
             if (ImGui.Button("Center horizontally##ImGui", new Vector2(200f, 25f))) {
                 changed = true;
                 var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size * 0.5f).X;
@@ -163,11 +164,14 @@ internal static class Config {
             var mask = (int)((1 - config.ImGuiCompassReverseMaskPercentage) * 100);
             changed |= ImGui.SliderInt("Mask###ImGuiCompassMask", ref mask, 0, 90,
                 "%d %%");
+
             config.ImGuiCompassReverseMaskPercentage =  1 - mask / 100f;
             changed                                  |= ImGui.SliderFloat("Scale##ImGui", ref config.ImGuiCompassScale, 0.02f, 3f, "%.2f");
             changed |= ImGui.SliderFloat("Minimum Scale Factor##ImGuiCompass_AreaMap", ref config.ImGuiCompassMinimumIconScaleFactor, 0.00f, 1f, "%.2f",
                 ImGuiSliderFlags.AlwaysClamp);
+
             changed |= ImGui.DragInt("Cardinals Offset##ImGui", ref config.ImGuiCompassCardinalsOffset);
+
             var visibility = (int)config.Visibility;
             ImGui.Text("Visibility");
             changed |= ImGui.RadioButton("Always##ImGuiCompass", ref visibility, 0);
@@ -176,8 +180,18 @@ internal static class Config {
             ImGui.SameLine();
             changed |= ImGui.RadioButton("Only in Combat##ImGuiCompass", ref visibility, 2);
             if (changed) config.Visibility = (CompassVisibility)visibility;
-            changed |= ImGui.Checkbox("Show only Cardinals##ImGui", ref config.ShowOnlyCardinals);
+
+            changed |= ImGui.Checkbox("Show Cardinals##ImGui", ref config.ShowCardinals);
             changed |= ImGui.Checkbox("Show Intercardinals##ImGui", ref config.ShowInterCardinals);
+            changed |= ImGui.Checkbox("Hide all icons##ImGui", ref config.ShowOnlyCardinals);
+            if (ImGui.IsItemHovered()) {
+                ImGui.BeginTooltip();
+                ImGui.PushTextWrapPos(ImGui.GetFontSize() * 25.0f);
+                ImGui.TextUnformatted("Except Cardinals & Intercardinals, if enabled.");
+                ImGui.PopTextWrapPos();
+                ImGui.EndTooltip();
+            }
+
             changed |= ImGuiHelper.DrawTreeCheckbox("Enable Centre Marker", ref config.ImGuiCompassEnableCenterMarker, () => {
                 var changed = false;
                 ImGui.SetNextItemWidth(35 * scale);
@@ -186,7 +200,9 @@ internal static class Config {
                 changed |= ImGui.Checkbox("Flip Centre Marker##ImGui", ref config.ImGuiCompassFlipCentreMarker);
                 return changed;
             });
+
             changed |= ImGuiHelper.DrawTreeCheckbox("Enable Background", ref config.ImGuiCompassEnableBackground, DrawBackgroundConfig(config));
+
             changed |= ImGuiHelper.DrawTreeCheckbox("Show Weather Icon", ref config.ShowWeatherIcon, () => {
                 var changed = false;
                 changed |= ImGui.Checkbox("Show Border##ImGuiCompass_WeatherIcon", ref config.ShowWeatherIconBorder);
@@ -194,6 +210,7 @@ internal static class Config {
                 changed |= ImGui.SliderFloat("Scale##ImGuiCompass_WeatherIcon", ref config.ImGuiCompassWeatherIconScale, 0.01f, 3f, "%.2f");
                 return changed;
             });
+
             changed |= ImGuiHelper.DrawTreeCheckbox("Show approx. Distance To Target", ref config.ShowDistanceToTarget, () => {
                 var changed = false;
                 changed |= ImGui.DragFloat2("Offset##ImGuiCompass_DistanceToTarget", ref config.ImGuiCompassDistanceToTargetOffset, 1f);
@@ -207,6 +224,7 @@ internal static class Config {
                     ref config.ImGuiCompassDistanceToTargetMouseOverPrio);
                 return changed;
             });
+
             changed |= ImGuiHelper.DrawTreeCheckbox("Use Map instead of Minimap as source##ImGui",
                 ref config.UseAreaMapAsSource,
                 () => {

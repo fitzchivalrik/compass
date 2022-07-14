@@ -9,6 +9,7 @@ namespace Compass;
 public class Configuration : IPluginConfiguration {
     public bool   UseAreaMapAsSource;
     public bool   ShowOnlyCardinals;
+    public bool   ShowCardinals = true;
     public bool   ShowInterCardinals;
     public bool   ShowWeatherIcon;
     public bool   ShowWeatherIconBorder  = true;

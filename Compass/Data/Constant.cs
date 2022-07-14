@@ -9,6 +9,7 @@ internal static class Constant {
     internal const uint  PlayerViewTriangleRotationOffset = 0x254; // 6.18
     internal const float CompassHeight                    = 50f;
 
+    // Technical debt: ORDER SENSITIVE, DO NOT MOVE AROUND
     internal static readonly (string[] getUiObjectIdentifier, bool disable, string userFacingIdentifier)[] InitialUiObjectArray = {
         (new[] { "_BattleTalk" }, false, "Dialogue Box During Battle"),
         (new[] { "Talk" }, false, "Dialogue Box"),

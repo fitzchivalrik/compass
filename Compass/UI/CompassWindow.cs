@@ -62,15 +62,16 @@ internal static class CompassWindow {
                 config.ImGuiCompassCardinalsOffset,
                 pointers.NaviMapTextureD3D11ShaderResourceView
             );
-        DrawCardinals(
-            playerForward,
-            drawVariables.Centre,
-            drawVariables.HalfWidth40,
-            drawVariables.HalfWidth28,
-            drawVariables.CompassUnit,
-            config.ImGuiCompassCardinalsOffset,
-            pointers.NaviMapTextureD3D11ShaderResourceView
-        );
+        if (config.ShowCardinals)
+            DrawCardinals(
+                playerForward,
+                drawVariables.Centre,
+                drawVariables.HalfWidth40,
+                drawVariables.HalfWidth28,
+                drawVariables.CompassUnit,
+                config.ImGuiCompassCardinalsOffset,
+                pointers.NaviMapTextureD3D11ShaderResourceView
+            );
         if (config.ShowWeatherIcon)
             unsafe {
                 DrawWeatherIcon(
@@ -494,7 +495,7 @@ internal static class CompassWindow {
                     var     tintColour = Constant.WhiteColour;
                     var     rotate     = false;
                     switch (iconId) {
-                        case 0 when useAreaMapAsSource:
+                        case 0 when useAreaMapAsSource: //0 interpreted as NaviMap texture atlas
                             continue;
                         case 0 when imgNode->PartId == 21: //Glowy thingy
                             rotate = true;                 // TODO Duplicate code instead of branching?
@@ -505,17 +506,13 @@ internal static class CompassWindow {
                             if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                 goto default;
                             goto case 1;
-                        case 0: //Arrows to quests and fates
+                        case 0: //Arrows to quests and fates, part of the Navimap texture atlas
                             // NOTE: We assume part.Width == part.Height == 24
                             // NOTE: We assume tex.Width == 448 && tex.Height == 212
                             var u  = (float)part.U / 448;        // = (float) part.U / tex->Width;
                             var v  = (float)part.V / 212;        // = (float) part.V / tex->Height;
                             var u1 = (float)(part.U + 24) / 448; // = (float) (part.U + part.Width) / tex->Width;
                             var v1 = (float)(part.V + 24) / 212; // = (float) (part.V + part.Height) / tex->Height;
-                            //var u = (float) part.U / tex->Width;
-                            //var v = (float) part.V / tex->Height; 
-                            //var u1 = (float) (part.U + part.Width) / tex->Width; 
-                            //var v1 = (float) (part.V + part.Height) / tex->Height;
 
                             uv  = new Vector2(u, v);
                             uv1 = new Vector2(u1, v1);
@@ -523,7 +520,7 @@ internal static class CompassWindow {
                             var naviMapCutIconOffset = compassUnit *
                                                        Util.SignedAngle(mapIconComponentNode->AtkResNode.Rotation,
                                                            playerForward);
-                            // We hope width == height
+                            // We declare width == height
                             const int naviMapIconHalfWidth = 12;
                             var       naviMapYOffset       = 14 * scale;
                             pMin = new Vector2(centre.X - naviMapIconHalfWidth + naviMapCutIconOffset,
@@ -652,9 +649,15 @@ internal static class CompassWindow {
 
                     //PluginLog.Debug($"ID: {iconId}; Tintcolor: {tintColour:x8}");
                     if (rotate)
-                        ImGuiHelper.ImageRotated(textureIdPtr,
-                            new Vector2(pMin.X + (pMax.X - pMin.X) * 0.5f, pMin.Y + (pMax.Y - pMin.Y) * 0.5f)
-                            , pMax - pMin, imgNode->AtkResNode.Rotation, uv, uv1, drawList);
+                        ImGuiHelper.ImageRotated(
+                            textureIdPtr,
+                            new Vector2(pMin.X + (pMax.X - pMin.X) * 0.5f, pMin.Y + (pMax.Y - pMin.Y) * 0.5f),
+                            pMax - pMin,
+                            imgNode->AtkResNode.Rotation,
+                            uv,
+                            uv1,
+                            drawList
+                        );
                     else
                         drawList.AddImage(textureIdPtr, pMin, pMax, uv, uv1, tintColour);
                 }
