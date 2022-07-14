@@ -10,6 +10,7 @@ changelog: |-
   - feat: Ability to disable Cardinals
   - feat: Add intercardinals
   - feat: Add own FC filter
-  - chore: Behind-the-scenes refactoring
-  - fix: Update to new Clientstructs
   - feat: Enable negative X position values
+  - feat: ALL circles filter (FATEs & Quests)
+  - fix: Update to new Clientstructs
+  - chore: Behind-the-scenes refactoring

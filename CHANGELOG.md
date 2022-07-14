@@ -4,10 +4,11 @@
 
 - feat: Add intercardinals
 - feat: Add own FC filter
-- chore: Behind-the-scenes refactoring
-- fix: Update to new Clientstructs
 - feat: Ability to disable Cardinals
 - feat: Enable negative X position values
+- feat: ALL circles filter (FATEs & Quests)
+- fix: Update to new Clientstructs
+- chore: Behind-the-scenes refactoring
 
 ## 1.20.1
 

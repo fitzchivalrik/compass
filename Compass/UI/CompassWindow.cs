@@ -99,7 +99,7 @@ internal static class CompassWindow {
 
         if (!config.ShowOnlyCardinals)
             unsafe {
-                playerPosition = DrawCompassIcons(
+                playerPosition = DrawIcons(
                     drawVariables.CurrentScaleOffset,
                     drawVariables.ComponentIconLoopStart,
                     drawVariables.ComponentIconLoopEnd,
@@ -423,7 +423,7 @@ internal static class CompassWindow {
     }
 
     // TODO: Reduce parameter counts by splitting DrawVariables in smaller structs
-    private static unsafe Vector2 DrawCompassIcons(
+    private static unsafe Vector2 DrawIcons(
         int                currentScaleOffset,
         int                componentIconLoopStart,
         int                componentIconLoopEnd,

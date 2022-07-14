@@ -78,7 +78,8 @@ internal static class Constant {
         ("Levequests", new uint[] { 071081, 71082, 071041 }),
         ("Triple Triad Regular", new uint[] { 071101 }),
         ("Triple Triad New Cards", new uint[] { 071102 }),
-        ("FATE Markers", new uint[] { 060501, 60502, 60503, 60504, 60505, 60506, 60507, 60508, 60458 }), // TODO CHECK LAST
+        ("FATE Markers", new uint[] { 060501, 60502, 60503, 60504, 60505, 60506, 60507, 60508, 60458 }),
+        ("ALL Circles (FATEs & Quests)", new uint[] { 060495, 060496, 060497, 060498, 060541, 060542, 060543, 060545, 060546, 060547 }),
         ("Dungeon Symbols", new uint[] { 060414 }),
         ("Porter", new uint[] { 060311 }),
         ("Area Transition Markers", new uint[] { 060457 }),
