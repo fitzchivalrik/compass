@@ -159,7 +159,7 @@ internal static class Config {
                 config.ImGuiCompassPosition = config.ImGuiCompassPosition with { X = screenSizeCenterX - config.ImGuiCompassWidth * 0.5f };
             }
 
-            changed |= ImGui.DragFloat2("Position##ImGui", ref config.ImGuiCompassPosition, 1f, 0f, float.MaxValue, "%.f", ImGuiSliderFlags.AlwaysClamp);
+            changed |= ImGui.DragFloat2("Position##ImGui", ref config.ImGuiCompassPosition, 1f, float.MinValue, float.MaxValue, "%.f");
             changed |= ImGui.DragFloat("Width##ImGui", ref config.ImGuiCompassWidth, 1f, 150f, float.MaxValue, "%.f", ImGuiSliderFlags.AlwaysClamp);
             var mask = (int)((1 - config.ImGuiCompassReverseMaskPercentage) * 100);
             changed |= ImGui.SliderInt("Mask###ImGuiCompassMask", ref mask, 0, 90,

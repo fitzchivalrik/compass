@@ -6,6 +6,8 @@
 - feat: Add own FC filter
 - chore: Behind-the-scenes refactoring
 - fix: Update to new Clientstructs
+- feat: Ability to disable Cardinals
+- feat: Enable negative X position values
 
 ## 1.20.1
 

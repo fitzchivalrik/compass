@@ -1,14 +1,12 @@
 ﻿# Compass
 
-A Final Fantasy XIV Quicklauncher (XIVLauncher) plugin.
+A Final Fantasy XIV Dalamud plugin.
 Shows a monodimensional compass to augment/replace the minimap.
 
 Licensed under AGPLv3 or later.
 
 ![](docs/compass_showcase.gif)
 ![](docs/compass_line.jpg)
-
-(Washed-out colours are due to the recording)
 
 ### Know Issues
 
