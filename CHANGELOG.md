@@ -5,6 +5,7 @@
 - feat: Add intercardinals
 - feat: Add own FC filter
 - chore: Behind-the-scenes refactoring
+- fix: Update to new Clientstructs
 
 ## 1.20.1
 

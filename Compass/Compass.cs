@@ -84,7 +84,7 @@ internal class Compass {
         try {
             unsafe {
                 var atkBase = _pointers.CurrentSourceBase;
-                if (atkBase->UldManager.LoadedState != 3) return;
+                if (atkBase->UldManager.LoadedState != AtkLoadState.Loaded) return;
                 if (!atkBase->IsVisible) return;
                 // 0 == Facing North, -PI/2 facing east, PI/2 facing west.
                 //var _miniMapIconsRootComponentNode = (AtkComponentNode*)_naviMap->ULDData.NodeList[2];
@@ -130,7 +130,7 @@ internal class Compass {
         if (ptr == IntPtr.Zero) return false;
         unsafe {
             var naviMap = (AtkUnitBase*)ptr;
-            if (naviMap->UldManager.LoadedState != 3) return false;
+            if (naviMap->UldManager.LoadedState != AtkLoadState.Loaded) return false;
             // Node indices valid as of 6.18
             var naviMapIconsRootComponentNode = (AtkComponentNode*)naviMap->UldManager.NodeList[2];
             var areaMap                       = (AtkUnitBase*)_gameGui.GetAddonByName("AreaMap", 1);

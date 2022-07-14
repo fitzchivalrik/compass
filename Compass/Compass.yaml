@@ -9,4 +9,5 @@ punchline: Monodimensional compass for your adventures.
 changelog: |-
   - feat: Add intercardinals
   - feat: Add own FC filter
-  - chore: Behind-the-scenes refactoring 
+  - chore: Behind-the-scenes refactoring
+  - fix: Update to new Clientstructs
