@@ -7,10 +7,5 @@ description: |-
 repo_url: https://github.com/fitzchivalrik/compass
 punchline: Monodimensional compass for your adventures.
 changelog: |-
-  - feat: Ability to disable Cardinals
-  - feat: Add intercardinals
-  - feat: Add own FC filter
-  - feat: Enable negative X position values
-  - feat: ALL circles filter (FATEs & Quests)
-  - fix: Update to new Clientstructs
-  - chore: Behind-the-scenes refactoring
+  - feat: Update to .NET6
+  - chore: Adjustments for D17, automatic plugin builds

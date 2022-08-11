@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using Compass.Data;
 using Dalamud.Interface;
+using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -342,7 +343,7 @@ internal static class CompassWindow {
         }
 #if DEBUG
         catch (Exception e) {
-            SimpleLog.Error(e);
+            PluginLog.Error(e.ToString());
         }
 #else
         catch {
@@ -422,7 +423,7 @@ internal static class CompassWindow {
         drawList.AddText(font, distanceToTargetScale, pMin, colour, text);
     }
 
-    // TODO: Reduce parameter counts by splitting DrawVariables in smaller structs
+    // TODO: Reduce parameter counts by splitting DrawVariables in smaller structs?
     private static unsafe Vector2 DrawIcons(
         int                currentScaleOffset,
         int                componentIconLoopStart,
@@ -465,12 +466,13 @@ internal static class CompassWindow {
                     var part = imgNode->PartsList->Parts[imgNode->PartId];
                     //NOTE Invariant: It should always be a resource
 #if DEBUG
-                        var type = part.UldAsset->AtkTexture.TextureType;
-                        if (type != TextureType.Resource)
-                        {
-                            SimpleLog.Error($"{i} {j} was not a Resource texture");
-                            continue;
-                        };
+                    var type = part.UldAsset->AtkTexture.TextureType;
+                    if (type != TextureType.Resource) {
+                        PluginLog.Error($"{i} {j} was not a Resource texture");
+                        continue;
+                    }
+
+                    ;
 #endif
                     var tex = part.UldAsset->AtkTexture.Resource->KernelTextureObject;
                     var texFileNameStdString =
@@ -480,14 +482,13 @@ internal static class CompassWindow {
                     // Cannot act anyways if the texture path is butchered
                     var textureFileName = texFileNameStdString.ToString();
                     var _ = uint.TryParse(
-                        textureFileName.Substring(textureFileName.LastIndexOfAny(new[] { '/', '\\' }) + 1, 6),
+                        textureFileName.AsSpan(textureFileName.LastIndexOfAny(new[] { '/', '\\' }) + 1, 6),
                         out var iconId);
                     //iconId = 0 (=> success == false as IconID will never be 0) Must have been 'NaviMap(_hr1)?\.tex' (and only that hopefully)
                     if (filteredIconIds.Contains(iconId)) continue;
 
                     var textureIdPtr = new IntPtr(tex->D3D11ShaderResourceView);
-                    //TODO DEBUG
-//                        PluginLog.Debug($"TextureIdPtr is null? {textureIdPtr == IntPtr.Zero}");
+
                     Vector2 pMin;
                     Vector2 pMax;
                     var     uv         = Vector2.Zero;
@@ -664,8 +665,8 @@ internal static class CompassWindow {
             }
         }
 #if DEBUG
-            catch (Exception e) {
-                SimpleLog.Error(e);
+        catch (Exception e) {
+            PluginLog.Error(e.ToString());
         }
 #else
         catch {

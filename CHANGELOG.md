@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.26.0
+
+- feat: Update to .NET6
+- chore: Adjustments for D17, automatic plugin builds
+
 ## 1.25.0
 
 - feat: Add intercardinals

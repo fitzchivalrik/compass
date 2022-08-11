@@ -10,8 +10,8 @@ using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
 using Dalamud.Interface;
 using Dalamud.IoC;
+using Dalamud.Logging;
 using Dalamud.Plugin;
-using SimpleTweaksPlugin;
 
 namespace Compass;
 
@@ -60,7 +60,7 @@ public partial class Plugin : IDalamudPlugin {
         DebugCtor(sigScanner);
         if (_pluginInterface.Reason == PluginLoadReason.Installer) {
             // NOTE: Centers compass on first install
-            SimpleLog.Information("Fresh install of Compass; centering compass, drawing modal.");
+            PluginLog.Information("Fresh install of Compass; centering compass, drawing modal.");
             var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size * 0.5f).X;
             _config.ImGuiCompassPosition    =  _config.ImGuiCompassPosition with { X = screenSizeCenterX - _config.ImGuiCompassWidth * 0.5f };
             _buildingConfigUi               =  true;
@@ -121,8 +121,8 @@ public partial class Plugin : IDalamudPlugin {
         var config = pi.GetPluginConfig() as Configuration ?? new Configuration();
         switch (config.Version) {
             case 0: {
-                SimpleLog.Debug("Migrate configuration 0 to version 1:");
-                SimpleLog.Debug($"HideInCombat: ${config.HideInCombat}");
+                PluginLog.Debug("Migrate configuration 0 to version 1:");
+                PluginLog.Debug($"HideInCombat: ${config.HideInCombat}");
                 config.Visibility = config.HideInCombat ? CompassVisibility.NotInCombat : CompassVisibility.Always;
                 config.Version    = 1;
                 pi.SavePluginConfig(config);

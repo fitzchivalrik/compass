@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0-windows</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <LangVersion>10</LangVersion>
-        <VersionPrefix>1.25.0</VersionPrefix>
+        <VersionPrefix>1.26.0</VersionPrefix>
         <Authors>Chivalrik</Authors>
         <Company>Chivalrik</Company>
         <Nullable>enable</Nullable>
@@ -12,6 +12,7 @@
         <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
         <PreserveCompilationContext>false</PreserveCompilationContext>
         <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     </PropertyGroup>
 
     <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
@@ -32,72 +33,44 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DalamudPackager" Version="2.1.6"/>
+        <PackageReference Include="DalamudPackager" Version="2.1.7"/>
     </ItemGroup>
 
+    <PropertyGroup>
+        <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
+        <!--        <DalamudLibPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\</DalamudLibPath>-->
+        <!--        <DalamudLibPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\</DalamudLibPath>-->
+        <!--        <DalamudLibPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\</DalamudLibPath>-->
+        <!--        <DalamudLibPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)</DalamudLibPath>-->
+    </PropertyGroup>
+
     <ItemGroup>
-        <Reference Include="Dalamud">
-            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Dalamud.dll</HintPath>
-            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Dalamud.dll</HintPath>
-            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Dalamud.dll</HintPath>
-            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Dalamud.dll</HintPath>
-            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Dalamud.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="ImGui.NET">
-            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\ImGuiScene.dll</HintPath>
-            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
-            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
-            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\ImGui.NET.dll</HintPath>
-            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\ImGui.NET.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="ImGuiScene">
-            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\ImGuiScene.dll</HintPath>
-            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\ImGuiScene.dll</HintPath>
-            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\ImGuiScene.dll</HintPath>
-            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\ImGuiScene.dll</HintPath>
-            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\ImGuiScene.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="Lumina">
-            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Lumina.dll</HintPath>
-            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Lumina.dll</HintPath>
-            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Lumina.dll</HintPath>
-            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Lumina.dll</HintPath>
-            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Lumina.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="Lumina.Excel">
-            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Lumina.Excel.dll</HintPath>
-            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Lumina.Excel.dll</HintPath>
-            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Lumina.Excel.dll</HintPath>
-            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Lumina.Excel.dll</HintPath>
-            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Lumina.Excel.dll</HintPath>
+        <Reference Include="FFXIVClientStructs">
+            <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
             <Private>false</Private>
         </Reference>
         <Reference Include="Newtonsoft.Json">
-            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\Newtonsoft.Json.dll</HintPath>
-            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\Newtonsoft.Json.dll</HintPath>
-            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\Newtonsoft.Json.dll</HintPath>
-            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\Newtonsoft.Json.dll</HintPath>
-            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\Newtonsoft.Json.dll</HintPath>
+            <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
             <Private>false</Private>
         </Reference>
-        <Reference Include="FFXIVClientStructs">
-            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\FFXIVClientStructs.dll</HintPath>
-            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\FFXIVClientStructs.dll</HintPath>
-            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\FFXIVClientStructs.dll</HintPath>
-            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\FFXIVClientStructs.dll</HintPath>
-            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\FFXIVClientStructs.dll</HintPath>
+        <Reference Include="Dalamud">
+            <HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
             <Private>false</Private>
         </Reference>
-        <Reference Include="SharpDX.Mathematics">
-            <HintPath Condition="Exists('$(DalamudHooks)')">$(DalamudHooks)\SharpDX.Mathematics.dll</HintPath>
-            <HintPath Condition="Exists('..\Dalamud\bin\Debug')">..\Dalamud\bin\Debug\SharpDX.Mathematics.dll</HintPath>
-            <HintPath Condition="Exists('..\..\Dalamud\bin\Debug')">..\..\Dalamud\bin\Debug\SharpDX.Mathematics.dll</HintPath>
-            <HintPath Condition="Exists('..\..\..\Dalamud\bin\Debug')">..\..\..\Dalamud\bin\Debug\SharpDX.Mathematics.dll</HintPath>
-            <HintPath Condition="Exists('$(AppData)\XIVLauncher\addon\Hooks\dev')">$(AppData)\XIVLauncher\addon\Hooks\dev\SharpDX.Mathematics.dll</HintPath>
+        <Reference Include="ImGui.NET">
+            <HintPath>$(DalamudLibPath)ImGui.NET.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="ImGuiScene">
+            <HintPath>$(DalamudLibPath)ImGuiScene.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Lumina">
+            <HintPath>$(DalamudLibPath)Lumina.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Lumina.Excel">
+            <HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
             <Private>false</Private>
         </Reference>
     </ItemGroup>
