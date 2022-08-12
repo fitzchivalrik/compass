@@ -8,7 +8,7 @@ Licensed under AGPLv3 or later.
 ![](docs/compass_showcase.gif)
 ![](docs/compass_line.jpg)
 
-### Know Issues
+### Known Issues
 
 - Not all icons which need special handling got it. Please see below on how to report issues.
 - Not all desirable windows for hiding the compass are implemented. Please see below on how to request new ones.
