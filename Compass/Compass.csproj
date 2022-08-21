@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net6.0-windows</TargetFramework>
         <LangVersion>10</LangVersion>
         <VersionPrefix>1.26.0</VersionPrefix>
         <Authors>Chivalrik</Authors>
