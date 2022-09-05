@@ -16,7 +16,7 @@ public unsafe partial class Plugin {
             _pluginInterface.UiBuilder.Draw += BuildDebugUi;
         }) {
             HelpMessage = $"Open {PluginName} Debug menu.",
-            ShowInHelp = false
+            ShowInHelp  = false
         });
 
 
@@ -30,6 +30,8 @@ public unsafe partial class Plugin {
             ImGui.End();
             return;
         }
+
+        ImGui.Text($"TargetSystem Pointer {(long)_compass._pointers.TargetSystem:x16}");
 
 
         ImGui.End();

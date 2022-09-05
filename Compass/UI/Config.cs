@@ -71,7 +71,7 @@ internal static class Config {
         ImGui.TextWrapped(i18n.fresh_install_note);
         ImGui.PopTextWrapPos();
         ImGui.Spacing();
-        if (ImGui.Button($"${i18n.fresh_install_note_confirm_button}###Compass_FreshInstallPopUp")) {
+        if (ImGui.Button($"{i18n.fresh_install_note_confirm_button}###Compass_FreshInstallPopUp")) {
             config.FreshInstall = false;
             ImGui.CloseCurrentPopup();
         }

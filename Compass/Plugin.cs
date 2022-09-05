@@ -58,6 +58,7 @@ public partial class Plugin : IDalamudPlugin {
         });
 
         DebugCtor(sigScanner);
+        // TODO Need a double check for existing config, else this overrides position
         if (_pluginInterface.Reason == PluginLoadReason.Installer) {
             // NOTE: Centers compass on first install
             PluginLog.Information("Fresh install of Compass; centering compass, drawing modal.");
