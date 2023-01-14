@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0-windows</TargetFramework>
-        <LangVersion>10</LangVersion>
-        <VersionPrefix>1.26.1</VersionPrefix>
+        <TargetFramework>net7.0-windows</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <VersionPrefix>1.26.2</VersionPrefix>
         <Authors>Chivalrik</Authors>
         <Company>Chivalrik</Company>
         <Nullable>enable</Nullable>
@@ -34,7 +34,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DalamudPackager" Version="2.1.8"/>
+        <PackageReference Include="DalamudPackager" Version="2.1.10"/>
     </ItemGroup>
 
     <PropertyGroup>
