@@ -6,7 +6,8 @@ using Newtonsoft.Json;
 
 namespace Compass;
 
-public class Configuration : IPluginConfiguration {
+public class Configuration : IPluginConfiguration
+{
     public bool   UseAreaMapAsSource;
     public bool   ShowOnlyCardinals;
     public bool   ShowCardinals = true;
@@ -61,7 +62,8 @@ public class Configuration : IPluginConfiguration {
     public int Version { get; set; } = 1;
 }
 
-public class ConfigurationV0 : IPluginConfiguration {
+public class ConfigurationV0 : IPluginConfiguration
+{
     [JsonIgnore] public Vector2 AddonCompassOffset           = new(0, 0);
     [JsonIgnore] public float   AddonCompassScale            = 1f;
     [JsonIgnore] public int     AddonCompassWidth            = 550;
@@ -119,15 +121,17 @@ public class ConfigurationV0 : IPluginConfiguration {
     public int Version { get; set; } = 0;
 }
 
-public enum ImGuiCompassBackgroundStyle {
-    Filled,
-    Border,
-    FilledAndBorder,
-    Line
+public enum ImGuiCompassBackgroundStyle
+{
+    Filled
+  , Border
+  , FilledAndBorder
+  , Line
 }
 
-public enum CompassVisibility {
-    Always,
-    NotInCombat,
-    InCombat
+public enum CompassVisibility
+{
+    Always
+  , NotInCombat
+  , InCombat
 }

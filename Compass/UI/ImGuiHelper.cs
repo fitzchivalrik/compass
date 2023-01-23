@@ -5,9 +5,11 @@ using ImGuiNET;
 
 namespace Compass.UI;
 
-public static class ImGuiHelper {
+public static class ImGuiHelper
+{
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static void ImageRotated(IntPtr texId, Vector2 center, Vector2 size, float angle, Vector2 uv, Vector2 uv1, ImDrawListPtr drawList) {
+    internal static void ImageRotated(nint texId, Vector2 center, Vector2 size, float angle, Vector2 uv, Vector2 uv1, ImDrawListPtr drawList)
+    {
         var cosA = MathF.Cos(angle);
         var sinA = MathF.Sin(angle);
         drawList.AddImageQuad(
@@ -23,22 +25,25 @@ public static class ImGuiHelper {
         );
     }
 
-    internal static bool DrawTreeCheckbox(string label, ref bool open, Func<bool> drawConfig) {
+    internal static bool DrawTreeCheckbox(string label, ref bool open, Func<bool> drawConfig)
+    {
         var changed = ImGui.Checkbox($"###{label.GetHashCode()}", ref open);
         ImGui.SameLine();
-        if (open) {
+        if (open)
+        {
             if (!ImGui.TreeNodeEx(label)) return changed;
             changed |= drawConfig();
             ImGui.TreePop();
-        }
-        else {
+        } else
+        {
             DummyTreeNode(label);
         }
 
         return changed;
     }
 
-    private static void DummyTreeNode(string label, ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen) {
+    private static void DummyTreeNode(string label, ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen)
+    {
         ImGui.PushStyleColor(ImGuiCol.HeaderHovered, 0x0);
         ImGui.PushStyleColor(ImGuiCol.HeaderActive, 0x0);
         ImGui.TreeNodeEx(label, flags);

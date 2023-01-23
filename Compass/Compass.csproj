@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net7.0-windows</TargetFramework>
         <LangVersion>latest</LangVersion>
-        <VersionPrefix>1.26.2</VersionPrefix>
+        <VersionPrefix>1.26.3</VersionPrefix>
         <Authors>Chivalrik</Authors>
         <Company>Chivalrik</Company>
         <Nullable>enable</Nullable>

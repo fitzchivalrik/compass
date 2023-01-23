@@ -10,7 +10,8 @@ namespace Compass.Data;
 // It is a struct and not a class because that makes 'measurable' (draw time window of Dalamud)
 // difference in draw time; a struct being faster.
 // TODO: Split up in smaller structs
-internal struct DrawVariables {
+internal struct DrawVariables
+{
     internal readonly Vector2 Centre                 = new(835 + 125f, 515 + 25f);
     internal readonly Vector2 BackgroundPMin         = Vector2.Zero;
     internal readonly Vector2 BackgroundPMax         = Vector2.Zero;
@@ -46,9 +47,11 @@ internal struct DrawVariables {
     internal readonly int   ComponentIconLoopStart              = 0;
     internal readonly int   ComponentIconLoopEnd                = 0;
 
-    public DrawVariables() { }
+    public DrawVariables()
+    { }
 
-    internal DrawVariables(Configuration config) {
+    internal DrawVariables(Configuration config)
+    {
         Scale                               = config.ImGuiCompassScale * ImGui.GetIO().FontGlobalScale;
         HeightScale                         = ImGui.GetIO().FontGlobalScale;
         DistanceScaleFactorForRotationIcons = Scale * 0.7f;
@@ -64,16 +67,18 @@ internal struct DrawVariables {
 
         BackgroundPMin = new Vector2(
             Centre.X - 5 - HalfWidth * config.ImGuiCompassReverseMaskPercentage
-            , Centre.Y - HalfHeight * 0.5f - 2
+          , Centre.Y - HalfHeight * 0.5f - 2
         );
         BackgroundPMax = new Vector2(
             Centre.X + 5 + HalfWidth * config.ImGuiCompassReverseMaskPercentage
-            , Centre.Y + HalfHeight * 0.5f + 2
+          , Centre.Y + HalfHeight * 0.5f + 2
         );
-        BackgroundLinePMin = BackgroundPMin with {
+        BackgroundLinePMin = BackgroundPMin with
+        {
             Y = config.ImGuiCompassBackgroundLineOffset + BackgroundPMin.Y + HalfHeight
         };
-        BackgroundLinePMax = BackgroundPMax with {
+        BackgroundLinePMax = BackgroundPMax with
+        {
             Y = config.ImGuiCompassBackgroundLineOffset + BackgroundPMin.Y + HalfHeight
         };
         DistanceToTargetPMin = Centre + config.ImGuiCompassDistanceToTargetOffset;

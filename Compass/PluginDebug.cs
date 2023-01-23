@@ -16,7 +16,7 @@ public unsafe partial class Plugin {
             _pluginInterface.UiBuilder.Draw += BuildDebugUi;
         }) {
             HelpMessage = $"Open {PluginName} Debug menu.",
-            ShowInHelp  = false
+            ShowInHelp = false
         });
 
 

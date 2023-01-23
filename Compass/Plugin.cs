@@ -16,7 +16,8 @@ using Dalamud.Plugin;
 namespace Compass;
 
 // ReSharper disable once ClassNeverInstantiated.Global Instantiated by Dalamud
-public partial class Plugin : IDalamudPlugin {
+public partial class Plugin : IDalamudPlugin
+{
     public const     string                 PluginName = "Compass";
     public           string                 Name => PluginName;
     private const    string                 Command = "/compass";
@@ -29,14 +30,15 @@ public partial class Plugin : IDalamudPlugin {
     private          bool                   _isDisposed;
 
     public Plugin(
-        DalamudPluginInterface             pi
-        , SigScanner                       sigScanner
-        , ClientState                      clientState
-        , CommandManager                   commands
-        , Condition                        condition
-        , TargetManager                    targetManager
-        , [RequiredVersion("1.0")] GameGui gameGui
-    ) {
+        DalamudPluginInterface           pi
+      , SigScanner                       sigScanner
+      , ClientState                      clientState
+      , CommandManager                   commands
+      , Condition                        condition
+      , TargetManager                    targetManager
+      , [RequiredVersion("1.0")] GameGui gameGui
+    )
+    {
         _pluginInterface = pi;
         _config          = GetAndMigrateConfig(pi);
         _clientState     = clientState;
@@ -51,15 +53,17 @@ public partial class Plugin : IDalamudPlugin {
         _clientState.Login  += OnLogin;
         _clientState.Logout += OnLogout;
 
-        _commands.AddHandler(Command, new CommandInfo(CommandHandler) {
+        _commands.AddHandler(Command, new CommandInfo(CommandHandler)
+        {
             HelpMessage =
-                string.Format(i18n.command_help_text, PluginName, Command),
-            ShowInHelp = true
+                string.Format(i18n.command_help_text, PluginName, Command)
+          , ShowInHelp = true
         });
 
         DebugCtor(sigScanner);
         // TODO Need a double check for existing config, else this overrides position
-        if (_pluginInterface.Reason == PluginLoadReason.Installer) {
+        if (_pluginInterface.Reason == PluginLoadReason.Installer)
+        {
             // NOTE: Centers compass on first install
             PluginLog.Information("Fresh install of Compass; centering compass, drawing modal.");
             var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size * 0.5f).X;
@@ -72,21 +76,25 @@ public partial class Plugin : IDalamudPlugin {
         if (_clientState.LocalPlayer is not null) OnLogin(null!, null!);
     }
 
-    private void OnLogout(object? sender, EventArgs e) {
+    private void OnLogout(object? sender, EventArgs e)
+    {
         _pluginInterface.UiBuilder.OpenConfigUi -= OnOpenConfigUi;
         _pluginInterface.UiBuilder.Draw         -= DrawConfigUi;
 
         _pluginInterface.UiBuilder.Draw -= _compass.Draw;
     }
 
-    private void OnLogin(object? sender, EventArgs e) {
+    private void OnLogin(object? sender, EventArgs e)
+    {
         _pluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
         _compass.UpdateCachedVariables();
         _pluginInterface.UiBuilder.Draw += _compass.Draw;
     }
 
-    private void CommandHandler(string _command, string args) {
-        switch (args) {
+    private void CommandHandler(string _command, string args)
+    {
+        switch (args)
+        {
             case "toggle":
                 _config.ImGuiCompassEnable ^= true;
                 _compass.UpdateCachedVariables();
@@ -118,10 +126,13 @@ public partial class Plugin : IDalamudPlugin {
         }
     }
 
-    private static Configuration GetAndMigrateConfig(DalamudPluginInterface pi) {
+    private static Configuration GetAndMigrateConfig(DalamudPluginInterface pi)
+    {
         var config = pi.GetPluginConfig() as Configuration ?? new Configuration();
-        switch (config.Version) {
-            case 0: {
+        switch (config.Version)
+        {
+            case 0:
+            {
                 PluginLog.Debug("Migrate configuration 0 to version 1:");
                 PluginLog.Debug($"HideInCombat: ${config.HideInCombat}");
                 config.Visibility = config.HideInCombat ? CompassVisibility.NotInCombat : CompassVisibility.Always;
@@ -136,18 +147,25 @@ public partial class Plugin : IDalamudPlugin {
         //  but apart from that I am unsure why _this_ was the solution I came up with. Oh well.
         config.ShouldHideOnUiObject = Constant.InitialUiObjectArray;
         for (var i = 0; i < config.ShouldHideOnUiObjectSerializer.Length; i++)
+        {
             config.ShouldHideOnUiObject[i].disable = config.ShouldHideOnUiObjectSerializer[i];
+        }
+
         if (config.ShouldHideOnUiObjectSerializer.Length < config.ShouldHideOnUiObject.Length)
+        {
             Array.Resize(ref config.ShouldHideOnUiObjectSerializer, config.ShouldHideOnUiObject.Length);
+        }
 
         return config;
     }
 
     #region UI
 
-    private void DrawConfigUi() {
+    private void DrawConfigUi()
+    {
         var (shouldBuildConfigUi, changedConfig) = Config.Draw(_config);
-        if (changedConfig) {
+        if (changedConfig)
+        {
             _pluginInterface.SavePluginConfig(_config);
             _compass.UpdateCachedVariables();
         }
@@ -157,12 +175,16 @@ public partial class Plugin : IDalamudPlugin {
         _buildingConfigUi               =  false;
     }
 
-    private void OnOpenConfigUi() {
+    private void OnOpenConfigUi()
+    {
         _buildingConfigUi = !_buildingConfigUi;
         if (_buildingConfigUi)
+        {
             _pluginInterface.UiBuilder.Draw += DrawConfigUi;
-        else
+        } else
+        {
             _pluginInterface.UiBuilder.Draw -= DrawConfigUi;
+        }
     }
 
     #endregion
@@ -177,14 +199,17 @@ public partial class Plugin : IDalamudPlugin {
 
     #region Dispose
 
-    public void Dispose() {
+    public void Dispose()
+    {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
 
-    private void Dispose(bool disposing) {
+    private void Dispose(bool disposing)
+    {
         if (_isDisposed) return;
-        if (disposing) {
+        if (disposing)
+        {
             // Dispose managed resources
             OnLogout(null!, null!);
             _clientState.Login  -= OnLogin;
@@ -197,7 +222,8 @@ public partial class Plugin : IDalamudPlugin {
         _isDisposed = true;
     }
 
-    ~Plugin() {
+    ~Plugin()
+    {
         Dispose(false);
     }
 

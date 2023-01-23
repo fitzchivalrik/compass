@@ -11,14 +11,16 @@ using ImGuiNET;
 
 namespace Compass.UI;
 
-internal static class CompassWindow {
+internal static class CompassWindow
+{
     internal static Vector2 Draw(
-        DrawVariables drawVariables,
-        Pointers      pointers,
-        float         cameraRotationInRadian,
-        Vector2       playerPosition,
-        Configuration config
-    ) {
+        DrawVariables drawVariables
+      , Pointers      pointers
+      , float         cameraRotationInRadian
+      , Vector2       playerPosition
+      , Configuration config
+    )
+    {
         const ImGuiWindowFlags flags =
             ImGuiWindowFlags.NoDecoration
             | ImGuiWindowFlags.NoMove
@@ -55,6 +57,7 @@ internal static class CompassWindow {
             config
         );
         if (config.ShowInterCardinals)
+        {
             DrawInterCardinals(
                 playerForward,
                 drawVariables.Centre,
@@ -63,7 +66,10 @@ internal static class CompassWindow {
                 config.ImGuiCompassCardinalsOffset,
                 pointers.NaviMapTextureD3D11ShaderResourceView
             );
+        }
+
         if (config.ShowCardinals)
+        {
             DrawCardinals(
                 playerForward,
                 drawVariables.Centre,
@@ -73,8 +79,12 @@ internal static class CompassWindow {
                 config.ImGuiCompassCardinalsOffset,
                 pointers.NaviMapTextureD3D11ShaderResourceView
             );
+        }
+
         if (config.ShowWeatherIcon)
-            unsafe {
+        {
+            unsafe
+            {
                 DrawWeatherIcon(
                     drawVariables.WeatherIconBorderPMin,
                     drawVariables.WeatherIconBorderPMax,
@@ -84,9 +94,12 @@ internal static class CompassWindow {
                     pointers.WeatherIconNode
                 );
             }
+        }
 
         if (config.ShowDistanceToTarget)
-            unsafe {
+        {
+            unsafe
+            {
                 DrawDistanceToTarget(
                     config.ImGuiCompassDistanceToTargetMouseOverPrio,
                     pointers.TargetSystem,
@@ -97,9 +110,12 @@ internal static class CompassWindow {
                     config.DistanceToTargetSuffix
                 );
             }
+        }
 
         if (!config.ShowOnlyCardinals)
-            unsafe {
+        {
+            unsafe
+            {
                 playerPosition = DrawIcons(
                     drawVariables.CurrentScaleOffset,
                     drawVariables.ComponentIconLoopStart,
@@ -125,6 +141,7 @@ internal static class CompassWindow {
                     config.FilteredIconIds
                 );
             }
+        }
 
         drawList.PopClipRect();
         backgroundDrawList.PopClipRect();
@@ -133,51 +150,57 @@ internal static class CompassWindow {
     }
 
     private static void DrawImGuiCompassBackground(
-        Vector2       backgroundPMin,
-        Vector2       backgroundPMax,
-        Vector2       backgroundLinePMin,
-        Vector2       backgroundLinePMax,
-        uint          backgroundColour,
-        uint          backgroundBorderColour,
-        uint          backgroundLineColour,
-        Configuration config
-    ) {
+        Vector2       backgroundPMin
+      , Vector2       backgroundPMax
+      , Vector2       backgroundLinePMin
+      , Vector2       backgroundLinePMax
+      , uint          backgroundColour
+      , uint          backgroundBorderColour
+      , uint          backgroundLineColour
+      , Configuration config
+    )
+    {
         if (!config.ImGuiCompassEnableBackground) return;
         var backgroundDrawList = ImGui.GetBackgroundDrawList();
         if (config.ImGuiCompassBackground is ImGuiCompassBackgroundStyle.Filled or ImGuiCompassBackgroundStyle.FilledAndBorder)
+        {
             backgroundDrawList.AddRectFilled(backgroundPMin
-                , backgroundPMax
-                , backgroundColour
-                , config.ImGuiCompassBackgroundRounding
+              , backgroundPMax
+              , backgroundColour
+              , config.ImGuiCompassBackgroundRounding
             );
-        switch (config.ImGuiCompassBackground) {
+        }
+
+        switch (config.ImGuiCompassBackground)
+        {
             case ImGuiCompassBackgroundStyle.Border or ImGuiCompassBackgroundStyle.FilledAndBorder:
                 backgroundDrawList.AddRect(backgroundPMin - Vector2.One
-                    , backgroundPMax + Vector2.One
-                    , backgroundBorderColour
-                    , config.ImGuiCompassBackgroundRounding
-                    , ImDrawFlags.RoundCornersAll
-                    , config.ImGuiBackgroundBorderThickness
+                  , backgroundPMax + Vector2.One
+                  , backgroundBorderColour
+                  , config.ImGuiCompassBackgroundRounding
+                  , ImDrawFlags.RoundCornersAll
+                  , config.ImGuiBackgroundBorderThickness
                 );
                 break;
             case ImGuiCompassBackgroundStyle.Line:
                 backgroundDrawList.AddLine(backgroundLinePMin
-                    , backgroundLinePMax
-                    , backgroundLineColour
-                    , config.ImGuiBackgroundLineThickness
+                  , backgroundLinePMax
+                  , backgroundLineColour
+                  , config.ImGuiBackgroundLineThickness
                 );
                 break;
         }
     }
 
     private static void DrawInterCardinals(
-        Vector2 playerForward,
-        Vector2 centre,
-        float   halfWidth28,
-        float   compassUnit,
-        int     cardinalsOffset,
-        nint    naviMapTextureD3D11ShaderResourceView
-    ) {
+        Vector2 playerForward
+      , Vector2 centre
+      , float   halfWidth28
+      , float   compassUnit
+      , int     cardinalsOffset
+      , nint    naviMapTextureD3D11ShaderResourceView
+    )
+    {
         var         backgroundDrawList = ImGui.GetBackgroundDrawList();
         const float n                  = 0.7071067811865475f;
         // const float n  = 0.5f;
@@ -197,74 +220,75 @@ internal static class CompassWindow {
         var pMaxXRight = centre.X + 3 * quarterWidth28;
         backgroundDrawList.AddImage( // North
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(pMinXLeft + northeastOffset, pMinY)
-            , new Vector2(pMaxXLeft + northeastOffset, pMaxY)
-            , new Vector2(0.4017857f, 0.8301887f)
-            , new Vector2(0.4732143f, 0.9811321f)
+          , new Vector2(pMinXLeft + northeastOffset, pMinY)
+          , new Vector2(pMaxXLeft + northeastOffset, pMaxY)
+          , new Vector2(0.4017857f, 0.8301887f)
+          , new Vector2(0.4732143f, 0.9811321f)
         );
         backgroundDrawList.AddImage( // East
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(pMinXRight + northeastOffset, pMinY)
-            , new Vector2(pMaxXRight + northeastOffset, pMaxY)
-            , new Vector2(0.5446429f, 0.8301887f)
-            , new Vector2(0.5892857f, 0.9811321f)
+          , new Vector2(pMinXRight + northeastOffset, pMinY)
+          , new Vector2(pMaxXRight + northeastOffset, pMaxY)
+          , new Vector2(0.5446429f, 0.8301887f)
+          , new Vector2(0.5892857f, 0.9811321f)
         );
         var southeastOffset = compassUnit * Util.SignedAngle(southeast, playerForward);
         backgroundDrawList.AddImage( //South
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(pMinXLeft + southeastOffset, pMinY)
-            , new Vector2(pMaxXLeft + southeastOffset, pMaxY)
-            , new Vector2(0.5892857f, 0.8301887f)
-            , new Vector2(0.6339286f, 0.9811321f)
+          , new Vector2(pMinXLeft + southeastOffset, pMinY)
+          , new Vector2(pMaxXLeft + southeastOffset, pMaxY)
+          , new Vector2(0.5892857f, 0.8301887f)
+          , new Vector2(0.6339286f, 0.9811321f)
         );
         backgroundDrawList.AddImage( // East
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(pMinXRight + southeastOffset, pMinY)
-            , new Vector2(pMaxXRight + southeastOffset, pMaxY)
-            , new Vector2(0.5446429f, 0.8301887f)
-            , new Vector2(0.5892857f, 0.9811321f)
+          , new Vector2(pMinXRight + southeastOffset, pMinY)
+          , new Vector2(pMaxXRight + southeastOffset, pMaxY)
+          , new Vector2(0.5446429f, 0.8301887f)
+          , new Vector2(0.5892857f, 0.9811321f)
         );
         var southwestOffset = compassUnit * Util.SignedAngle(southwest, playerForward);
         backgroundDrawList.AddImage( //South
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(pMinXLeft + southwestOffset, pMinY)
-            , new Vector2(pMaxXLeft + southwestOffset, pMaxY)
-            , new Vector2(0.5892857f, 0.8301887f)
-            , new Vector2(0.6339286f, 0.9811321f)
+          , new Vector2(pMinXLeft + southwestOffset, pMinY)
+          , new Vector2(pMaxXLeft + southwestOffset, pMaxY)
+          , new Vector2(0.5892857f, 0.8301887f)
+          , new Vector2(0.6339286f, 0.9811321f)
         );
         backgroundDrawList.AddImage( // West
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(pMinXRight + southwestOffset, pMinY)
-            , new Vector2(pMaxXRight + southwestOffset, pMaxY)
-            , new Vector2(0.4732143f, 0.8301887f)
-            , new Vector2(0.5446429f, 0.9811321f)
+          , new Vector2(pMinXRight + southwestOffset, pMinY)
+          , new Vector2(pMaxXRight + southwestOffset, pMaxY)
+          , new Vector2(0.4732143f, 0.8301887f)
+          , new Vector2(0.5446429f, 0.9811321f)
         );
         var northwestOffset = compassUnit * Util.SignedAngle(northwest, playerForward);
         backgroundDrawList.AddImage( // North
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(pMinXLeft + northwestOffset, pMinY)
-            , new Vector2(pMaxXLeft + northwestOffset, pMaxY)
-            , new Vector2(0.4017857f, 0.8301887f)
-            , new Vector2(0.4732143f, 0.9811321f)
+          , new Vector2(pMinXLeft + northwestOffset, pMinY)
+          , new Vector2(pMaxXLeft + northwestOffset, pMaxY)
+          , new Vector2(0.4017857f, 0.8301887f)
+          , new Vector2(0.4732143f, 0.9811321f)
         );
         backgroundDrawList.AddImage( // West
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(pMinXRight + northwestOffset, pMinY)
-            , new Vector2(pMaxXRight + northwestOffset, pMaxY)
-            , new Vector2(0.4732143f, 0.8301887f)
-            , new Vector2(0.5446429f, 0.9811321f)
+          , new Vector2(pMinXRight + northwestOffset, pMinY)
+          , new Vector2(pMaxXRight + northwestOffset, pMaxY)
+          , new Vector2(0.4732143f, 0.8301887f)
+          , new Vector2(0.5446429f, 0.9811321f)
         );
     }
 
     private static void DrawCardinals(
-        Vector2 playerForward,
-        Vector2 centre,
-        float   halfWidth40,
-        float   halfWidth28,
-        float   compassUnit,
-        int     cardinalsOffset,
-        nint    naviMapTextureD3D11ShaderResourceView
-    ) {
+        Vector2 playerForward
+      , Vector2 centre
+      , float   halfWidth40
+      , float   halfWidth28
+      , float   compassUnit
+      , int     cardinalsOffset
+      , nint    naviMapTextureD3D11ShaderResourceView
+    )
+    {
         var backgroundDrawList = ImGui.GetBackgroundDrawList();
 
         var east  = Vector2.UnitX;
@@ -277,76 +301,79 @@ internal static class CompassWindow {
         var eastOffset = compassUnit * Util.SignedAngle(east, playerForward);
         backgroundDrawList.AddImage( //East
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth28 + eastOffset, pMinY)
-            , new Vector2(centre.X + eastOffset + halfWidth28, pMaxY)
-            , new Vector2(0.5446429f, 0.8301887f)
-            , new Vector2(0.5892857f, 0.9811321f)
+          , new Vector2(centre.X - halfWidth28 + eastOffset, pMinY)
+          , new Vector2(centre.X + eastOffset + halfWidth28, pMaxY)
+          , new Vector2(0.5446429f, 0.8301887f)
+          , new Vector2(0.5892857f, 0.9811321f)
         );
         var southOffset = compassUnit * Util.SignedAngle(south, playerForward);
         backgroundDrawList.AddImage( // South
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth28 + southOffset, pMinY)
-            , new Vector2(centre.X + southOffset + halfWidth28, pMaxY)
-            , new Vector2(0.5892857f, 0.8301887f)
-            , new Vector2(0.6339286f, 0.9811321f)
+          , new Vector2(centre.X - halfWidth28 + southOffset, pMinY)
+          , new Vector2(centre.X + southOffset + halfWidth28, pMaxY)
+          , new Vector2(0.5892857f, 0.8301887f)
+          , new Vector2(0.6339286f, 0.9811321f)
         );
         var westOffset = compassUnit * Util.SignedAngle(west, playerForward);
         backgroundDrawList.AddImage( //West
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth40 + westOffset, pMinY)
-            , new Vector2(centre.X + westOffset + halfWidth40, pMaxY)
-            , new Vector2(0.4732143f, 0.8301887f)
-            , new Vector2(0.5446429f, 0.9811321f)
+          , new Vector2(centre.X - halfWidth40 + westOffset, pMinY)
+          , new Vector2(centre.X + westOffset + halfWidth40, pMaxY)
+          , new Vector2(0.4732143f, 0.8301887f)
+          , new Vector2(0.5446429f, 0.9811321f)
         );
         var northOffset = compassUnit * Util.SignedAngle(north, playerForward);
         backgroundDrawList.AddImage( // North
             naviMapTextureD3D11ShaderResourceView
-            , new Vector2(centre.X - halfWidth40 + northOffset, pMinY)
-            , new Vector2(centre.X + northOffset + halfWidth40, pMaxY)
-            , new Vector2(0.4017857f, 0.8301887f)
-            , new Vector2(0.4732143f, 0.9811321f)
-            , 0xFF0064B0 //ABGR ImGui.ColorConvertFloat4ToU32(new Vector4(176f / 255f, 100f / 255f, 0f, 1))
+          , new Vector2(centre.X - halfWidth40 + northOffset, pMinY)
+          , new Vector2(centre.X + northOffset + halfWidth40, pMaxY)
+          , new Vector2(0.4017857f, 0.8301887f)
+          , new Vector2(0.4732143f, 0.9811321f)
+          , 0xFF0064B0 //ABGR ImGui.ColorConvertFloat4ToU32(new Vector4(176f / 255f, 100f / 255f, 0f, 1))
         );
     }
 
     private static unsafe void DrawWeatherIcon(
-        Vector2       weatherIconBorderPMin,
-        Vector2       weatherIconBorderPMax,
-        Vector2       weatherIconPMin,
-        Vector2       weatherIconPMax,
-        nint          naviMapTextureD3D11ShaderResourceView,
-        AtkImageNode* weatherIconNode
-    ) {
+        Vector2       weatherIconBorderPMin
+      , Vector2       weatherIconBorderPMax
+      , Vector2       weatherIconPMin
+      , Vector2       weatherIconPMax
+      , nint          naviMapTextureD3D11ShaderResourceView
+      , AtkImageNode* weatherIconNode
+    )
+    {
         var backgroundDrawList = ImGui.GetBackgroundDrawList();
         backgroundDrawList.PushClipRectFullScreen();
-        try {
+        try
+        {
             if (!weatherIconNode->AtkResNode.IsVisible) return;
             //Background of Weather Icon
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
-                , weatherIconBorderPMin
-                , weatherIconBorderPMax
-                , new Vector2(0.08035714f, 0.8301887f)
-                , new Vector2(0.1607143f, 1));
+              , weatherIconBorderPMin
+              , weatherIconBorderPMax
+              , new Vector2(0.08035714f, 0.8301887f)
+              , new Vector2(0.1607143f, 1));
             //Weather Icon
             var tex = weatherIconNode->PartsList->Parts[0].UldAsset->AtkTexture.Resource->KernelTextureObject;
             backgroundDrawList.AddImage(
-                new IntPtr(tex->D3D11ShaderResourceView), weatherIconPMin,
+                new nint(tex->D3D11ShaderResourceView), weatherIconPMin,
                 weatherIconPMax);
             //Border around Weather Icon
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
-                , weatherIconBorderPMin
-                , weatherIconBorderPMax
-                , new Vector2(0.1607143f, 0.8301887f)
-                , new Vector2(0.2410714f, 1));
+              , weatherIconBorderPMin
+              , weatherIconBorderPMax
+              , new Vector2(0.1607143f, 0.8301887f)
+              , new Vector2(0.2410714f, 1));
         }
 #if DEBUG
         catch (Exception e) {
             PluginLog.Error(e.ToString());
         }
 #else
-        catch {
+        catch
+        {
             // ignored
         }
 #endif
@@ -354,24 +381,26 @@ internal static class CompassWindow {
     }
 
     private static unsafe void DrawDistanceToTarget(
-        bool          prioritizeMouseOverTarget,
-        TargetSystem* targetSystem,
-        float         scale,
-        uint          colour,
-        Vector2       pMin,
-        string        prefix,
-        string        suffix
-    ) {
+        bool          prioritizeMouseOverTarget
+      , TargetSystem* targetSystem
+      , float         scale
+      , uint          colour
+      , Vector2       pMin
+      , string        prefix
+      , string        suffix
+    )
+    {
         var drawList = ImGui.GetWindowDrawList();
         var current = prioritizeMouseOverTarget && targetSystem->MouseOverTarget != null
             ? targetSystem->MouseOverTarget
             : targetSystem->GetCurrentTarget();
         if (current is null) return;
-        var distanceFromPlayer = *current switch {
+        var distanceFromPlayer = *current switch
+        {
             { ObjectKind: var o } when
                 (ObjectKind)o is ObjectKind.Pc or ObjectKind.BattleNpc or ObjectKind.EventNpc
-                => current->YalmDistanceFromPlayerX,
-            _ => byte.MaxValue
+                => current->YalmDistanceFromPlayerX
+          , _ => byte.MaxValue
         };
         if (distanceFromPlayer == byte.MaxValue) return;
         var text                  = $"{prefix}{distanceFromPlayer + 1}{suffix}";
@@ -383,83 +412,87 @@ internal static class CompassWindow {
         drawList.AddText(font,
             distanceToTargetScale,
             pMin + new Vector2(-1, +1)
-            , 0xFF000000,
+          , 0xFF000000,
             text);
         drawList.AddText(font,
             distanceToTargetScale,
             pMin + new Vector2(0, +1)
-            , 0xFF000000
-            , text);
+          , 0xFF000000
+          , text);
         drawList.AddText(font,
             distanceToTargetScale,
             pMin + new Vector2(+1, +1)
-            , 0xFF000000,
+          , 0xFF000000,
             text);
         drawList.AddText(font,
             distanceToTargetScale,
             pMin + new Vector2(-1, 0)
-            , 0xFF000000,
+          , 0xFF000000,
             text);
         drawList.AddText(font,
             distanceToTargetScale,
             pMin + new Vector2(+1, 0)
-            , 0xFF000000,
+          , 0xFF000000,
             text);
         drawList.AddText(font,
             distanceToTargetScale,
             pMin + new Vector2(-1, -1)
-            , 0xFF000000,
+          , 0xFF000000,
             text);
         drawList.AddText(font,
             distanceToTargetScale,
             pMin + new Vector2(0, -1)
-            , 0xFF000000,
+          , 0xFF000000,
             text);
         drawList.AddText(font,
             distanceToTargetScale,
             pMin + new Vector2(+1, -1)
-            , 0xFF000000,
+          , 0xFF000000,
             text);
         drawList.AddText(font, distanceToTargetScale, pMin, colour, text);
     }
 
     // TODO: Reduce parameter counts by splitting DrawVariables in smaller structs?
     private static unsafe Vector2 DrawIcons(
-        int                currentScaleOffset,
-        int                componentIconLoopStart,
-        int                componentIconLoopEnd,
-        int                centreMarkerOffset,
-        float              maxDistance,
-        float              compassUnit,
-        float              scale,
-        float              rotationIconHalfWidth,
-        float              halfWidth40,
-        float              minScaleFactor,
-        float              backgroundRounding,
-        Vector2            playerForward,
-        Vector2            playerPosition,
-        Vector2            centre,
-        Vector2            backgroundPMin,
-        Vector2            backgroundPMax,
-        bool               useAreaMapAsSource,
-        bool               enableCentreMarker,
-        bool               flipCentreMarker,
-        AtkUnitBase*       unitBase,
-        AtkComponentNode*  rootComponentNode,
-        IReadOnlySet<uint> filteredIconIds
-    ) {
-        try {
+        int                currentScaleOffset
+      , int                componentIconLoopStart
+      , int                componentIconLoopEnd
+      , int                centreMarkerOffset
+      , float              maxDistance
+      , float              compassUnit
+      , float              scale
+      , float              rotationIconHalfWidth
+      , float              halfWidth40
+      , float              minScaleFactor
+      , float              backgroundRounding
+      , Vector2            playerForward
+      , Vector2            playerPosition
+      , Vector2            centre
+      , Vector2            backgroundPMin
+      , Vector2            backgroundPMax
+      , bool               useAreaMapAsSource
+      , bool               enableCentreMarker
+      , bool               flipCentreMarker
+      , AtkUnitBase*       unitBase
+      , AtkComponentNode*  rootComponentNode
+      , IReadOnlySet<uint> filteredIconIds
+    )
+    {
+        try
+        {
             var drawList = ImGui.GetWindowDrawList();
             // We loop through all relevant nodes on _NaviMap or AreaMap, depending on the configuration
             // This throws sometimes, but we just ignore those small exceptions, it works a few frames later anyways
             var mapScale       = *(float*)((nint)unitBase + currentScaleOffset);
             var distanceOffset = 20f * mapScale;
             maxDistance *= mapScale;
-            for (var i = componentIconLoopStart; i < rootComponentNode->Component->UldManager.NodeListCount; i++) {
+            for (var i = componentIconLoopStart; i < rootComponentNode->Component->UldManager.NodeListCount; i++)
+            {
                 var mapIconComponentNode =
                     (AtkComponentNode*)rootComponentNode->Component->UldManager.NodeList[i];
                 if (!mapIconComponentNode->AtkResNode.IsVisible) continue;
-                for (var j = 2; j < componentIconLoopEnd; j++) {
+                for (var j = 2; j < componentIconLoopEnd; j++)
+                {
                     var imgNode = (AtkImageNode*)mapIconComponentNode->Component->UldManager.NodeList[j];
                     if (imgNode->AtkResNode.Type != NodeType.Image) continue;
                     if (!imgNode->AtkResNode.IsVisible || !imgNode->AtkResNode.ParentNode->IsVisible) continue;
@@ -487,7 +520,7 @@ internal static class CompassWindow {
                     //iconId = 0 (=> success == false as IconID will never be 0) Must have been 'NaviMap(_hr1)?\.tex' (and only that hopefully)
                     if (filteredIconIds.Contains(iconId)) continue;
 
-                    var textureIdPtr = new IntPtr(tex->D3D11ShaderResourceView);
+                    var textureIdPtr = new nint(tex->D3D11ShaderResourceView);
 
                     Vector2 pMin;
                     Vector2 pMax;
@@ -495,7 +528,8 @@ internal static class CompassWindow {
                     var     uv1        = Vector2.One;
                     var     tintColour = Constant.WhiteColour;
                     var     rotate     = false;
-                    switch (iconId) {
+                    switch (iconId)
+                    {
                         case 0 when useAreaMapAsSource: //0 interpreted as NaviMap texture atlas
                             continue;
                         case 0 when imgNode->PartId == 21: //Glowy thingy
@@ -505,7 +539,10 @@ internal static class CompassWindow {
                             // NOTE (Chiv) Glowy thingy always rotates, but whether its in or outside the mask
                             // determines how to calculate its position on the compass
                             if (mapIconComponentNode->AtkResNode.Rotation == 0)
+                            {
                                 goto default;
+                            }
+
                             goto case 1;
                         case 0: //Arrows to quests and fates, part of the Navimap texture atlas
                             // NOTE: We assume part.Width == part.Height == 24
@@ -562,11 +599,14 @@ internal static class CompassWindow {
                                     maxDistance, minScaleFactor);
                             if (inArea)
                                 //*((byte*) &tintColour + 3) = 0x33  == (0x33FFFFFF) & (tintColour)
+                            {
                                 ImGui.GetBackgroundDrawList().AddRectFilled(backgroundPMin
-                                    , backgroundPMax
-                                    , 0x33FFFFFF & tintColour //Set A to 0.2
-                                    , backgroundRounding
+                                  , backgroundPMax
+                                  , 0x33FFFFFF & tintColour //Set A to 0.2
+                                  , backgroundRounding
                                 );
+                            }
+
                             break;
                         case 060541: // Arrow UP on Circle
                         case 060542: // Arrow UP on Circle
@@ -625,7 +665,10 @@ internal static class CompassWindow {
                             if (mapIconComponentNode->AtkResNode.Rotation == 0)
                                 // => The current quest marker is inside the mask and should be
                                 // treated as a map point
+                            {
                                 goto default;
+                            }
+
                             // => The current quest marker is outside the mask and should be
                             // treated as a rotation
                             goto case 1; //No UV setup needed for quest markers
@@ -650,6 +693,7 @@ internal static class CompassWindow {
 
                     //PluginLog.Debug($"ID: {iconId}; Tintcolor: {tintColour:x8}");
                     if (rotate)
+                    {
                         ImGuiHelper.ImageRotated(
                             textureIdPtr,
                             new Vector2(pMin.X + (pMax.X - pMin.X) * 0.5f, pMin.Y + (pMax.Y - pMin.Y) * 0.5f),
@@ -659,8 +703,10 @@ internal static class CompassWindow {
                             uv1,
                             drawList
                         );
-                    else
+                    } else
+                    {
                         drawList.AddImage(textureIdPtr, pMin, pMax, uv, uv1, tintColour);
+                    }
                 }
             }
         }
@@ -669,7 +715,8 @@ internal static class CompassWindow {
             PluginLog.Error(e.ToString());
         }
 #else
-        catch {
+        catch
+        {
             // ignored
         }
 #endif

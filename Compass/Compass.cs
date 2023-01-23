@@ -12,7 +12,8 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace Compass;
 
-internal class Compass {
+internal class Compass
+{
     private readonly Condition     _condition;
     private readonly Configuration _config;
     private readonly GameGui       _gameGui;
@@ -37,11 +38,12 @@ internal class Compass {
 
 
     internal Compass(
-        Condition                          condition
-        , TargetManager                    targetManager
-        , [RequiredVersion("1.0")] GameGui gameGui
-        , Configuration                    config
-    ) {
+        Condition                        condition
+      , TargetManager                    targetManager
+      , [RequiredVersion("1.0")] GameGui gameGui
+      , Configuration                    config
+    )
+    {
         _condition     = condition;
         _gameGui       = gameGui;
         _targetManager = targetManager;
@@ -50,22 +52,26 @@ internal class Compass {
         UpdateCachedVariables();
     }
 
-    internal void Draw() {
+    internal void Draw()
+    {
         if (!_config.ImGuiCompassEnable) return;
         // To prevent Aesthetician crash. This is unfortunate, but I do not know 
         // of an event or similar which gets fired when transitioning to Aesthetician.
         // Therefore, we need to check every frame.
-        if (_gameGui.GetAddonByName("_CharaMakeBgSelector", 1) != IntPtr.Zero) {
+        if (_gameGui.GetAddonByName("_CharaMakeBgSelector") != nint.Zero)
+        {
             _dirty = true;
             return;
         }
 
-        if (_dirty) {
+        if (_dirty)
+        {
             _dirty = !UpdateCachedVariables();
             return;
         }
 
-        switch (_config.Visibility) {
+        switch (_config.Visibility)
+        {
             case CompassVisibility.Always:
                 break;
             case CompassVisibility.NotInCombat:
@@ -81,8 +87,10 @@ internal class Compass {
         UpdateHideCompass();
         if (_shouldHideCompass) return;
         float cameraRotationInRadian;
-        try {
-            unsafe {
+        try
+        {
+            unsafe
+            {
                 var atkBase = _pointers.CurrentSourceBase;
                 if (atkBase->UldManager.LoadedState != AtkLoadState.Loaded) return;
                 if (!atkBase->IsVisible) return;
@@ -94,7 +102,8 @@ internal class Compass {
                 cameraRotationInRadian = *_pointers.PlayerViewTriangleRotation * Util.Deg2Rad;
             }
         }
-        catch {
+        catch
+        {
             // ignored
             return;
         }
@@ -108,7 +117,8 @@ internal class Compass {
         );
     }
 
-    internal bool UpdateCachedVariables() {
+    internal bool UpdateCachedVariables()
+    {
         if (!UpdateMapPointersCache()) return false;
         _drawVariables = new DrawVariables(_config);
         _uiIdentifiers = _config.ShouldHideOnUiObject
@@ -125,15 +135,17 @@ internal class Compass {
     // Some cases when `_NaviMap` gets created anew:
     // - Aesthetician
     // - Any Deep Dungeon
-    private bool UpdateMapPointersCache() {
-        var ptr = _gameGui.GetAddonByName("_NaviMap", 1);
-        if (ptr == IntPtr.Zero) return false;
-        unsafe {
+    private bool UpdateMapPointersCache()
+    {
+        var ptr = _gameGui.GetAddonByName("_NaviMap");
+        if (ptr == nint.Zero) return false;
+        unsafe
+        {
             var naviMap = (AtkUnitBase*)ptr;
             if (naviMap->UldManager.LoadedState != AtkLoadState.Loaded) return false;
             // Node indices valid as of 6.18
             var naviMapIconsRootComponentNode = (AtkComponentNode*)naviMap->UldManager.NodeList[2];
-            var areaMap                       = (AtkUnitBase*)_gameGui.GetAddonByName("AreaMap", 1);
+            var areaMap                       = (AtkUnitBase*)_gameGui.GetAddonByName("AreaMap");
             var areaMapIconsRootComponentNode = (AtkComponentNode*)areaMap->UldManager.NodeList[3];
 
             // Cardinals, etc. are on the same naviMap texture atlas
@@ -144,7 +156,7 @@ internal class Compass {
                 _config.UseAreaMapAsSource ? areaMap : naviMap,
                 _config.UseAreaMapAsSource ? areaMapIconsRootComponentNode : naviMapIconsRootComponentNode,
                 (AtkImageNode*)((AtkComponentNode*)naviMap->UldManager.NodeList[6])->Component->UldManager.NodeList[2],
-                new IntPtr(
+                new nint(
                     westCardinalAtkImageNode->PartsList->Parts[0]
                        .UldAsset->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
                 )
@@ -154,22 +166,26 @@ internal class Compass {
         return true;
     }
 
-    private void UpdateHideCompass() {
+    private void UpdateHideCompass()
+    {
         // NOTE: We loop through max 8 at a time because else performance suffers too much,
         //  going through the whole list on each frame.
         //  It is better to take each frame roughly the same amount of time instead of having spikes,
         //  which is why this solution is used and not, e.g., only checking for open UI windows every 100ms or so.
-        for (var i = 0; i < Math.Min(8, _uiIdentifiers.Length); i++) {
+        for (var i = 0; i < Math.Min(8, _uiIdentifiers.Length); i++)
+        {
             var uiIdentifier = _uiIdentifiers[_currentUiObjectIndex++];
             _currentUiObjectIndex %= _uiIdentifiers.Length;
-            if (_currentUiObjectIndex == 0) {
+            if (_currentUiObjectIndex == 0)
+            {
                 _shouldHideCompass          = _shouldHideCompassIteration;
                 _shouldHideCompassIteration = false;
             }
 
-            var unitBase = _gameGui.GetAddonByName(uiIdentifier, 1);
-            if (unitBase == IntPtr.Zero) continue;
-            unsafe {
+            var unitBase = _gameGui.GetAddonByName(uiIdentifier);
+            if (unitBase == nint.Zero) continue;
+            unsafe
+            {
                 _shouldHideCompassIteration |= ((AtkUnitBase*)unitBase)->IsVisible;
             }
         }
