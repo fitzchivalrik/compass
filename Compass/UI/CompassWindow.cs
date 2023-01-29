@@ -368,7 +368,8 @@ internal static class CompassWindow
               , new Vector2(0.2410714f, 1));
         }
 #if DEBUG
-        catch (Exception e) {
+        catch (Exception e)
+        {
             PluginLog.Error(e.ToString());
         }
 #else
@@ -500,7 +501,8 @@ internal static class CompassWindow
                     //NOTE Invariant: It should always be a resource
 #if DEBUG
                     var type = part.UldAsset->AtkTexture.TextureType;
-                    if (type != TextureType.Resource) {
+                    if (type != TextureType.Resource)
+                    {
                         PluginLog.Error($"{i} {j} was not a Resource texture");
                         continue;
                     }
@@ -508,6 +510,7 @@ internal static class CompassWindow
                     ;
 #endif
                     var tex = part.UldAsset->AtkTexture.Resource->KernelTextureObject;
+                    if (tex == null) continue;
                     var texFileNameStdString =
                         part.UldAsset->AtkTexture.Resource->TexFileResourceHandle->ResourceHandle
                            .FileName;
@@ -621,6 +624,7 @@ internal static class CompassWindow
                             break;
                         case 071003: // MSQ Ongoing Marker
                         case 071005: // MSQ Complete Marker
+                        case 071006: // Blue Exclamation Mark Marker
                         case 071013: // MSQ Ongoing Red Marker
                         case 071015: // MSQ Complete Red Marker
                         case 071023: // Quest Ongoing Marker
@@ -711,7 +715,8 @@ internal static class CompassWindow
             }
         }
 #if DEBUG
-        catch (Exception e) {
+        catch (Exception e)
+        {
             PluginLog.Error(e.ToString());
         }
 #else

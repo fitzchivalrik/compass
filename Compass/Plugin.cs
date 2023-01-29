@@ -12,6 +12,7 @@ using Dalamud.Interface;
 using Dalamud.IoC;
 using Dalamud.Logging;
 using Dalamud.Plugin;
+using Dalamud.Utility.Signatures;
 
 namespace Compass;
 
@@ -39,6 +40,7 @@ public partial class Plugin : IDalamudPlugin
       , [RequiredVersion("1.0")] GameGui gameGui
     )
     {
+        SignatureHelper.Initialise(this);
         _pluginInterface = pi;
         _config          = GetAndMigrateConfig(pi);
         _clientState     = clientState;
