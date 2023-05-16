@@ -639,6 +639,7 @@ internal static class CompassWindow
                         case 071026: // Weird Blueish Round Exclamation Mark 2 
                         case 071111: // Weird Round Quest Mark  
                         case 071112: // Weird Round Quest Complete Mark
+                        case 060004: // The Hunt Mob Marker
                         case 060954: // Arrow up for quests
                         case 060955: // Arrow down for quests
                         case 060561: // Red Flag (Custom marker)
