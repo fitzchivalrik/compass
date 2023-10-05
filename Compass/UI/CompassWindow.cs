@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using Compass.Data;
 using Dalamud.Interface;
-using Dalamud.Logging;
+using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -370,7 +370,7 @@ internal static class CompassWindow
 #if DEBUG
         catch (Exception e)
         {
-            PluginLog.Error(e.ToString());
+            Plugin.PluginLog.Error(e.ToString());
         }
 #else
         catch
@@ -400,8 +400,8 @@ internal static class CompassWindow
         {
             { ObjectKind: var o } when
                 (ObjectKind)o is ObjectKind.Pc or ObjectKind.BattleNpc or ObjectKind.EventNpc
-                => current->YalmDistanceFromPlayerX
-          , _ => byte.MaxValue
+                => current->YalmDistanceFromPlayerX,
+            _ => byte.MaxValue
         };
         if (distanceFromPlayer == byte.MaxValue) return;
         var text                  = $"{prefix}{distanceFromPlayer + 1}{suffix}";
@@ -503,7 +503,7 @@ internal static class CompassWindow
                     var type = part.UldAsset->AtkTexture.TextureType;
                     if (type != TextureType.Resource)
                     {
-                        PluginLog.Error($"{i} {j} was not a Resource texture");
+                        Plugin.PluginLog.Error($"{i} {j} was not a Resource texture");
                         continue;
                     }
 
@@ -718,7 +718,7 @@ internal static class CompassWindow
 #if DEBUG
         catch (Exception e)
         {
-            PluginLog.Error(e.ToString());
+            Plugin.PluginLog.Error(e.ToString());
         }
 #else
         catch

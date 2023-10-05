@@ -7,6 +7,7 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.Gui;
 using Dalamud.IoC;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
@@ -14,12 +15,12 @@ namespace Compass;
 
 internal class Compass
 {
-    private readonly Condition     _condition;
-    private readonly Configuration _config;
-    private readonly GameGui       _gameGui;
-    private readonly TargetManager _targetManager;
-    private          int           _currentUiObjectIndex;
-    private          bool          _dirty;
+    private readonly ICondition     _condition;
+    private readonly IGameGui       _gameGui;
+    private readonly ITargetManager _targetManager;
+    private readonly Configuration  _config;
+    private          int            _currentUiObjectIndex;
+    private          bool           _dirty;
 
     private DrawVariables _drawVariables;
 
@@ -38,10 +39,10 @@ internal class Compass
 
 
     internal Compass(
-        Condition                        condition
-      , TargetManager                    targetManager
-      , [RequiredVersion("1.0")] GameGui gameGui
-      , Configuration                    config
+        ICondition                        condition
+      , ITargetManager                    targetManager
+      , [RequiredVersion("1.0")] IGameGui gameGui
+      , Configuration                     config
     )
     {
         _condition     = condition;
