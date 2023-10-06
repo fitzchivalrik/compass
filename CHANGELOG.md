@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.27.1
+
+- fix: More icons handled
+
 ## 1.27.0
 
 - chore: Update to API 9

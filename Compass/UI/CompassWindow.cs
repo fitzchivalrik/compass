@@ -633,6 +633,38 @@ internal static class CompassWindow
                         case 071025: // Quest Complete Marker
                         case 071035: // Quest Complete Red Marker
                         case 071155: // Quest Complete Red Marker
+                        case 070961: // Quest with small arrow for area change
+                        case 070962: // Quest with small arrow for area change
+                        case 070963: // Quest with small arrow for area change
+                        case 070964: // Quest with small arrow for area change
+                        case 070965: // Quest with small arrow for area change
+                        case 070966: // Quest with small arrow for area change
+                        case 070967: // Quest with small arrow for area change
+                        case 070968: // Quest with small arrow for area change
+                        case 070969: // Quest with small arrow for area change
+                        case 070970: // Quest with small arrow for area change
+                        case 070971: // Quest with small arrow for area change
+                        case 070972: // Quest with small arrow for area change
+                        case 070973: // Quest with small arrow for area change
+                        case 070974: // Quest with small arrow for area change
+                        case 070975: // Quest with small arrow for area change
+                        case 070976: // Quest with small arrow for area change
+                        case 070981: // Quest with small arrow for area change
+                        case 070982: // Quest with small arrow for area change
+                        case 070983: // Quest with small arrow for area change
+                        case 070984: // Quest with small arrow for area change
+                        case 070985: // Quest with small arrow for area change
+                        case 070986: // Quest with small arrow for area change
+                        case 070987: // Quest with small arrow for area change
+                        case 070988: // Quest with small arrow for area change
+                        case 070989: // Quest with small arrow for area change
+                        case 070990: // Quest with small arrow for area change
+                        case 070991: // Quest with small arrow for area change
+                        case 070992: // Quest with small arrow for area change
+                        case 070993: // Quest with small arrow for area change
+                        case 070994: // Quest with small arrow for area change
+                        case 070995: // Quest with small arrow for area change
+                        case 070996: // Quest with small arrow for area change
                         case 071063: // BookQuest Ongoing Marker
                         case 071065: // BookQuest Complete Marker
                         case 071083: // LeveQuest Ongoing Marker
