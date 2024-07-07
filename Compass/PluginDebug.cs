@@ -65,7 +65,7 @@ public unsafe partial class Plugin
         return result;
     }
 
-    partial void DebugCtor(SigScanner sigScanner)
+    partial void DebugCtor(ISigScanner sigScanner)
     {
         _commands.AddHandler($"{Command}debug", new CommandInfo((_, _) =>
         {

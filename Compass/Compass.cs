@@ -8,6 +8,7 @@ using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.Gui;
 using Dalamud.IoC;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
@@ -17,7 +18,6 @@ internal class Compass
 {
     private readonly ICondition     _condition;
     private readonly IGameGui       _gameGui;
-    private readonly ITargetManager _targetManager;
     private readonly Configuration  _config;
     private          int            _currentUiObjectIndex;
     private          bool           _dirty;
@@ -40,14 +40,12 @@ internal class Compass
 
     internal Compass(
         ICondition                        condition
-      , ITargetManager                    targetManager
-      , [RequiredVersion("1.0")] IGameGui gameGui
+      , IGameGui gameGui
       , Configuration                     config
     )
     {
         _condition     = condition;
         _gameGui       = gameGui;
-        _targetManager = targetManager;
 
         _config = config;
         UpdateCachedVariables();
@@ -144,7 +142,7 @@ internal class Compass
         {
             var naviMap = (AtkUnitBase*)ptr;
             if (naviMap->UldManager.LoadedState != AtkLoadState.Loaded) return false;
-            // Node indices valid as of 6.18
+            // Node indices valid as of 7.0
             var naviMapIconsRootComponentNode = (AtkComponentNode*)naviMap->UldManager.NodeList[2];
             var areaMap                       = (AtkUnitBase*)_gameGui.GetAddonByName("AreaMap");
             var areaMapIconsRootComponentNode = (AtkComponentNode*)areaMap->UldManager.NodeList[3];
@@ -152,7 +150,7 @@ internal class Compass
             // Cardinals, etc. are on the same naviMap texture atlas
             var westCardinalAtkImageNode = (AtkImageNode*)naviMap->UldManager.NodeList[11];
             _pointers = new Pointers(
-                (TargetSystem*)_targetManager.Address,
+                TargetSystem.Instance(),
                 (float*)((nint)naviMap + Constant.PlayerViewTriangleRotationOffset),
                 _config.UseAreaMapAsSource ? areaMap : naviMap,
                 _config.UseAreaMapAsSource ? areaMapIconsRootComponentNode : naviMapIconsRootComponentNode,

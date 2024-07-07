@@ -23,18 +23,17 @@ public partial class Plugin : IDalamudPlugin
     private readonly ICommandManager        _commands;
     private readonly Compass                _compass;
     private readonly Configuration          _config;
-    private readonly DalamudPluginInterface _pluginInterface;
+    private readonly IDalamudPluginInterface _pluginInterface;
     private          bool                   _buildingConfigUi;
     private          bool                   _isDisposed;
 
     public Plugin(
-        DalamudPluginInterface            pi
+        IDalamudPluginInterface           pi
       , ISigScanner                       sigScanner
       , IClientState                      clientState
       , ICommandManager                   commands
       , ICondition                        condition
-      , ITargetManager                    targetManager
-      , [RequiredVersion("1.0")] IGameGui gameGui
+      , IGameGui gameGui
       , IPluginLog                        pluginLog
       , IGameInteropProvider              gameInteropProvider
     )
@@ -47,7 +46,6 @@ public partial class Plugin : IDalamudPlugin
         _commands        = commands;
         _compass = new Compass(
             condition,
-            targetManager,
             gameGui,
             _config
         );
@@ -128,7 +126,7 @@ public partial class Plugin : IDalamudPlugin
         }
     }
 
-    private static Configuration GetAndMigrateConfig(DalamudPluginInterface pi)
+    private static Configuration GetAndMigrateConfig(IDalamudPluginInterface pi)
     {
         var config = pi.GetPluginConfig() as Configuration ?? new Configuration();
         switch (config.Version)
