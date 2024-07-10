@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0-windows</TargetFramework>
+        <TargetFramework>net8.0-windows</TargetFramework>
         <LangVersion>latest</LangVersion>
         <VersionPrefix>1.27.1</VersionPrefix>
         <Authors>Chivalrik</Authors>
@@ -18,7 +18,7 @@
 
     <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
         <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="True" IgnoreExitCode="False">
-            <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput"/>
+            <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
         </Exec>
     </Target>
 
@@ -34,7 +34,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DalamudPackager" Version="2.1.12" />
+        <PackageReference Include="DalamudPackager" Version="2.1.13" />
     </ItemGroup>
 
     <PropertyGroup>

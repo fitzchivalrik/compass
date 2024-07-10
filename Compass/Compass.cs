@@ -41,7 +41,7 @@ internal class Compass
     internal Compass(
         ICondition                        condition
       , ITargetManager                    targetManager
-      , [RequiredVersion("1.0")] IGameGui gameGui
+      , IGameGui gameGui
       , Configuration                     config
     )
     {
@@ -152,7 +152,7 @@ internal class Compass
             // Cardinals, etc. are on the same naviMap texture atlas
             var westCardinalAtkImageNode = (AtkImageNode*)naviMap->UldManager.NodeList[11];
             _pointers = new Pointers(
-                (TargetSystem*)_targetManager.Address,
+                TargetSystem.Instance(),
                 (float*)((nint)naviMap + Constant.PlayerViewTriangleRotationOffset),
                 _config.UseAreaMapAsSource ? areaMap : naviMap,
                 _config.UseAreaMapAsSource ? areaMapIconsRootComponentNode : naviMapIconsRootComponentNode,

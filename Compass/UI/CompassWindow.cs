@@ -346,7 +346,7 @@ internal static class CompassWindow
         backgroundDrawList.PushClipRectFullScreen();
         try
         {
-            if (!weatherIconNode->AtkResNode.IsVisible) return;
+            if (!weatherIconNode->AtkResNode.IsVisible()) return;
             //Background of Weather Icon
             backgroundDrawList.AddImage(
                 naviMapTextureD3D11ShaderResourceView
@@ -394,7 +394,7 @@ internal static class CompassWindow
         var drawList = ImGui.GetWindowDrawList();
         var current = prioritizeMouseOverTarget && targetSystem->MouseOverTarget != null
             ? targetSystem->MouseOverTarget
-            : targetSystem->GetCurrentTarget();
+            : targetSystem->GetTargetObject();
         if (current is null) return;
         var distanceFromPlayer = *current switch
         {
@@ -491,12 +491,12 @@ internal static class CompassWindow
             {
                 var mapIconComponentNode =
                     (AtkComponentNode*)rootComponentNode->Component->UldManager.NodeList[i];
-                if (!mapIconComponentNode->AtkResNode.IsVisible) continue;
+                if (!mapIconComponentNode->AtkResNode.IsVisible()) continue;
                 for (var j = 2; j < componentIconLoopEnd; j++)
                 {
                     var imgNode = (AtkImageNode*)mapIconComponentNode->Component->UldManager.NodeList[j];
                     if (imgNode->AtkResNode.Type != NodeType.Image) continue;
-                    if (!imgNode->AtkResNode.IsVisible || !imgNode->AtkResNode.ParentNode->IsVisible) continue;
+                    if (!imgNode->AtkResNode.IsVisible() || !imgNode->AtkResNode.ParentNode->IsVisible()) continue;
                     var part = imgNode->PartsList->Parts[imgNode->PartId];
                     //NOTE Invariant: It should always be a resource
 #if DEBUG
