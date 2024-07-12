@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net8.0-windows</TargetFramework>
         <LangVersion>latest</LangVersion>
-        <VersionPrefix>1.28.0</VersionPrefix>
+        <VersionPrefix>1.28.1</VersionPrefix>
         <Authors>Chivalrik</Authors>
         <Company>Chivalrik</Company>
         <Nullable>enable</Nullable>
@@ -15,12 +15,6 @@
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
         <PlatformTarget>x64</PlatformTarget>
     </PropertyGroup>
-
-    <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
-        <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="True" IgnoreExitCode="False">
-            <Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput"/>
-        </Exec>
-    </Target>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
