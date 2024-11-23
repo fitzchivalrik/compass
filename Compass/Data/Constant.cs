@@ -5,7 +5,7 @@ internal static class Constant {
     internal const int   NaviMapPlayerX                   = 72;
     internal const int   NaviMapPlayerY                   = -72;
     internal const int   NaviMapScaleOffset               = 0x264; // 7.1
-    internal const int   AreaMapScaleOffset               = 0x3CC; // 7.0
+    internal const int   AreaMapScaleOffset               = 0x3D4; // 7.1
     internal const uint  PlayerViewTriangleRotationOffset = 0x26C; // 7.1
     internal const float CompassHeight                    = 50f;
 
