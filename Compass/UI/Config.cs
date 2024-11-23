@@ -5,7 +5,7 @@ using Compass.Resources;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using ImGuiNET;
-using FFXIVAction = Lumina.Excel.GeneratedSheets.Action;
+using FFXIVAction = Lumina.Excel;
 
 namespace Compass.UI;
 

@@ -76,7 +76,7 @@ public partial class Plugin : IDalamudPlugin
         if (_clientState.LocalPlayer is not null) OnLogin();
     }
 
-    private void OnLogout()
+    private void OnLogout(int type, int code)
     {
         _pluginInterface.UiBuilder.OpenConfigUi -= OnOpenConfigUi;
         _pluginInterface.UiBuilder.Draw         -= DrawConfigUi;
@@ -211,7 +211,7 @@ public partial class Plugin : IDalamudPlugin
         if (disposing)
         {
             // Dispose managed resources
-            OnLogout();
+            OnLogout(0, 0);
             _clientState.Login  -= OnLogin;
             _clientState.Logout -= OnLogout;
             _commands.RemoveHandler(Command);
