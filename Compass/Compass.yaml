@@ -6,5 +6,13 @@ description: |-
   after install for common caveats.
 repo_url: https://github.com/fitzchivalrik/compass
 punchline: Monodimensional compass for your adventures.
+tags:
+  - UI
+  - Minimap
+  - Compass
+  - Navigation
 changelog: |-
-  - feat: Update to API X & 7.0
+  - feat: Update to 7.1. Thanks @TheDeadCode for the PR!
+  NOTE: Since 7.0, Compass seems to work funky in some cases.
+  I am sorry, but I cannot promise that I will manage to work on plugins for the foreseeable future.
+  I can, however, promise to have a look at any potential PR in a timely manner.

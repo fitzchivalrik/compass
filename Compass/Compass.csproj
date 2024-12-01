@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net8.0-windows</TargetFramework>
         <LangVersion>latest</LangVersion>
-        <VersionPrefix>1.28.1</VersionPrefix>
+        <VersionPrefix>1.29.0</VersionPrefix>
         <Authors>Chivalrik</Authors>
         <Company>Chivalrik</Company>
         <Nullable>enable</Nullable>
