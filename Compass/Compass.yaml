@@ -12,7 +12,9 @@ tags:
   - Compass
   - Navigation
 changelog: |-
-  - feat: Update to 7.1. Thanks @TheDeadCode for the PR!
+  - chore: Update to API12
+  No other changes or fixes.
+  
   NOTE: Since 7.0, Compass seems to work funky in some cases.
   I am sorry, but I cannot promise that I will manage to work on plugins for the foreseeable future.
   I can, however, promise to have a look at any potential PR in a timely manner.

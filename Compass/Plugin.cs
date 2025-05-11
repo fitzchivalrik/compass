@@ -33,7 +33,7 @@ public partial class Plugin : IDalamudPlugin
       , IClientState                      clientState
       , ICommandManager                   commands
       , ICondition                        condition
-      , IGameGui gameGui
+      , IGameGui                          gameGui
       , IPluginLog                        pluginLog
       , IGameInteropProvider              gameInteropProvider
     )
@@ -73,7 +73,8 @@ public partial class Plugin : IDalamudPlugin
             _pluginInterface.UiBuilder.Draw += DrawConfigUi;
         }
 
-        if (_clientState.LocalPlayer is not null) OnLogin();
+        if(_clientState.IsLoggedIn) OnLogin();
+
     }
 
     private void OnLogout(int type, int code)
