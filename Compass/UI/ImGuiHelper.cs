@@ -1,14 +1,22 @@
 ﻿using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace Compass.UI;
 
 public static class ImGuiHelper
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static void ImageRotated(nint texId, Vector2 center, Vector2 size, float angle, Vector2 uv, Vector2 uv1, ImDrawListPtr drawList)
+    internal static void ImageRotated(
+        ImTextureID   texId
+      , Vector2       center
+      , Vector2       size
+      , float         angle
+      , Vector2       uv
+      , Vector2       uv1
+      , ImDrawListPtr drawList
+    )
     {
         var cosA = MathF.Cos(angle);
         var sinA = MathF.Sin(angle);

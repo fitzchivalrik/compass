@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Numerics;
 using Compass.Data;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
 
 namespace Compass.UI;
 
@@ -193,12 +193,12 @@ internal static class CompassWindow
     }
 
     private static void DrawInterCardinals(
-        Vector2 playerForward
-      , Vector2 centre
-      , float   halfWidth28
-      , float   compassUnit
-      , int     cardinalsOffset
-      , nint    naviMapTextureD3D11ShaderResourceView
+        Vector2     playerForward
+      , Vector2     centre
+      , float       halfWidth28
+      , float       compassUnit
+      , int         cardinalsOffset
+      , ImTextureID naviMapTextureD3D11ShaderResourceView
     )
     {
         var         backgroundDrawList = ImGui.GetBackgroundDrawList();
@@ -280,13 +280,13 @@ internal static class CompassWindow
     }
 
     private static void DrawCardinals(
-        Vector2 playerForward
-      , Vector2 centre
-      , float   halfWidth40
-      , float   halfWidth28
-      , float   compassUnit
-      , int     cardinalsOffset
-      , nint    naviMapTextureD3D11ShaderResourceView
+        Vector2     playerForward
+      , Vector2     centre
+      , float       halfWidth40
+      , float       halfWidth28
+      , float       compassUnit
+      , int         cardinalsOffset
+      , ImTextureID naviMapTextureD3D11ShaderResourceView
     )
     {
         var backgroundDrawList = ImGui.GetBackgroundDrawList();
@@ -338,7 +338,7 @@ internal static class CompassWindow
       , Vector2       weatherIconBorderPMax
       , Vector2       weatherIconPMin
       , Vector2       weatherIconPMax
-      , nint          naviMapTextureD3D11ShaderResourceView
+      , ImTextureID   naviMapTextureD3D11ShaderResourceView
       , AtkImageNode* weatherIconNode
     )
     {
@@ -357,7 +357,7 @@ internal static class CompassWindow
             //Weather Icon
             var tex = weatherIconNode->PartsList->Parts[0].UldAsset->AtkTexture.Resource->KernelTextureObject;
             backgroundDrawList.AddImage(
-                new nint(tex->D3D11ShaderResourceView), weatherIconPMin,
+                new ImTextureID(tex->D3D11ShaderResourceView), weatherIconPMin,
                 weatherIconPMax);
             //Border around Weather Icon
             backgroundDrawList.AddImage(
@@ -398,10 +398,9 @@ internal static class CompassWindow
         if (current is null) return;
         var distanceFromPlayer = *current switch
         {
-            { ObjectKind: var o } when
-                (ObjectKind)o is ObjectKind.Pc or ObjectKind.BattleNpc or ObjectKind.EventNpc
-                => current->YalmDistanceFromPlayerX,
-            _ => byte.MaxValue
+            { ObjectKind: ObjectKind.Pc or ObjectKind.BattleNpc or ObjectKind.EventNpc } =>
+                current->YalmDistanceFromPlayerX
+          , _ => byte.MaxValue
         };
         if (distanceFromPlayer == byte.MaxValue) return;
         var text                  = $"{prefix}{distanceFromPlayer + 1}{suffix}";
@@ -523,7 +522,7 @@ internal static class CompassWindow
                     //iconId = 0 (=> success == false as IconID will never be 0) Must have been 'NaviMap(_hr1)?\.tex' (and only that hopefully)
                     if (filteredIconIds.Contains(iconId)) continue;
 
-                    var textureIdPtr = new nint(tex->D3D11ShaderResourceView);
+                    var textureIdPtr = new ImTextureID(tex->D3D11ShaderResourceView);
 
                     Vector2 pMin;
                     Vector2 pMax;
@@ -617,7 +616,7 @@ internal static class CompassWindow
                         case 060545: // Another Arrow DOWN
                         case 060546: // Arrow DOWN on Circle
                         case 060547: // Arrow DOWN on Circle
-                            (pMin, pMax, tintColour, _)
+                            (pMin, pMax, tintColour, var _)
                                 = Util.CalculateAreaCircleVariables(playerPosition, playerForward, mapIconComponentNode,
                                     imgNode, distanceOffset, compassUnit, halfWidth40, centre,
                                     maxDistance, minScaleFactor);

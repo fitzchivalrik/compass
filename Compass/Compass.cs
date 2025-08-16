@@ -4,11 +4,7 @@ using System.Numerics;
 using Compass.Data;
 using Compass.UI;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Objects;
-using Dalamud.Game.Gui;
-using Dalamud.IoC;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
@@ -136,7 +132,7 @@ internal class Compass
     // - Any Deep Dungeon
     private bool UpdateMapPointersCache()
     {
-        var ptr = _gameGui.GetAddonByName("_NaviMap");
+        var ptr = _gameGui.GetAddonByName("_NaviMap").Address;
         if (ptr == nint.Zero) return false;
         unsafe
         {
@@ -144,7 +140,7 @@ internal class Compass
             if (naviMap->UldManager.LoadedState != AtkLoadState.Loaded) return false;
             // Node indices valid as of 7.0
             var naviMapIconsRootComponentNode = (AtkComponentNode*)naviMap->UldManager.NodeList[2];
-            var areaMap                       = (AtkUnitBase*)_gameGui.GetAddonByName("AreaMap");
+            var areaMap                       = (AtkUnitBase*)_gameGui.GetAddonByName("AreaMap").Address;
             var areaMapIconsRootComponentNode = (AtkComponentNode*)areaMap->UldManager.NodeList[3];
 
             // Cardinals, etc. are on the same naviMap texture atlas
@@ -155,10 +151,8 @@ internal class Compass
                 _config.UseAreaMapAsSource ? areaMap : naviMap,
                 _config.UseAreaMapAsSource ? areaMapIconsRootComponentNode : naviMapIconsRootComponentNode,
                 (AtkImageNode*)((AtkComponentNode*)naviMap->UldManager.NodeList[6])->Component->UldManager.NodeList[2],
-                new nint(
-                    westCardinalAtkImageNode->PartsList->Parts[0]
-                       .UldAsset->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
-                )
+                westCardinalAtkImageNode->PartsList->Parts[0]
+                   .UldAsset->AtkTexture.Resource->KernelTextureObject->D3D11ShaderResourceView
             );
         }
 
@@ -182,11 +176,7 @@ internal class Compass
             }
 
             var unitBase = _gameGui.GetAddonByName(uiIdentifier);
-            if (unitBase == nint.Zero) continue;
-            unsafe
-            {
-                _shouldHideCompassIteration |= ((AtkUnitBase*)unitBase)->IsVisible;
-            }
+            _shouldHideCompassIteration |= unitBase.IsVisible;
         }
     }
 }

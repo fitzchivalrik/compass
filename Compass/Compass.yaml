@@ -12,7 +12,7 @@ tags:
   - Compass
   - Navigation
 changelog: |-
-  - chore: Update to API12
+  - chore: Update to API13
   No other changes or fixes.
   
   NOTE: Since 7.0, Compass seems to work funky in some cases.

@@ -2,10 +2,9 @@
 using System.Numerics;
 using Compass.Data;
 using Compass.Resources;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
-using ImGuiNET;
-using FFXIVAction = Lumina.Excel;
 
 namespace Compass.UI;
 

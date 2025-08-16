@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.31.0
+
+- chore: Update to API13
+
+## 1.30.0
+
+- chore: Update to API12
+
 ## 1.27.1
 
 - fix: More icons handled
