@@ -5,7 +5,8 @@ using Dalamud.Game.Command;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Plugin.Services;
 
 namespace Compass;
 
