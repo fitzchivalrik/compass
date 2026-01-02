@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.32.0
+
+- chore: Update to API14 (thanks @ashen-dawn)
+
 ## 1.31.0
 
 - chore: Update to API13
