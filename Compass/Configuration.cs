@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel;
 using System.Numerics;
 using Dalamud.Configuration;
 using Newtonsoft.Json;
@@ -49,10 +48,10 @@ public class Configuration : IPluginConfiguration
     public bool    ImGuiCompassDistanceToTargetMouseOverPrio = true;
     public bool    ImGuiCompassEnable                        = true;
 
-    public              bool[] ShouldHideOnUiObjectSerializer = System.Array.Empty<bool>();
+    public bool[] ShouldHideOnUiObjectSerializer = [];
     [JsonIgnore] public (string[] getUiObjectIdentifier, bool disable, string userFacingIdentifier)[] ShouldHideOnUiObject = null!;
 
-    public HashSet<uint>     FilteredIconIds = new();
+    public HashSet<uint>     FilteredIconIds = [];
     public CompassVisibility Visibility      = CompassVisibility.Always;
 
     // ReSharper disable once UnassignedField.Global Leftover from Version 0
@@ -110,9 +109,9 @@ public class ConfigurationV0 : IPluginConfiguration
     public bool    ImGuiCompassDistanceToTargetMouseOverPrio = true;
     public bool    ImGuiCompassEnable                        = true;
 
-    public              bool[] ShouldHideOnUiObjectSerializer = System.Array.Empty<bool>();
+    public bool[] ShouldHideOnUiObjectSerializer = [];
     [JsonIgnore] public (string[] getUiObjectIdentifier, bool disable, string userFacingIdentifier)[] ShouldHideOnUiObject = null!;
-    public              HashSet<uint> FilteredIconIds = new();
+    public HashSet<uint> FilteredIconIds = [];
     public              bool HideInCombat;
     [JsonIgnore] public bool FreshInstall;
     public              bool HideInPvPMaps;

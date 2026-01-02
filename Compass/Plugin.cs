@@ -2,11 +2,8 @@
 using Compass.Data;
 using Compass.Resources;
 using Compass.UI;
-using Dalamud.Game;
-using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Utility;
-using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 

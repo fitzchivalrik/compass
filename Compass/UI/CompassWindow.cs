@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Numerics;
 using Compass.Data;
@@ -452,30 +453,31 @@ internal static class CompassWindow
         drawList.AddText(font, distanceToTargetScale, pMin, colour, text);
     }
 
+    private static readonly SearchValues<char> PathDelimiter = SearchValues.Create('/', '\\');
     // TODO: Reduce parameter counts by splitting DrawVariables in smaller structs?
     private static unsafe Vector2 DrawIcons(
-        int                currentScaleOffset
-      , int                componentIconLoopStart
-      , int                componentIconLoopEnd
-      , int                centreMarkerOffset
-      , float              maxDistance
-      , float              compassUnit
-      , float              scale
-      , float              rotationIconHalfWidth
-      , float              halfWidth40
-      , float              minScaleFactor
-      , float              backgroundRounding
-      , Vector2            playerForward
-      , Vector2            playerPosition
-      , Vector2            centre
-      , Vector2            backgroundPMin
-      , Vector2            backgroundPMax
-      , bool               useAreaMapAsSource
-      , bool               enableCentreMarker
-      , bool               flipCentreMarker
-      , AtkUnitBase*       unitBase
-      , AtkComponentNode*  rootComponentNode
-      , IReadOnlySet<uint> filteredIconIds
+        int               currentScaleOffset
+      , int               componentIconLoopStart
+      , int               componentIconLoopEnd
+      , int               centreMarkerOffset
+      , float             maxDistance
+      , float             compassUnit
+      , float             scale
+      , float             rotationIconHalfWidth
+      , float             halfWidth40
+      , float             minScaleFactor
+      , float             backgroundRounding
+      , Vector2           playerForward
+      , Vector2           playerPosition
+      , Vector2           centre
+      , Vector2           backgroundPMin
+      , Vector2           backgroundPMax
+      , bool              useAreaMapAsSource
+      , bool              enableCentreMarker
+      , bool              flipCentreMarker
+      , AtkUnitBase*      unitBase
+      , AtkComponentNode* rootComponentNode
+      , HashSet<uint>     filteredIconIds
     )
     {
         try
@@ -517,7 +519,7 @@ internal static class CompassWindow
                     // Cannot act anyways if the texture path is butchered
                     var textureFileName = texFileNameStdString.ToString();
                     var _ = uint.TryParse(
-                        textureFileName.AsSpan(textureFileName.LastIndexOfAny(new[] { '/', '\\' }) + 1, 6),
+                        textureFileName.AsSpan(textureFileName.LastIndexOfAny(PathDelimiter) + 1, 6),
                         out var iconId);
                     //iconId = 0 (=> success == false as IconID will never be 0) Must have been 'NaviMap(_hr1)?\.tex' (and only that hopefully)
                     if (filteredIconIds.Contains(iconId)) continue;
@@ -594,8 +596,7 @@ internal static class CompassWindow
                         case 060496: // Big Area Circle
                         case 060497: // Another Circle
                         case 060498: // One More Circle
-                            bool inArea;
-                            (pMin, pMax, tintColour, inArea)
+                            (pMin, pMax, tintColour, var inArea)
                                 = Util.CalculateAreaCircleVariables(playerPosition, playerForward, mapIconComponentNode,
                                     imgNode, distanceOffset, compassUnit, halfWidth40, centre,
                                     maxDistance, minScaleFactor);

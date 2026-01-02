@@ -24,7 +24,7 @@ internal readonly unsafe struct Pointers
     {
         TargetSystem                          = targetSystem;
         WeatherIconNode                       = weatherIconNode;
-        NaviMapTextureD3D11ShaderResourceView = new ImTextureID(naviMapTextureD3D11ShaderResourceView);;
+        NaviMapTextureD3D11ShaderResourceView = new ImTextureID(naviMapTextureD3D11ShaderResourceView);
         CurrentMapIconsRootComponentNode      = currentMapIconsRootComponentNode;
         CurrentSourceBase                     = currentSourceBase;
         PlayerViewTriangleRotation            = playerViewTriangleRotation;

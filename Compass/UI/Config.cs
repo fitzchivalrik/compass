@@ -224,6 +224,7 @@ internal static class Config
                 ImGui.EndTooltip();
             }
 
+            // ReSharper disable VariableHidesOuterVariable
             changed |= ImGuiHelper.DrawTreeCheckbox("Enable Centre Marker", ref config.ImGuiCompassEnableCenterMarker, () =>
             {
                 var changed = false;
@@ -271,6 +272,7 @@ internal static class Config
                         "%.2f", ImGuiSliderFlags.AlwaysClamp);
                     return changed;
                 });
+            // ReSharper restore VariableHidesOuterVariable
             ImGui.SameLine();
             ImGui.PushFont(UiBuilder.IconFont);
             ImGui.TextDisabled(FontAwesomeIcon.QuestionCircle.ToIconString());

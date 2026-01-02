@@ -31,7 +31,7 @@ internal class Compass
     private Vector2  _playerPosition = new(Constant.NaviMapPlayerX, Constant.NaviMapPlayerY);
     private bool     _shouldHideCompass;
     private bool     _shouldHideCompassIteration;
-    private string[] _uiIdentifiers = Array.Empty<string>();
+    private string[] _uiIdentifiers = [];
 
 
     internal Compass(
