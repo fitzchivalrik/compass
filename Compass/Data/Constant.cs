@@ -9,6 +9,7 @@ internal static class Constant {
     internal const uint  PlayerViewTriangleRotationOffset = 0x26C; // 7.1
     internal const float CompassHeight                    = 50f;
 
+    // @formatter:off
     // Technical debt: ORDER SENSITIVE, DO NOT MOVE AROUND
     internal static readonly (string[] getUiObjectIdentifier, bool disable, string userFacingIdentifier)[] InitialUiObjectArray = {
         (new[] { "_BattleTalk" }, false, "Dialogue Box During Battle"),
@@ -66,9 +67,10 @@ internal static class Constant {
         (new[] { "Synthesis" }, false, "Crafting (Synthesis)")
     };
 
+
     internal static readonly (string description, uint[] ids)[] FilterIconIds = {
         ("MSQ Quests", new uint[] { 71001, 71002 }),
-        ("Locked MSQ Quests", new uint[] { 071011, 71012 }),
+        ("Locked MSQ Quests", new uint[] { 071011, 71012, 71015 }),
         ("Blue Quests", new uint[] { 071141, 71142 }),
         ("Locked Blue Quests", new uint[] { 071151, 71152 }),
         ("Side Quests", new uint[] { 071021, 71022, 71111 }),
@@ -117,4 +119,5 @@ internal static class Constant {
         ("Housing (Shared)", new uint[] { 060783, 060784, 060785, 060786, 060787, 060788 }),
         ("Housing (Own FC)", new uint[] { 060761, 060762, 060763, 060764, 060766 })
     };
+    // @formatter:on
 }
