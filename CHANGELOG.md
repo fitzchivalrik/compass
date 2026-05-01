@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 1.33.0
+## 1.33.1
 
 - chore: Update to API15 (thanks @ashen-dawn)
 
