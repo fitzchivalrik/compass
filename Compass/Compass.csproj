@@ -1,7 +1,7 @@
-<Project Sdk="Dalamud.NET.Sdk/14.0.1">
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
 
     <PropertyGroup>
-        <VersionPrefix>1.32.0</VersionPrefix>
+        <VersionPrefix>1.33.0</VersionPrefix>
         <Authors>Chivalrik</Authors>
         <Company>Chivalrik</Company>
         <IsPackable>false</IsPackable>
@@ -40,7 +40,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Update="DalamudPackager" Version="14.0.1"/>
+        <PackageReference Update="DalamudPackager" Version="15.0.0"/>
     </ItemGroup>
 
 </Project>
