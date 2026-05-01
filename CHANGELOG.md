@@ -4,7 +4,7 @@
 
 ## 1.33.0
 
-- chore: Update to API15
+- chore: Update to API15 (thanks @ashen-dawn)
 
 ## 1.32.0
 
