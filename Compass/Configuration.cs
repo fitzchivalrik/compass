@@ -30,7 +30,9 @@ public class Configuration : IPluginConfiguration
     public float ImGuiBackgroundLineThickness   = 1f;
     public int   ImGuiCompassBackgroundLineOffset;
 
+    // Kept for migration from configs that stored top-left coordinates in pixels.
     public Vector2 ImGuiCompassPosition              = new(835, 515);
+    public Vector2 ImGuiCompassCentrePosition        = new(0.5f, 0.5f);
     public float   ImGuiCompassWidth                 = 250f;
     public float   ImGuiCompassReverseMaskPercentage = 1f;
 
@@ -58,7 +60,7 @@ public class Configuration : IPluginConfiguration
     public              bool HideInCombat;
     [JsonIgnore] public bool FreshInstall;
 
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = 2;
 }
 
 public class ConfigurationV0 : IPluginConfiguration
@@ -92,6 +94,7 @@ public class ConfigurationV0 : IPluginConfiguration
     public int   ImGuiCompassBackgroundLineOffset;
 
     public Vector2 ImGuiCompassPosition              = new(835, 515);
+    public Vector2 ImGuiCompassCentrePosition        = new(0.5f, 0.5f);
     public float   ImGuiCompassWidth                 = 250f;
     public float   ImGuiCompassReverseMaskPercentage = 1f;
 

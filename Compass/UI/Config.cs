@@ -186,11 +186,16 @@ internal static class Config
             if (ImGui.Button("Center horizontally##ImGui", new Vector2(200f, 25f)))
             {
                 changed = true;
-                var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size * 0.5f).X;
-                config.ImGuiCompassPosition = config.ImGuiCompassPosition with { X = screenSizeCenterX - config.ImGuiCompassWidth * 0.5f };
+                config.ImGuiCompassCentrePosition = config.ImGuiCompassCentrePosition with { X = 0.5f };
             }
 
-            changed |= ImGui.DragFloat2("Position##ImGui", ref config.ImGuiCompassPosition, 1f, float.MinValue, float.MaxValue, "%.f");
+            var positionPercent = config.ImGuiCompassCentrePosition * 100f;
+            if (ImGui.DragFloat2("Center Position (%)##ImGui", ref positionPercent, 0.1f, 0f, 100f, "%.1f"))
+            {
+                changed = true;
+                config.ImGuiCompassCentrePosition = Vector2.Clamp(positionPercent * 0.01f, Vector2.Zero, Vector2.One);
+            }
+
             changed |= ImGui.DragFloat("Width##ImGui", ref config.ImGuiCompassWidth, 1f, 150f, float.MaxValue, "%.f", ImGuiSliderFlags.AlwaysClamp);
             var mask = (int)((1 - config.ImGuiCompassReverseMaskPercentage) * 100);
             changed |= ImGui.SliderInt("Mask###ImGuiCompassMask", ref mask, 0, 90,

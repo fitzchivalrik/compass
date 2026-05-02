@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.34.0
+
+- feat: Store compass position relative to viewport
+
 ## 1.33.1
 
 - chore: Update to API15 (thanks @ashen-dawn)
