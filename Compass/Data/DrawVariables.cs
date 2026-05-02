@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility;
 
 namespace Compass.Data;
 
@@ -13,6 +14,7 @@ namespace Compass.Data;
 internal struct DrawVariables
 {
     internal readonly Vector2 Centre                 = new(835 + 125f, 515 + 25f);
+    internal readonly Vector2 Position               = new(835, 515);
     internal readonly Vector2 BackgroundPMin         = Vector2.Zero;
     internal readonly Vector2 BackgroundPMax         = Vector2.Zero;
     internal readonly Vector2 BackgroundLinePMin     = Vector2.Zero;
@@ -61,9 +63,12 @@ internal struct DrawVariables
         HalfHeight            = Constant.CompassHeight * 0.5f * HeightScale;
 
         CompassUnit = config.ImGuiCompassWidth / (2f * MathF.PI);
-        Centre =
-            new Vector2(config.ImGuiCompassPosition.X + HalfWidth,
-                config.ImGuiCompassPosition.Y + HalfHeight);
+        var viewportSize = ImGuiHelpers.MainViewport.Size;
+        Centre = new Vector2(
+            Math.Clamp(config.ImGuiCompassCentrePosition.X, 0f, 1f) * viewportSize.X,
+            Math.Clamp(config.ImGuiCompassCentrePosition.Y, 0f, 1f) * viewportSize.Y
+        );
+        Position = Centre - new Vector2(HalfWidth, HalfHeight);
 
         BackgroundPMin = new Vector2(
             Centre.X - 5 - HalfWidth * config.ImGuiCompassReverseMaskPercentage

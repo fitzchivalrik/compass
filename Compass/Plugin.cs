@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Numerics;
 using Compass.Data;
 using Compass.Resources;
 using Compass.UI;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Utility;
 using Dalamud.Plugin;
@@ -49,6 +51,8 @@ public partial class Plugin : IDalamudPlugin
 
         _clientState.Login  += OnLogin;
         _clientState.Logout += OnLogout;
+        _pluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
+        _pluginInterface.UiBuilder.OpenMainUi   += OnOpenConfigUi;
 
         _commands.AddHandler(Command, new CommandInfo(CommandHandler)
         {
@@ -63,8 +67,7 @@ public partial class Plugin : IDalamudPlugin
         {
             // NOTE: Centers compass on first install
             PluginLog.Information("Fresh install of Compass; centering compass, drawing modal.");
-            var screenSizeCenterX = (ImGuiHelpers.MainViewport.Size * 0.5f).X;
-            _config.ImGuiCompassPosition    =  _config.ImGuiCompassPosition with { X = screenSizeCenterX - _config.ImGuiCompassWidth * 0.5f };
+            _config.ImGuiCompassCentrePosition =  _config.ImGuiCompassCentrePosition with { X = 0.5f };
             _buildingConfigUi               =  true;
             _config.FreshInstall            =  true;
             _pluginInterface.UiBuilder.Draw += DrawConfigUi;
@@ -76,15 +79,12 @@ public partial class Plugin : IDalamudPlugin
 
     private void OnLogout(int type, int code)
     {
-        _pluginInterface.UiBuilder.OpenConfigUi -= OnOpenConfigUi;
-        _pluginInterface.UiBuilder.Draw         -= DrawConfigUi;
-
+        _pluginInterface.UiBuilder.Draw -= DrawConfigUi;
         _pluginInterface.UiBuilder.Draw -= _compass.Draw;
     }
 
     private void OnLogin()
     {
-        _pluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
         _compass.UpdateCachedVariables();
         _pluginInterface.UiBuilder.Draw += _compass.Draw;
     }
@@ -140,6 +140,14 @@ public partial class Plugin : IDalamudPlugin
             }
         }
 
+        if (config.Version < 2)
+        {
+            PluginLog.Debug("Migrate configuration to version 2.");
+            MigrateCompassPositionToRelative(config);
+            config.Version = 2;
+            pi.SavePluginConfig(config);
+        }
+
         // NOTE: Technical debt; This array is order-sensitive as it is used in combination with
         //  Configuration.ShouldHideOnUiObjectSerializer. There were problems serializing a Dictionary,
         //  but apart from that I am unsure why _this_ was the solution I came up with. Oh well.
@@ -155,6 +163,26 @@ public partial class Plugin : IDalamudPlugin
         }
 
         return config;
+    }
+
+    private static void MigrateCompassPositionToRelative(Configuration config)
+    {
+        var viewportSize = ImGuiHelpers.MainViewport.Size;
+        if (viewportSize.X <= 0f || viewportSize.Y <= 0f)
+        {
+            viewportSize = new Vector2(1920f, 1080f);
+        }
+
+        var centre = config.ImGuiCompassPosition + new Vector2(
+            config.ImGuiCompassWidth * 0.5f,
+            Constant.CompassHeight * 0.5f * ImGui.GetIO().FontGlobalScale
+        );
+
+        config.ImGuiCompassCentrePosition = Vector2.Clamp(
+            new Vector2(centre.X / viewportSize.X, centre.Y / viewportSize.Y),
+            Vector2.Zero,
+            Vector2.One
+        );
     }
 
     #region UI
@@ -212,6 +240,8 @@ public partial class Plugin : IDalamudPlugin
             OnLogout(0, 0);
             _clientState.Login  -= OnLogin;
             _clientState.Logout -= OnLogout;
+            _pluginInterface.UiBuilder.OpenConfigUi -= OnOpenConfigUi;
+            _pluginInterface.UiBuilder.OpenMainUi   -= OnOpenConfigUi;
             _commands.RemoveHandler(Command);
             DebugDtor();
         }

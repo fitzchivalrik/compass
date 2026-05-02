@@ -17,13 +17,13 @@ public unsafe partial class Plugin
 
     private delegate nuint WriteFileHidDOutputReport(int hidDevice, DualSenseOutputReport* outputReport, ushort reportLength);
 
-    [Signature("E8 ?? ?? ?? ?? 83 7B 18 00 74 55", DetourName = nameof(WriteFileHidDOutputReportDetour))]
+    [Signature("E8 ?? ?? ?? ?? 83 7B 18 00 74 55", DetourName = nameof(WriteFileHidDOutputReportDetour), Fallibility = Fallibility.Fallible)]
     private Hook<WriteFileHidDOutputReport>? _writeFileHidDOutputReportHook { get; init; }
 
-    [Signature("48 8D 1D ?? ?? ?? ?? 4C 8B EA", Offset = 4, UseFlags = SignatureUseFlags.Offset)]
+    [Signature("48 8D 1D ?? ?? ?? ?? 4C 8B EA", Offset = 4, UseFlags = SignatureUseFlags.Offset, Fallibility = Fallibility.Fallible)]
     private int qword_140002258E20 { get; init; }
 
-    [Signature("48 8D 05 ?? ?? ?? ?? 45 33 E4 4C 39 23", Offset = 4, UseFlags = SignatureUseFlags.Offset)]
+    [Signature("48 8D 05 ?? ?? ?? ?? 45 33 E4 4C 39 23", Offset = 4, UseFlags = SignatureUseFlags.Offset, Fallibility = Fallibility.Fallible)]
     private int unk_140002269DE0 { get; init; }
 
     private int _controllerNumber = 1;

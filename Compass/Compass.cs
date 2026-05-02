@@ -3,7 +3,9 @@ using System.Linq;
 using System.Numerics;
 using Compass.Data;
 using Compass.UI;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -17,6 +19,8 @@ internal class Compass
     private readonly Configuration  _config;
     private          int            _currentUiObjectIndex;
     private          bool           _dirty;
+    private          float          _lastFontGlobalScale;
+    private          Vector2        _lastViewportSize;
 
     private DrawVariables _drawVariables;
 
@@ -64,6 +68,8 @@ internal class Compass
             _dirty = !UpdateCachedVariables();
             return;
         }
+
+        UpdateViewportCache();
 
         switch (_config.Visibility)
         {
@@ -116,12 +122,25 @@ internal class Compass
     {
         if (!UpdateMapPointersCache()) return false;
         _drawVariables = new DrawVariables(_config);
+        _lastViewportSize    = ImGuiHelpers.MainViewport.Size;
+        _lastFontGlobalScale = ImGui.GetIO().FontGlobalScale;
         _uiIdentifiers = _config.ShouldHideOnUiObject
                                 .Where(it => it.disable)
                                 .SelectMany(it => it.getUiObjectIdentifier)
                                 .ToArray();
         _currentUiObjectIndex = 0;
         return true;
+    }
+
+    private void UpdateViewportCache()
+    {
+        var viewportSize    = ImGuiHelpers.MainViewport.Size;
+        var fontGlobalScale = ImGui.GetIO().FontGlobalScale;
+        if (viewportSize == _lastViewportSize && Math.Abs(fontGlobalScale - _lastFontGlobalScale) < float.Epsilon) return;
+
+        _drawVariables      = new DrawVariables(_config);
+        _lastViewportSize   = viewportSize;
+        _lastFontGlobalScale = fontGlobalScale;
     }
 
     // `GetAddonByName` is rather expensive, so we cache the ptr instead of

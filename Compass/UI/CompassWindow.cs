@@ -33,7 +33,7 @@ internal static class CompassWindow
             | ImGuiWindowFlags.NoCollapse
             | ImGuiWindowFlags.NoSavedSettings;
         ImGuiHelpers.ForceNextWindowMainViewport();
-        ImGuiHelpers.SetNextWindowPosRelativeMainViewport(config.ImGuiCompassPosition, ImGuiCond.Always);
+        ImGuiHelpers.SetNextWindowPosRelativeMainViewport(drawVariables.Position, ImGuiCond.Always);
         ImGui.Begin("###ImGuiCompassWindow", flags);
 
         var cosPlayer = MathF.Cos(cameraRotationInRadian);
