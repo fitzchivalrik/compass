@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.34.0
+
+- feat: extend quest filters with new icons
+
 ## 1.33.1
 
 - chore: Update to API15 (thanks @ashen-dawn)
